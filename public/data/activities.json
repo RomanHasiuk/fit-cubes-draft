@@ -1,65 +1,65 @@
 [
   {
     "id": 1,
-    "name": "Кроки",
-    "unit": "крок",
+    "name": "Walking",
+    "unit": "steps",
     "metValue": 3.5,
-    "description": "Ходьба в середньому темпі"
+    "description": "Walking at a moderate pace"
   },
   {
     "id": 2,
-    "name": "Віджимання",
-    "unit": "раз",
+    "name": "Push-ups",
+    "unit": "rep",
     "metValue": 8.0,
-    "description": "Висока інтенсивність"
+    "description": "High intensity"
   },
   {
     "id": 3,
-    "name": "Присідання",
-    "unit": "раз",
+    "name": "Squats",
+    "unit": "rep",
     "metValue": 8.0,
-    "description": "Висока інтенсивність"
+    "description": "High intensity"
   },
   {
     "id": 4,
-    "name": "Планка",
-    "unit": "хв",
+    "name": "Plank",
+    "unit": "min",
     "metValue": 3.0,
-    "description": "Ізометричне навантаження"
+    "description": "Isometric load"
   },
   {
     "id": 5,
-    "name": "Велосипед",
-    "unit": "хв",
+    "name": "Cycling",
+    "unit": "min",
     "metValue": 7.5,
-    "description": "Помірна інтенсивність"
+    "description": "Moderate intensity"
   },
   {
     "id": 6,
-    "name": "Прибирання",
-    "unit": "хв",
+    "name": "Cleaning",
+    "unit": "min",
     "metValue": 3.5,
-    "description": "Легка активність"
+    "description": "Light activity"
   },
   {
     "id": 7,
-    "name": "Плавання",
-    "unit": "хв",
+    "name": "Swimming",
+    "unit": "min",
     "metValue": 8.0,
-    "description": "Загальне плавання"
+    "description": "General swimming"
   },
   {
     "id": 8,
-    "name": "Біг",
-    "unit": "хв",
+    "name": "Running",
+    "unit": "min",
     "metValue": 10.0,
-    "description": "Темп ~9 км/год"
+    "description": "Pace ~9 km/h"
   },
   {
     "id": 9,
-    "name": "Стрибки на скакалці",
-    "unit": "хв",
+    "name": "Jump rope",
+    "unit": "min",
     "metValue": 12.0,
-    "description": "Висока інтенсивність"
+    "description": "High intensity"
   }
 ]

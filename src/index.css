@@ -1,0 +1,112 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 225 14% 7%;
+    --card: 0 0% 100%;
+    --card-foreground: 225 14% 7%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 225 14% 7%;
+    --primary: 33 95% 44%; /* Amber-600 */
+    --primary-foreground: 0 0% 100%;
+    --secondary: 220 10% 96%;
+    --secondary-foreground: 225 14% 7%;
+    --muted: 220 10% 96%;
+    --muted-foreground: 220 10% 45%;
+    --accent: 220 10% 96%;
+    --accent-foreground: 225 14% 7%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 220 13% 91%;
+    --input: 220 13% 91%;
+    --ring: 33 95% 44%;
+    --radius: 1rem;
+
+    --bg-gradient: linear-gradient(-45deg, #faf8ef 0%, #f1d3b5 100%);
+  }
+
+  .dark {
+    --background: 225 14% 7%;
+    --foreground: 220 14% 96%;
+    --card: 225 14% 10%;
+    --card-foreground: 220 14% 96%;
+    --popover: 225 14% 10%;
+    --popover-foreground: 220 14% 96%;
+    --primary: 38 92% 50%; /* Amber-500 */
+    --primary-foreground: 220 13% 9%;
+    --secondary: 220 10% 18%;
+    --secondary-foreground: 220 14% 96%;
+    --muted: 220 10% 18%;
+    --muted-foreground: 218 11% 65%;
+    --accent: 220 10% 18%;
+    --accent-foreground: 220 14% 96%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 220 10% 22%;
+    --input: 220 10% 18%;
+    --ring: 38 92% 50%;
+
+    --bg-gradient: linear-gradient(-45deg, #080606 0%, #280000 50%, #3b0303 100%);
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply text-foreground transition-colors duration-500 min-h-screen;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+    overscroll-behavior-y: none;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+
+    background: var(--bg-gradient);
+    background-size: 400% 400%;
+    animation: gradient-bg 15s ease infinite;
+    background-attachment: fixed;
+  }
+}
+
+@keyframes gradient-bg {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+@layer utilities {
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .glass {
+    @apply bg-background/50 backdrop-blur-[2px] border border-white/20 dark:border-white/10 shadow-xl transition-all duration-500;
+  }
+
+  .glass-card {
+    @apply bg-card/50 backdrop-blur-[2px] border border-white/10 dark:border-white/5 shadow-lg transition-all duration-500;
+  }
+
+  .text-gradient {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-amber-500 to-orange-400;
+  }
+}
+
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+input[type="number"] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+

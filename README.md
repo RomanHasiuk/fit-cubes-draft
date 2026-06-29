@@ -2,6 +2,10 @@
 
 A comprehensive calorie and macro tracking application prototype built with React. This draft was created to solve the pain points of inaccurate macro tracking for home-cooked meals, providing a solid foundation for the upcoming team project.
 
+## 🔗 Live Demo
+
+Check out the live draft here: **[https://fit-cubes-draft.vercel.app/](https://fit-cubes-draft.vercel.app/)**
+
 ## 🛠️ Tech Stack
 
 - **Framework:** React 19 + Vite

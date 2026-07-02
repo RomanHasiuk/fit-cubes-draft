@@ -22,3 +22,7 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Local Developer Notes
+FRONTEND_NOTES.md
+qa-tests.md

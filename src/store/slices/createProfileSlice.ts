@@ -1,6 +1,7 @@
 import type { StateCreator } from 'zustand';
 import type { UserProfile } from '@/types';
 import type { StoreState } from '../useStore';
+import { generateMacroTargets } from '@/utils/calculations';
 
 export interface ProfileSlice {
   profile: UserProfile;
@@ -17,13 +18,9 @@ const defaultProfile: UserProfile = {
   age: 28,
   weightKg: 85.5,
   heightCm: 180,
-  activityFactor: 1.55,
+  activityFactor: 1.5,
   theme: 'system',
-  macroTargets: {
-    protein: Math.round((initialTDEE * 0.4) / 4),
-    carbs: Math.round((initialTDEE * 0.4) / 4),
-    fats: Math.round((initialTDEE * 0.2) / 9),
-  },
+  macroTargets: generateMacroTargets(initialTDEE, 'balanced', 85.5, 'maintain'),
 };
 
 export const createProfileSlice: StateCreator<StoreState, [], [], ProfileSlice> = (set) => ({

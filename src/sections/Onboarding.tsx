@@ -12,6 +12,13 @@ interface OnboardingProps {
   onComplete: () => void;
 }
 
+const LIMITS = {
+  age: { min: 16, max: 120 },
+  weight: { min: 30, max: 300 },
+  height: { min: 100, max: 250 },
+  name: { min: 2, max: 50 }
+};
+
 const STEPS = ['welcome', 'basics', 'targets', 'ready'] as const;
 
 export default function Onboarding({ onComplete }: OnboardingProps) {
@@ -27,12 +34,61 @@ export default function Onboarding({ onComplete }: OnboardingProps) {
   const handleNext = () => {
     // Validation
     if (currentStep === 'basics') {
-      if (!profile.name.trim()) {
+      const trimmedName = profile.name.trim();
+
+      if (!trimmedName) {
         setError("Please enter your name");
         return;
       }
-      if (profile.age <= 0 || profile.weightKg <= 0 || profile.heightCm <= 0) {
-        setError("Please fill in all body metrics");
+
+      // check name length
+      if(trimmedName.length < LIMITS.name.min || trimmedName.length > LIMITS.name.max){
+        setError(`Name must be between ${LIMITS.name.min} and ${LIMITS.name.max} characters long`);
+        return;
+      }
+
+      // check on spacebar start and end
+      if(profile.name !== profile.name.trim()){
+        setError("Name cannot start or end with a space");
+        return;
+      }
+
+      // check name allows numbers, but MUST contain at least one letter
+      const allowedCharsRegex = /^[a-zA-Zа-яА-ЯіїєґІЇЄҐąćęłńóśźżĄĆĘŁŃÓŚŹŻ0-9\s\-']+$/;
+      const hasLetterRegex = /[a-zA-Zа-яА-ЯіїєґІЇЄҐąćęłńóśźżĄĆĘŁŃÓŚŹŻ]/;
+      
+      if (!allowedCharsRegex.test(trimmedName)) {
+        setError("Name can only contain letters, numbers, spaces, hyphens, and apostrophes");
+        return;
+      }
+      if (!hasLetterRegex.test(trimmedName)) {
+        setError("Name must contain at least one letter");
+        return;
+      }
+
+      // Metrics Validation
+      // Check age
+      if (profile.age < LIMITS.age.min || profile.age > LIMITS.age.max) {
+        setError(`Age must be between ${LIMITS.age.min} and ${LIMITS.age.max}`);
+        return;
+      }
+
+      // Check weight
+      if (profile.weightKg < LIMITS.weight.min || profile.weightKg > LIMITS.weight.max) {
+        setError(`Weight must be between ${LIMITS.weight.min} kg and ${LIMITS.weight.max} kg`);
+        return;
+      }
+
+      // Check height
+      if (profile.heightCm < LIMITS.height.min || profile.heightCm > LIMITS.height.max) {
+        setError(`Height must be between ${LIMITS.height.min} cm and ${LIMITS.height.max} cm`);
+        return;
+      }
+    }
+
+    if (currentStep === 'targets') {
+      if (!profile.macroTargets?.protein || profile.macroTargets.protein <= 0) {
+        setError("Protein field cannot be blank or zero");
         return;
       }
     }
@@ -60,11 +116,10 @@ export default function Onboarding({ onComplete }: OnboardingProps) {
   // Auto-update macro targets when goal or diet changes
   useEffect(() => {
     if (currentStep === 'targets') {
-      const macros = generateMacroTargets(targetCalories, diet, profile.weightKg);
+      const macros = generateMacroTargets(targetCalories, diet, profile.weightKg, goal);
       updateProfile({ macroTargets: macros });
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [targetCalories, diet, profile.weightKg]);
+  }, [targetCalories, diet, profile.weightKg, goal, currentStep, updateProfile]);
 
   return (
     <div className="h-screen w-full bg-background flex justify-center items-center p-0 md:p-4">
@@ -150,6 +205,8 @@ export default function Onboarding({ onComplete }: OnboardingProps) {
                     <label className="text-sm font-medium mb-1.5 block">Name</label>
                     <input
                       type="text"
+                      maxLength={50}
+                      minLength={2}
                       value={profile.name}
                       onChange={(e) => updateProfile({ name: e.target.value })}
                       className="w-full h-12 bg-card border border-border rounded-xl px-4 text-sm outline-none focus:ring-2 focus:ring-primary/50"

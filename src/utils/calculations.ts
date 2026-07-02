@@ -144,11 +144,31 @@ export type WeightGoal = 'lose' | 'maintain' | 'gain';
 export function generateMacroTargets(
   targetCalories: number,
   dietType: DietType,
-  weightKg: number
+  weightKg: number,
+  goal: WeightGoal
 ): { protein: number; carbs: number; fats: number } {
-  // Protein is calculated based on weight (1.8g/kg for balanced, 2.0g/kg for low-carb/keto)
-  const proteinFactor = dietType === 'balanced' ? 1.8 : 2.0;
-  const proteinGrams = Math.round(weightKg * proteinFactor);
+  // Protein is calculated based on weight and goal
+  let proteinFactor = 1.8;
+  
+  if (goal === 'lose') {
+    // Higher protein to preserve muscle in a deficit
+    proteinFactor = dietType === 'balanced' ? 2.2 : 2.4;
+  } else if (goal === 'gain') {
+    // Carbs are protein-sparing in a surplus
+    proteinFactor = dietType === 'balanced' ? 2.0 : 2.2;
+  } else {
+    // Maintain
+    proteinFactor = dietType === 'balanced' ? 1.8 : 2.0;
+  }
+  
+  let proteinGrams = Math.round(weightKg * proteinFactor);
+  
+  // Cap protein at a maximum of 35% of total calories to prevent extreme macro splits (especially for higher body weights)
+  const maxProteinFromCalories = Math.round((targetCalories * 0.35) / 4);
+  if (proteinGrams > maxProteinFromCalories) {
+    proteinGrams = maxProteinFromCalories;
+  }
+  
   const proteinCals = proteinGrams * 4;
 
   let remainingCals = targetCalories - proteinCals;

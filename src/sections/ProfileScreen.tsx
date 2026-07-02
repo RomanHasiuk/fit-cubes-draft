@@ -6,10 +6,9 @@ import {
   Moon,
   Monitor,
   Dumbbell,
-  TrendingDown,
-  // AlertCircle,
-  // Target,
+  TrendingDown
 } from 'lucide-react';
+
 import { useStore } from '@/store/useStore';
 import { calculateBMR, calculateTDEE, generateMacroTargets, adjustMacrosForProtein, type DietType, type WeightGoal } from '@/utils/calculations';
 import InfoTooltip from '@/components/InfoTooltip';
@@ -31,8 +30,8 @@ export default function ProfileScreen() {
   const targetCalories = Math.round(goal === 'lose' ? tdeeBase * 0.85 : goal === 'gain' ? tdeeBase * 1.15 : tdeeBase);
 
   // Sync macros when goal/diet changes
-  const applyPreset = React.useCallback((currentDiet: DietType) => {
-    const macros = generateMacroTargets(targetCalories, currentDiet, profile.weightKg || 0);
+  const applyPreset = React.useCallback((currentDiet: DietType, currentGoal: WeightGoal) => {
+    const macros = generateMacroTargets(targetCalories, currentDiet, profile.weightKg || 0, currentGoal);
     updateProfile({ macroTargets: macros });
   }, [targetCalories, profile.weightKg, updateProfile]);
 
@@ -42,7 +41,7 @@ export default function ProfileScreen() {
   };
 
   useEffect(() => {
-    applyPreset(diet);
+    applyPreset(diet, goal);
   }, [goal, diet, tdeeBase, applyPreset]);
 
 

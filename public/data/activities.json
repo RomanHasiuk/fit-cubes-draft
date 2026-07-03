@@ -4,6 +4,7 @@
     "name": "Walking",
     "unit": "steps",
     "metValue": 3.5,
+    "kcalPerUnit": 0.03,
     "description": "Walking at a moderate pace"
   },
   {
@@ -11,6 +12,7 @@
     "name": "Push-ups",
     "unit": "rep",
     "metValue": 8.0,
+    "kcalPerUnit": 0.45,
     "description": "High intensity"
   },
   {
@@ -18,6 +20,7 @@
     "name": "Squats",
     "unit": "rep",
     "metValue": 8.0,
+    "kcalPerUnit": 0.40,
     "description": "High intensity"
   },
   {

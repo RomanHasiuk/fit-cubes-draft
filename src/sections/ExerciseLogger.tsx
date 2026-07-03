@@ -4,9 +4,11 @@ import { ChevronLeft, Check, Dumbbell, Footprints, Timer, Flame } from 'lucide-r
 import { useStore } from '@/store/useStore';
 import { calculateExerciseCalories } from '@/utils/calculations';
 import type { ExerciseEntry } from '@/types';
+import InfoTooltip from '@/components/InfoTooltip';
 
 interface ExerciseLoggerProps {
   onClose: () => void;
+  editEntry?: ExerciseEntry;
 }
 
 const ICONS: Record<string, typeof Dumbbell> = {
@@ -18,17 +20,19 @@ const ICONS: Record<string, typeof Dumbbell> = {
   'Housework': Flame,
 };
 
-export default function ExerciseLogger({ onClose }: ExerciseLoggerProps) {
+export default function ExerciseLogger({ onClose, editEntry }: ExerciseLoggerProps) {
   const selectedDate = useStore((state) => state.selectedDate);
   const addExerciseEntry = useStore((state) => state.addExerciseEntry);
+  const updateExerciseEntry = useStore((state) => state.updateExerciseEntry);
   const activities = useStore((state) => state.activities);
-  const [selectedActivity, setSelectedActivity] = useState<string | null>(null);
-  const [metric, setMetric] = useState('');
-  const [rpe, setRpe] = useState<number | undefined>(undefined);
+  const [selectedActivity, setSelectedActivity] = useState<string | null>(editEntry?.activityType || null);
+  const [metric, setMetric] = useState(editEntry ? String(editEntry.metric) : '');
+  const [rpe, setRpe] = useState<number>(editEntry?.rpe || 5);
 
+  const profile = useStore((state) => state.profile);
   const activity = activities.find((a) => a.name === selectedActivity);
   const calories = activity
-    ? calculateExerciseCalories(activity, parseFloat(metric) || 0)
+    ? calculateExerciseCalories(activity, parseFloat(metric) || 0, profile.weightKg, rpe)
     : 0;
 
   const handleSave = () => {
@@ -39,7 +43,7 @@ export default function ExerciseLogger({ onClose }: ExerciseLoggerProps) {
       activity.met < 4 ? 'low' : activity.met < 8 ? 'medium' : 'high';
 
     const entry: ExerciseEntry = {
-      id: `ex_${Date.now()}_${crypto.randomUUID().slice(0, 5)}`,
+      id: editEntry ? editEntry.id : `ex_${Date.now()}_${crypto.randomUUID().slice(0, 5)}`,
       activityType: activity.name,
       metric: parseFloat(metric),
       metricLabel: activity.metricLabel,
@@ -47,10 +51,14 @@ export default function ExerciseLogger({ onClose }: ExerciseLoggerProps) {
       met: activity.met,
       intensity: intensityValue,
       rpe,
-      timestamp: Date.now(),
+      timestamp: editEntry ? editEntry.timestamp : Date.now(),
     };
 
-    addExerciseEntry(selectedDate, entry);
+    if (editEntry) {
+      updateExerciseEntry(selectedDate, editEntry.id, entry);
+    } else {
+      addExerciseEntry(selectedDate, entry);
+    }
     onClose();
   };
 
@@ -181,32 +189,27 @@ export default function ExerciseLogger({ onClose }: ExerciseLoggerProps) {
                           {v} min
                         </button>
                       ))
-                    : [500, 1000, 2000, 5000, 10000].map((v) => (
-                        <button
-                          key={v}
-                          onClick={() => setMetric(String(v))}
-                          className={`px-3 py-2 rounded-lg text-xs font-medium transition-colors ${
-                            metric === String(v)
-                              ? 'bg-primary text-primary-foreground'
-                              : 'bg-secondary text-muted-foreground'
-                          }`}
-                        >
-                          {v.toLocaleString()}
-                        </button>
-                      ))}
+                    : null}
               </div>
             </div>
 
             {/* RPE Selector */}
             <div className="mt-6">
-              <label className="text-sm font-medium mb-2 block">
-                Rate of Perceived Exertion (RPE)
-              </label>
+              <div className="flex items-center gap-2 mb-2">
+                <label className="text-sm font-medium">
+                  Rate of Perceived Exertion (RPE)
+                </label>
+                <InfoTooltip 
+                  title="RPE (1-10)" 
+                  content="How hard you feel your body working. 1 is very easy (like watching TV), 10 is max effort. Higher RPE slightly increases calorie burn (+/- 20%)." 
+                  align="left" 
+                />
+              </div>
               <div className="flex gap-2">
                 {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((v) => (
                   <button
                     key={v}
-                    onClick={() => setRpe(v === rpe ? undefined : v)}
+                    onClick={() => setRpe(v)}
                     className={`flex-1 py-3 rounded-lg text-sm font-bold transition-colors ${
                       rpe === v
                         ? 'bg-primary text-primary-foreground'
@@ -251,7 +254,7 @@ export default function ExerciseLogger({ onClose }: ExerciseLoggerProps) {
               onClick={() => {
                 setSelectedActivity(null);
                 setMetric('');
-                setRpe(undefined);
+                setRpe(5);
               }}
               className="w-full mt-6 py-3 text-sm text-muted-foreground text-center"
             >

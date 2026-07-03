@@ -12,6 +12,8 @@ export interface UserProfile {
     carbs: number;
     fats: number;
   };
+  goal?: 'lose' | 'maintain' | 'gain';
+  diet?: 'balanced' | 'low-carb' | 'keto' | 'high-protein';
 }
 
 export interface FoodItem {

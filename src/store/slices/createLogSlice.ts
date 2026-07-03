@@ -12,6 +12,7 @@ export interface LogSlice {
   updateFoodEntry: (date: string, entryId: string, updatedEntry: FoodEntry) => void;
   removeFoodEntry: (date: string, entryId: string) => void;
   addExerciseEntry: (date: string, entry: ExerciseEntry) => void;
+  updateExerciseEntry: (date: string, entryId: string, updatedEntry: ExerciseEntry) => void;
   removeExerciseEntry: (date: string, entryId: string) => void;
   setWeight: (date: string, weight: number) => void;
 }
@@ -95,6 +96,20 @@ export const createLogSlice: StateCreator<StoreState, [], [], LogSlice> = (set, 
         };
       } else {
         logs.push({ date, foodEntries: [], exerciseEntries: [entry] });
+      }
+      return { dailyLogs: logs };
+    });
+  },
+
+  updateExerciseEntry: (date, entryId, updatedEntry) => {
+    set((state) => {
+      const logs = [...state.dailyLogs];
+      const idx = logs.findIndex((l) => l.date === date);
+      if (idx >= 0) {
+        logs[idx] = {
+          ...logs[idx],
+          exerciseEntries: logs[idx].exerciseEntries.map(e => e.id === entryId ? updatedEntry : e),
+        };
       }
       return { dailyLogs: logs };
     });

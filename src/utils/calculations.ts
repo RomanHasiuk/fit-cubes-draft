@@ -14,9 +14,29 @@ export function calculateTDEE(profile: UserProfile): number {
 // 3. Exercise calories
 export function calculateExerciseCalories(
   activity: ActivityConstant,
-  metric: number
+  metric: number,
+  userWeightKg: number = 75,
+  rpe?: number
 ): number {
-  return Math.round(activity.kcalPerUnit * metric * 100) / 100;
+  let baseKcal = 0;
+  if (activity.kcalPerUnit > 0) {
+    baseKcal = activity.kcalPerUnit * metric;
+  } else {
+    // Dynamic calculation for time-based activities (min)
+    // Formula: (MET * 3.5 * weightKg) / 200 = kcal per minute
+    const kcalPerMin = (activity.met * 3.5 * userWeightKg) / 200;
+    baseKcal = kcalPerMin * metric;
+  }
+
+  // Apply RPE multiplier if provided (default 5 is baseline 1.0x)
+  if (rpe !== undefined) {
+    // RPE 5 = 1.0x, RPE 10 = 1.2x (+20%), RPE 1 = 0.84x (-16%) roughly.
+    // Let's use a scale where each step is 4%. 1 + (rpe - 5) * 0.04
+    const rpeMultiplier = 1 + (rpe - 5) * 0.04;
+    baseKcal *= Math.max(0.5, rpeMultiplier);
+  }
+
+  return Math.floor(baseKcal);
 }
 
 // 4. Raw-to-cooked conversion

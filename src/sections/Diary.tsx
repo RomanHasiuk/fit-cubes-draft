@@ -36,6 +36,7 @@ export default function Diary() {
   const [showExercise, setShowExercise] = useState(false);
   const [directFoodAdd, setDirectFoodAdd] = useState<{ food: FoodItem; mealType: string; existingEntry?: FoodEntry } | null>(null);
   const [entryToDelete, setEntryToDelete] = useState<FoodEntry | null>(null);
+  const [editExercise, setEditExercise] = useState<ExerciseEntry | null>(null);
 
   useEffect(() => {
     if (pendingFoodLog) {
@@ -198,7 +199,7 @@ export default function Diary() {
             </button>
           </div>
 
-          <div className="divide-y divide-white/5">
+                  <div className="divide-y divide-white/5">
             <AnimatePresence>
               {dayLog?.exerciseEntries.map((entry: ExerciseEntry) => (
                 <motion.div
@@ -206,7 +207,11 @@ export default function Diary() {
                   initial={{ opacity: 0, height: 0 }}
                   animate={{ opacity: 1, height: 'auto' }}
                   exit={{ opacity: 0, height: 0 }}
-                  className="flex items-center justify-between px-4 py-3 hover:bg-white/5 transition-colors"
+                  className="flex items-center justify-between px-4 py-3 hover:bg-white/5 transition-colors cursor-pointer"
+                  onClick={() => {
+                    setEditExercise(entry);
+                    setShowExercise(true);
+                  }}
                 >
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium">{entry.activityType}</p>
@@ -220,7 +225,10 @@ export default function Diary() {
                       +{Math.round(entry.caloriesBurned)}
                     </span>
                     <button
-                      onClick={() => removeExerciseEntry(selectedDate, entry.id)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        removeExerciseEntry(selectedDate, entry.id);
+                      }}
                       className="p-1.5 text-muted-foreground hover:text-destructive transition-colors"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
@@ -273,7 +281,13 @@ export default function Diary() {
               exit={{ y: '100%' }}
               transition={{ type: 'spring', damping: 30, stiffness: 300 }}
             >
-              <ExerciseLogger onClose={() => setShowExercise(false)} />
+              <ExerciseLogger 
+                onClose={() => {
+                  setShowExercise(false);
+                  setEditExercise(null);
+                }} 
+                editEntry={editExercise || undefined} 
+              />
             </motion.div>
           </motion.div>
         )}

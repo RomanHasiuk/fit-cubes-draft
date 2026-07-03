@@ -22,8 +22,10 @@ export default function ProfileScreen() {
   const setTheme = useStore((state) => state.setTheme);
   const activities = useStore((state) => state.activities);
   const updateProfile = useStore((state) => state.updateProfile);
-  const [goal, setGoal] = useState<WeightGoal>('maintain');
-  const [diet, setDiet] = useState<DietType>('balanced');
+  
+  // Use profile values as initial state, fallback to defaults
+  const [goal, setGoal] = useState<WeightGoal>((profile.goal as WeightGoal) || 'maintain');
+  const [diet, setDiet] = useState<DietType>((profile.diet as DietType) || 'balanced');
 
   const bmr = Math.round(calculateBMR(profile));
   const tdeeBase = Math.round(calculateTDEE(profile));
@@ -32,7 +34,11 @@ export default function ProfileScreen() {
   // Sync macros when goal/diet changes
   const applyPreset = React.useCallback((currentDiet: DietType, currentGoal: WeightGoal) => {
     const macros = generateMacroTargets(targetCalories, currentDiet, profile.weightKg || 0, currentGoal);
-    updateProfile({ macroTargets: macros });
+    updateProfile({ 
+      macroTargets: macros,
+      goal: currentGoal,
+      diet: currentDiet
+    });
   }, [targetCalories, profile.weightKg, updateProfile]);
 
   const handleManualProteinChange = (newProtein: number) => {

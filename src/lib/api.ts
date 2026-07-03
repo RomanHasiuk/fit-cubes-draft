@@ -27,7 +27,7 @@ class ApiClient {
       name: a.name,
       metricLabel: a.unit || 'units',
       met: a.metValue || 0,
-      kcalPerUnit: a.kcalPerUnit || ((a.metValue || 0) * 3.5 * 75) / 200,
+      kcalPerUnit: a.kcalPerUnit || 0,
     }));
   }
 }

@@ -20,6 +20,8 @@ const defaultProfile: UserProfile = {
   heightCm: 180,
   activityFactor: 1.5,
   theme: 'system',
+  goal: 'maintain',
+  diet: 'balanced',
   macroTargets: generateMacroTargets(initialTDEE, 'balanced', 85.5, 'maintain'),
 };
 

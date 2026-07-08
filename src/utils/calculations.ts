@@ -36,7 +36,7 @@ export function calculateExerciseCalories(
     baseKcal *= Math.max(0.5, rpeMultiplier);
   }
 
-  return Math.floor(baseKcal);
+  return baseKcal;
 }
 
 // 4. Raw-to-cooked conversion

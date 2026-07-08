@@ -219,7 +219,7 @@ function App() {
                   </span>
                   {isActive && (
                     <motion.div
-                      className="absolute -top-px inset-x-0 mx-auto w-10 h-0.5 bg-primary rounded-full shadow-[0_0_10px_rgba(142,71,45,0.5)]"
+                      className="absolute -top-px inset-x-0 mx-auto w-12 h-0.5 bg-primary rounded-full shadow-[0_0_10px_rgba(142,71,45,0.5)]"
                       layoutId="activeTab"
                       transition={{
                         type: "spring",

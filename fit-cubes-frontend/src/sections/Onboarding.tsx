@@ -31,6 +31,16 @@ export default function Onboarding({ onComplete }: OnboardingProps) {
   const [error, setError] = useState<string | null>(null);
   const currentStep = STEPS[step];
 
+  const handleGenderChange = (val: string) => {
+    if (val === 'female' && profile.gender === 'male' && profile.age === 28 && profile.weightKg === 85.5 && profile.heightCm === 180) {
+      updateProfile({ gender: 'female', age: 25, weightKg: 65, heightCm: 168 });
+    } else if (val === 'male' && profile.gender === 'female' && profile.age === 25 && profile.weightKg === 65 && profile.heightCm === 168) {
+      updateProfile({ gender: 'male', age: 28, weightKg: 85.5, heightCm: 180 });
+    } else {
+      updateProfile({ gender: val as any });
+    }
+  };
+
   const handleNext = () => {
     // Validation
     if (currentStep === 'basics') {
@@ -54,8 +64,8 @@ export default function Onboarding({ onComplete }: OnboardingProps) {
       }
 
       // check name allows numbers, but MUST contain at least one letter
-      const allowedCharsRegex = /^[a-zA-Zа-яА-ЯіїєґІЇЄҐąćęłńóśźżĄĆĘŁŃÓŚŹŻ0-9\s\-']+$/;
-      const hasLetterRegex = /[a-zA-Zа-яА-ЯіїєґІЇЄҐąćęłńóśźżĄĆĘŁŃÓŚŹŻ]/;
+      const allowedCharsRegex = /^[0-9\p{L}\s.,'%-]+$/u;
+      const hasLetterRegex = /\p{L}/u;
       
       if (!allowedCharsRegex.test(trimmedName)) {
         setError("Name can only contain letters, numbers, spaces, hyphens, and apostrophes");
@@ -117,7 +127,7 @@ export default function Onboarding({ onComplete }: OnboardingProps) {
   useEffect(() => {
     if (currentStep === 'targets') {
       const macros = generateMacroTargets(targetCalories, diet, profile.weightKg, goal);
-      updateProfile({ macroTargets: macros });
+      updateProfile({ macroTargets: macros, goal: goal, diet: diet });
     }
   }, [targetCalories, diet, profile.weightKg, goal, currentStep, updateProfile]);
 
@@ -208,7 +218,10 @@ export default function Onboarding({ onComplete }: OnboardingProps) {
                       maxLength={50}
                       minLength={2}
                       value={profile.name}
-                      onChange={(e) => updateProfile({ name: e.target.value })}
+                      onChange={(e) => {
+                        const val = e.target.value.replace(/[^0-9\p{L}\s.,'%-]/gu, '');
+                        updateProfile({ name: val });
+                      }}
                       className="w-full h-12 bg-card border border-border rounded-xl px-4 text-sm outline-none focus:ring-2 focus:ring-primary/50"
                     />
                   </div>
@@ -216,15 +229,7 @@ export default function Onboarding({ onComplete }: OnboardingProps) {
                   <OptionSelector
                     label="Gender"
                     selectedValue={profile.gender}
-                    onSelect={(val) => {
-                      if (val === 'female' && profile.gender === 'male' && profile.age === 28 && profile.weightKg === 85.5 && profile.heightCm === 180) {
-                        updateProfile({ gender: 'female', age: 25, weightKg: 65, heightCm: 168 });
-                      } else if (val === 'male' && profile.gender === 'female' && profile.age === 25 && profile.weightKg === 65 && profile.heightCm === 168) {
-                        updateProfile({ gender: 'male', age: 28, weightKg: 85.5, heightCm: 180 });
-                      } else {
-                        updateProfile({ gender: val });
-                      }
-                    }}
+                    onSelect={handleGenderChange}
                     columns={2}
                     options={[
                       { id: 'male', label: 'Male', tip: 'Calculation using male formula' },

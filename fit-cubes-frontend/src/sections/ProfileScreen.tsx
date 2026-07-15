@@ -1,5 +1,5 @@
-import { motion } from 'framer-motion';
-import { OptionSelector } from '@/components/profile/OptionSelector.tsx';
+import { motion, AnimatePresence } from 'framer-motion';
+import { OptionSelector } from '@/components/profile/OptionSelector';
 import {
   LogOut,
   Sun,
@@ -9,12 +9,12 @@ import {
   TrendingDown
 } from 'lucide-react';
 
-import { useStore } from '@/store/useStore.ts';
-import { calculateBMR, calculateTDEE, generateMacroTargets, adjustMacrosForProtein, type DietType, type WeightGoal } from '@/utils/calculations.ts';
-import InfoTooltip from '@/components/InfoTooltip.tsx';
+import { useStore } from '@/store/useStore';
+import { calculateBMR, calculateTDEE, generateMacroTargets, adjustMacrosForProtein, type DietType, type WeightGoal } from '@/utils/calculations';
+import InfoTooltip from '@/components/InfoTooltip';
 import React, { useState, useEffect } from 'react';
-import { MetricInput } from '@/components/profile/MetricInput.tsx';
-import { ProteinIndicator } from '@/components/profile/ProteinIndicator.tsx';
+import { MetricInput } from '@/components/profile/MetricInput';
+import { ProteinIndicator } from '@/components/profile/ProteinIndicator';
 
 export default function ProfileScreen() {
   const profile = useStore((state) => state.profile);
@@ -23,32 +23,50 @@ export default function ProfileScreen() {
   const activities = useStore((state) => state.activities);
   const updateProfile = useStore((state) => state.updateProfile);
   
-  // Use profile values as initial state, fallback to defaults
-  const [goal, setGoal] = useState<WeightGoal>((profile.goal as WeightGoal) || 'maintain');
-  const [diet, setDiet] = useState<DietType>((profile.diet as DietType) || 'balanced');
+  const [showResetConfirm, setShowResetConfirm] = useState(false);
 
-  const bmr = Math.round(calculateBMR(profile));
-  const tdeeBase = Math.round(calculateTDEE(profile));
-  const targetCalories = Math.round(goal === 'lose' ? tdeeBase * 0.85 : goal === 'gain' ? tdeeBase * 1.15 : tdeeBase);
+  // Use a local draft for editing
+  const [draft, setDraft] = useState(profile);
+
+  // Sync draft when profile changes externally (like after Reset)
+  useEffect(() => {
+    setDraft(profile);
+  }, [profile]);
+
+  const updateDraft = (changes: Partial<typeof draft>) => {
+    setDraft((prev) => ({ ...prev, ...changes }));
+  };
+
+  const bmr = Math.round(calculateBMR(draft));
+  const tdeeBase = Math.round(calculateTDEE(draft));
+  const targetCalories = Math.round(
+    draft.goal === 'lose' ? tdeeBase * 0.85 : draft.goal === 'gain' ? tdeeBase * 1.15 : tdeeBase
+  );
 
   // Sync macros when goal/diet changes
-  const applyPreset = React.useCallback((currentDiet: DietType, currentGoal: WeightGoal) => {
-    const macros = generateMacroTargets(targetCalories, currentDiet, profile.weightKg || 0, currentGoal);
-    updateProfile({ 
-      macroTargets: macros,
-      goal: currentGoal,
-      diet: currentDiet
-    });
-  }, [targetCalories, profile.weightKg, updateProfile]);
+  const applyPreset = React.useCallback(
+    (currentDiet: DietType, currentGoal: WeightGoal) => {
+      const macros = generateMacroTargets(targetCalories, currentDiet, draft.weightKg || 0, currentGoal);
+      updateDraft({
+        macroTargets: macros,
+        goal: currentGoal,
+        diet: currentDiet,
+      });
+    },
+    [targetCalories, draft.weightKg]
+  );
 
   const handleManualProteinChange = (newProtein: number) => {
-    const macros = adjustMacrosForProtein(targetCalories, newProtein, diet);
-    updateProfile({ macroTargets: macros });
+    const macros = adjustMacrosForProtein(targetCalories, newProtein, draft.diet as DietType);
+    updateDraft({ macroTargets: macros });
   };
 
   useEffect(() => {
-    applyPreset(diet, goal);
-  }, [goal, diet, tdeeBase, applyPreset]);
+    applyPreset(draft.diet as DietType, draft.goal as WeightGoal);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [draft.goal, draft.diet, tdeeBase]);
+
+  const hasChanges = JSON.stringify(profile) !== JSON.stringify(draft);
 
 
 
@@ -56,8 +74,14 @@ export default function ProfileScreen() {
     <div className="flex flex-col h-full">
       {/* Header */}
       <div className="shrink-0 px-5 pt-6 pb-2 flex items-start justify-between">
-        <div>
-          <h1 className="text-2xl font-bold">Profile</h1>
+        <div className="flex-1 mr-4">
+          <input
+            type="text"
+            value={draft.name || ''}
+            onChange={(e) => updateDraft({ name: e.target.value })}
+            placeholder="Your Name"
+            className="bg-transparent text-2xl font-bold outline-none placeholder:text-muted-foreground/50 w-full"
+          />
           <p className="text-sm text-muted-foreground mt-0.5">
             Your body metrics and goals
           </p>
@@ -66,12 +90,13 @@ export default function ProfileScreen() {
         {/* Compact Theme Switcher */}
         <div className="flex bg-secondary/30 p-1 rounded-xl border border-white/5 backdrop-blur-md">
           {[
-            { key: 'light', icon: Sun },
-            { key: 'dark', icon: Moon },
-            { key: 'system', icon: Monitor },
+            { key: 'light', icon: Sun, label: 'Light Mode' },
+            { key: 'dark', icon: Moon, label: 'Dark Mode' },
+            { key: 'system', icon: Monitor, label: 'System Default' },
           ].map((t) => (
             <button
               key={t.key}
+              title={t.label}
               onClick={() => setTheme(t.key as any)}
               className={`p-2 rounded-lg transition-all ${
                 theme === t.key
@@ -128,8 +153,8 @@ export default function ProfileScreen() {
           <div className="mt-6 space-y-4">
             <OptionSelector
               label="Goal"
-              selectedValue={goal}
-              onSelect={setGoal}
+              selectedValue={draft.goal || ''}
+              onSelect={(val) => updateDraft({ goal: val as WeightGoal })}
               options={[
                 { id: 'lose', label: 'Loss', tip: 'Deficit: ~15% daily' },
                 { id: 'maintain', label: 'Maintain', tip: 'Base level: no changes' },
@@ -139,8 +164,8 @@ export default function ProfileScreen() {
 
             <OptionSelector
               label="Strategy"
-              selectedValue={diet}
-              onSelect={setDiet}
+              selectedValue={draft.diet || ''}
+              onSelect={(val) => updateDraft({ diet: val as DietType })}
               options={[
                 { id: 'balanced', label: 'Balanced', tip: 'Optimal macronutrient ratio' },
                 { id: 'low-carb', label: 'Low-carb', tip: 'Reduced carbs in favor of protein and fats' },
@@ -164,16 +189,16 @@ export default function ProfileScreen() {
             <div className="flex gap-3">
               <MetricInput
                 label="Age"
-                value={profile.age || ''}
-                onChange={(val) => updateProfile({ age: val })}
+                value={draft.age || ''}
+                onChange={(val) => updateDraft({ age: val })}
                 tooltipTitle="Age"
                 tooltipContent="Metabolism slows down with age, reducing calorie needs."
                 align="left"
               />
               <MetricInput
                 label="Weight (kg)"
-                value={profile.weightKg || ''}
-                onChange={(val) => updateProfile({ weightKg: val })}
+                value={draft.weightKg || ''}
+                onChange={(val) => updateDraft({ weightKg: val })}
                 tooltipTitle="Weight"
                 tooltipContent="More weight requires more energy to sustain."
                 step="0.1"
@@ -181,8 +206,8 @@ export default function ProfileScreen() {
               />
               <MetricInput
                 label="Height (cm)"
-                value={profile.heightCm || ''}
-                onChange={(val) => updateProfile({ heightCm: val })}
+                value={draft.heightCm || ''}
+                onChange={(val) => updateDraft({ heightCm: val })}
                 tooltipTitle="Height"
                 tooltipContent="Height affects metabolic rate."
                 align="right"
@@ -193,7 +218,7 @@ export default function ProfileScreen() {
               <div className="flex items-center justify-between mb-2 px-1">
                 <label className="text-[10px] font-bold text-muted-foreground uppercase">Activity</label>
                 <div className="flex items-center gap-2">
-                  <span className="text-sm font-bold text-primary">{profile.activityFactor}</span>
+                  <span className="text-sm font-bold text-primary">{draft.activityFactor}</span>
                   <InfoTooltip title="Activity" content="Multiplier from 1.2 (sedentary) to 1.9 (daily heavy lifting). Greatly impacts target calories." align="right" />
                 </div>
               </div>
@@ -202,8 +227,8 @@ export default function ProfileScreen() {
                 min="1.2"
                 max="1.9"
                 step="0.05"
-                value={profile.activityFactor}
-                onChange={(e) => updateProfile({ activityFactor: parseFloat(e.target.value) })}
+                value={draft.activityFactor}
+                onChange={(e) => updateDraft({ activityFactor: parseFloat(e.target.value) })}
                 className="w-full accent-primary"
               />
               <div className="flex justify-between text-[10px] text-muted-foreground mt-1 px-1">
@@ -241,12 +266,12 @@ export default function ProfileScreen() {
                 <label className={`text-[10px] font-bold ${m.color} uppercase mb-1 block text-center`}>{m.label}</label>
                 <input
                   type="number"
-                  value={profile.macroTargets?.[m.key as keyof typeof profile.macroTargets] || ''}
+                  value={draft.macroTargets?.[m.key as keyof typeof draft.macroTargets] || ''}
                   readOnly={m.key !== 'protein'}
                   onChange={(e) => {
                     if (m.key === 'protein') {
                       let newProtein = parseInt(e.target.value) || 0;
-                      const maxProtein = Math.round(profile.weightKg * 2.5);
+                      const maxProtein = Math.round((draft.weightKg || 0) * 2.5);
                       if (newProtein > maxProtein) newProtein = maxProtein;
                       handleManualProteinChange(newProtein);
                     }
@@ -259,8 +284,8 @@ export default function ProfileScreen() {
 
           {/* Protein Info/Warning */}
           <ProteinIndicator
-            protein={profile.macroTargets?.protein || 0}
-            weight={profile.weightKg}
+            protein={draft.macroTargets?.protein || 0}
+            weight={draft.weightKg || 0}
           />
         </motion.div>
 
@@ -294,7 +319,7 @@ export default function ProfileScreen() {
                   <div>
                     <p className="text-sm font-medium">{item.name}</p>
                     <p className="text-[10px] text-muted-foreground">
-                      {item.kcalPerUnit} kcal / {item.metricLabel}
+                      {parseFloat(item.kcalPerUnit.toFixed(2))} kcal / {item.metricLabel}
                     </p>
                   </div>
                 </div>
@@ -310,12 +335,92 @@ export default function ProfileScreen() {
 
         {/* Logout Placeholder */}
         <div className="mt-8 mb-4">
-          <button className="w-full flex items-center justify-center gap-2 py-4 text-destructive font-bold glass-card rounded-2xl hover:bg-destructive/10 transition-colors">
+          <button
+            onClick={() => setShowResetConfirm(true)}
+            className="w-full flex items-center justify-center gap-2 py-4 text-destructive font-bold glass-card rounded-2xl hover:bg-destructive/10 transition-colors">
             <LogOut className="w-5 h-5" />
             Reset App Data
           </button>
         </div>
       </div>
+
+      {/* Floating Save Bar */}
+      <AnimatePresence>
+        {hasChanges && (
+          <div className="fixed bottom-[90px] left-0 right-0 z-40 flex justify-center pointer-events-none px-5">
+            <motion.div
+              className="w-full max-w-[calc(430px-2.5rem)] glass-card rounded-2xl p-4 flex items-center justify-between shadow-2xl border border-primary/20 bg-background/80 backdrop-blur-xl pointer-events-auto"
+              initial={{ y: 50, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={{ y: 50, opacity: 0 }}
+            >
+              <div className="flex flex-col">
+                <span className="text-sm font-bold">Unsaved changes</span>
+                <span className="text-xs text-muted-foreground">Don't forget to save!</span>
+              </div>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setDraft(profile)}
+                  className="px-4 py-2 rounded-xl text-sm font-bold text-muted-foreground hover:bg-white/5 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => updateProfile(draft)}
+                  className="px-4 py-2 rounded-xl bg-primary text-primary-foreground text-sm font-bold shadow-lg shadow-primary/20 hover:scale-105 transition-transform"
+                >
+                  Save
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Reset Confirmation Modal */}
+      <AnimatePresence>
+        {showResetConfirm && (
+          <motion.div
+            className="fixed inset-0 z-[100] flex items-center justify-center p-5 bg-background/80 backdrop-blur-sm"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            <motion.div
+              className="glass-card w-full max-w-[calc(430px-2.5rem)] rounded-3xl p-6 border border-white/10 shadow-2xl flex flex-col relative"
+              initial={{ scale: 0.9, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.9, opacity: 0, y: 20 }}
+            >
+              <div className="w-16 h-16 rounded-2xl bg-destructive/20 flex items-center justify-center mb-6 mx-auto">
+                <LogOut className="w-8 h-8 text-destructive" />
+              </div>
+              <h3 className="text-xl font-bold text-center mb-2">Reset App Data?</h3>
+              <p className="text-sm text-center text-muted-foreground mb-8">
+                This action cannot be undone. All your logs, custom foods, and settings will be permanently deleted.
+              </p>
+
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setShowResetConfirm(false)}
+                  className="flex-1 py-3.5 rounded-xl font-bold bg-secondary/50 hover:bg-secondary transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => {
+                    localStorage.removeItem('fitcubes-storage');
+                    window.location.reload();
+                  }}
+                  className="flex-1 py-3.5 rounded-xl font-bold bg-destructive text-destructive-foreground hover:bg-destructive/90 transition-colors shadow-lg shadow-destructive/20"
+                >
+                  Yes, Reset
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

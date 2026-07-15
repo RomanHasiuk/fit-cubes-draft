@@ -340,7 +340,10 @@ export default function RecipeBuilder() {
             type="text"
             placeholder="e.g. Baked chicken with vegetables..."
             value={recipeName}
-            onChange={(e) => setRecipeName(e.target.value)}
+            onChange={(e) => {
+              const val = e.target.value.replace(/[^0-9\p{L}\s.,'%-]/gu, "");
+              setRecipeName(val);
+            }}
             className="w-full bg-secondary/30 border border-white/5 rounded-xl px-4 py-3 text-sm font-medium focus:ring-2 focus:ring-primary/50 outline-none transition-all"
           />
         </div>

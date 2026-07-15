@@ -49,12 +49,22 @@ export default function ProgressScreen() {
     
     const deficits = datesToProcess.map((date) => {
       const log = dailyLogs.find((l) => l.date === date);
-      if (!log) {
-        return { date, deficit: 0, calories: 0, weight: null, fatChange: 0, cumulativeFatChange: Math.round(cumulativeFatChange) };
+      if (!log || (log.foodEntries.length === 0 && log.exerciseEntries.length === 0)) {
+        return { 
+          date, 
+          deficit: 0, 
+          calories: 0, 
+          weight: log ? (log.weight || null) : null, 
+          fatChange: 0, 
+          cumulativeFatChange: Math.round(cumulativeFatChange) 
+        };
       }
       const intake = log.foodEntries.reduce((a, e) => a + e.calories, 0);
       const exercise = log.exerciseEntries.reduce((a, e) => a + e.caloriesBurned, 0);
-      const tdee = calculateTDEE(profile);
+      const tdee = calculateTDEE({ 
+        ...profile, 
+        weightKg: log.weight ? log.weight : profile.weightKg 
+      });
       const deficit = calculateNetDeficit(tdee, intake, exercise);
       
       const fatChange = deficit / 7.7;
@@ -126,8 +136,16 @@ export default function ProgressScreen() {
         </div>
       </div>
 
-      {/* Content */}
-      <div className="flex-1 overflow-y-auto no-scrollbar px-5 pb-10">
+      {chartData.every(d => d.calories === 0 && d.deficit === 0) ? (
+        <div className="flex-1 flex flex-col items-center justify-center p-6 text-center">
+          <TrendingDown className="w-16 h-16 text-muted-foreground/20 mb-4" />
+          <h2 className="text-lg font-bold mb-2">No progress data yet</h2>
+          <p className="text-sm text-muted-foreground max-w-[250px]">
+            Log your food and exercises to see your progress charts and statistics here.
+          </p>
+        </div>
+      ) : (
+        <div className="flex-1 overflow-y-auto no-scrollbar px-5 pb-10">
         {/* Deficit Chart */}
         <motion.div
           className="glass-card rounded-2xl p-4 mt-2"
@@ -138,6 +156,13 @@ export default function ProgressScreen() {
           <div className="flex items-center gap-2 mb-4">
             <TrendingDown className="w-4 h-4 text-primary" />
             <span className="text-sm font-medium">Daily Deficit</span>
+            <div className="ml-auto">
+              <InfoTooltip 
+                title="Daily Deficit" 
+                content="Shows the difference between your daily energy expenditure (TDEE) and your net intake (food - exercise). A positive value means you are in a deficit and losing weight." 
+                align="right"
+              />
+            </div>
           </div>
           <div className="h-48">
             <ResponsiveContainer width="100%" height="100%">
@@ -220,6 +245,13 @@ export default function ProgressScreen() {
           <div className="flex items-center gap-2 mb-4">
             <Flame className="w-4 h-4 text-orange-500" />
             <span className="text-sm font-medium">Calorie Intake</span>
+            <div className="ml-auto">
+              <InfoTooltip 
+                title="Calorie Intake" 
+                content="Displays the total calories you've consumed from logged food each day." 
+                align="right"
+              />
+            </div>
           </div>
           <div className="h-40">
             <ResponsiveContainer width="100%" height="100%">
@@ -378,6 +410,7 @@ export default function ProgressScreen() {
           </div>
         </motion.div>
       </div>
+      )}
     </div>
   );
 }

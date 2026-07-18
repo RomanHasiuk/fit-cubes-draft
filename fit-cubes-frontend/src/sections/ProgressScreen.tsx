@@ -45,41 +45,43 @@ export default function ProgressScreen() {
       datesToProcess = allDays;
     }
 
-    let cumulativeFatChange = 0;
-    
-    const deficits = datesToProcess.map((date) => {
-      const log = dailyLogs.find((l) => l.date === date);
-      if (!log || (log.foodEntries.length === 0 && log.exerciseEntries.length === 0)) {
-        return { 
-          date, 
-          deficit: 0, 
-          calories: 0, 
-          weight: log ? (log.weight || null) : null, 
-          fatChange: 0, 
-          cumulativeFatChange: Math.round(cumulativeFatChange) 
-        };
-      }
-      const intake = log.foodEntries.reduce((a, e) => a + e.calories, 0);
-      const exercise = log.exerciseEntries.reduce((a, e) => a + e.caloriesBurned, 0);
-      const tdee = calculateTDEE({ 
-        ...profile, 
-        weightKg: log.weight ? log.weight : profile.weightKg 
-      });
-      const deficit = calculateNetDeficit(tdee, intake, exercise);
-      
-      const fatChange = deficit / 7.7;
-      const newCumulative = cumulativeFatChange - fatChange;
-      cumulativeFatChange = newCumulative; // Safe mutation inside useMemo loop
+    const { deficits } = datesToProcess.reduce(
+      (acc, date) => {
+        const log = dailyLogs.find((l) => l.date === date);
+        if (!log || (log.foodEntries.length === 0 && log.exerciseEntries.length === 0)) {
+          acc.deficits.push({ 
+            date, 
+            deficit: 0, 
+            calories: 0, 
+            weight: log ? (log.weight || null) : null, 
+            fatChange: 0, 
+            cumulativeFatChange: Math.round(acc.cumulative) 
+          });
+          return acc;
+        }
+        const intake = log.foodEntries.reduce((a, e) => a + e.calories, 0);
+        const exercise = log.exerciseEntries.reduce((a, e) => a + e.caloriesBurned, 0);
+        const tdee = calculateTDEE({ 
+          ...profile, 
+          weightKg: log.weight ? log.weight : profile.weightKg 
+        });
+        const deficit = calculateNetDeficit(tdee, intake, exercise);
+        
+        const fatChange = deficit / 7.7;
+        acc.cumulative -= fatChange;
 
-      return {
-        date,
-        deficit,
-        calories: Math.round(intake),
-        weight: log.weight || null,
-        fatChange: Math.round(fatChange),
-        cumulativeFatChange: Math.round(newCumulative),
-      };
-    });
+        acc.deficits.push({
+          date,
+          deficit,
+          calories: Math.round(intake),
+          weight: log.weight || null,
+          fatChange: Math.round(fatChange),
+          cumulativeFatChange: Math.round(acc.cumulative),
+        });
+        return acc;
+      },
+      { cumulative: 0, deficits: [] as any[] }
+    );
 
     const deficitValues = deficits.map((d) => d.deficit);
     const rolling = calculateRollingAverage(deficitValues, days > 7 ? 7 : 3);

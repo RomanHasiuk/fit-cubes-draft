@@ -1,12 +1,14 @@
 import { useState, useEffect } from 'react';
+import { WelcomeStep } from './WelcomeStep';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronRight, ChevronLeft, Target, Flame, TrendingDown, AlertCircle } from 'lucide-react';
+import { ChevronRight, ChevronLeft, AlertCircle } from 'lucide-react';
 import { useStore } from '@/store/useStore.ts';
 import { calculateBMR, calculateTDEE, generateMacroTargets, adjustMacrosForProtein, type DietType, type WeightGoal } from '@/utils/calculations.ts';
 import InfoTooltip from '@/components/InfoTooltip.tsx';
 import { MetricInput } from '@/components/profile/MetricInput.tsx';
 import { OptionSelector } from '@/components/profile/OptionSelector.tsx';
 import { ProteinIndicator } from '@/components/profile/ProteinIndicator.tsx';
+import { Logo } from '@/components/ui/Logo';
 
 interface OnboardingProps {
   onComplete: () => void;
@@ -136,7 +138,7 @@ export default function Onboarding({ onComplete }: OnboardingProps) {
       <div className="w-full max-w-[430px] h-[100dvh] md:h-[850px] bg-background rounded-none overflow-hidden shadow-2xl relative isolate flex flex-col">
         <div className="flex-1 flex flex-col pt-8 pb-6 overflow-hidden">
           {/* Header with Back button and Progress dots */}
-          <div className="relative flex items-center justify-center mb-6 px-6 shrink-0">
+          <div className={`relative flex items-center justify-center mb-6 px-6 shrink-0 ${currentStep === 'welcome' ? 'hidden' : ''}`}>
             {step > 0 && (
               <button
                 onClick={handleBack}
@@ -161,39 +163,7 @@ export default function Onboarding({ onComplete }: OnboardingProps) {
             <AnimatePresence mode="wait">
             {/* Welcome Step */}
             {currentStep === 'welcome' && (
-              <motion.div
-                key="welcome"
-                className="flex-1 flex flex-col items-center justify-center text-center"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -20 }}
-              >
-                <div className="w-20 h-20 rounded-2xl bg-primary/15 flex items-center justify-center mb-6">
-                  <Target className="w-10 h-10 text-primary" />
-                </div>
-                <h1 className="text-3xl font-bold mb-3">FitCubes</h1>
-                <p className="text-muted-foreground text-sm leading-relaxed max-w-sm px-4">
-                  Your personal assistant for precise weight and body composition control.
-                  <br /><br />
-                  <span className="text-foreground font-medium">Create custom recipes and automatically calculate macros per 100g of the cooked meal!</span>
-                  <br /><br />
-                  <span className="text-foreground">Fill in your data to better calculate your calorie needs to reach your goals.</span>
-                </p>
-                <div className="mt-8 flex items-center gap-6 text-sm text-muted-foreground">
-                  <div className="flex flex-col items-center gap-1">
-                    <Flame className="w-5 h-5 text-orange-400" />
-                    <span>BMR Engine</span>
-                  </div>
-                  <div className="flex flex-col items-center gap-1">
-                    <TrendingDown className="w-5 h-5 text-primary" />
-                    <span>Deficit Track</span>
-                  </div>
-                  <div className="flex flex-col items-center gap-1">
-                    <Target className="w-5 h-5 text-blue-400" />
-                    <span>Macro Log</span>
-                  </div>
-                </div>
-              </motion.div>
+              <WelcomeStep onNext={handleNext} />
             )}
 
             {/* Basics Step */}
@@ -358,18 +328,20 @@ export default function Onboarding({ onComplete }: OnboardingProps) {
                       </label>
                       <input
                         type="number"
-                        value={profile.macroTargets.protein || ''}
+                        value={profile.macroTargets?.protein || ''}
+                        onKeyDown={(e) => ['-', 'e', 'E', '+', '.', ','].includes(e.key) && e.preventDefault()}
                         onChange={(e) => {
-                          let newProtein = parseInt(e.target.value) || 0;
-                          const maxProtein = Math.round(profile.weightKg * 2.5);
-                          if (newProtein > maxProtein) newProtein = maxProtein;
+                          if (error) setError(null);
+                          let newProtein = Math.max(0, parseInt(e.target.value) || 0);
+                          const absoluteMaxProtein = Math.floor(targetCalories / 4);
+                          if (newProtein > absoluteMaxProtein) newProtein = absoluteMaxProtein;
                           const macros = adjustMacrosForProtein(targetCalories, newProtein, diet);
                           updateProfile({ macroTargets: macros });
                         }}
                         className="w-full h-12 bg-card border border-border rounded-xl px-2 text-center text-sm font-bold outline-none focus:ring-2 focus:ring-primary/50"
                       />
                       <p className="text-[10px] text-muted-foreground mt-1 text-center font-medium">
-                        ~{Math.round((profile.macroTargets.protein * 4 / targetCalories) * 100)}%
+                        ~{Math.round(((profile.macroTargets?.protein ?? 0) * 4 / targetCalories) * 100)}%
                       </p>
                     </div>
 
@@ -379,12 +351,12 @@ export default function Onboarding({ onComplete }: OnboardingProps) {
                       </label>
                       <input
                         type="number"
-                        value={profile.macroTargets.carbs || ''}
+                        value={profile.macroTargets?.carbs ?? 0}
                         readOnly
                         className="w-full h-12 bg-secondary/20 opacity-70 border border-border rounded-xl px-2 text-center text-sm font-bold outline-none cursor-not-allowed"
                       />
                       <p className="text-[10px] text-muted-foreground mt-1 text-center font-medium">
-                        ~{Math.round((profile.macroTargets.carbs * 4 / targetCalories) * 100)}%
+                        ~{Math.round(((profile.macroTargets?.carbs ?? 0) * 4 / targetCalories) * 100)}%
                       </p>
                     </div>
 
@@ -394,20 +366,20 @@ export default function Onboarding({ onComplete }: OnboardingProps) {
                       </label>
                       <input
                         type="number"
-                        value={profile.macroTargets.fats || ''}
+                        value={profile.macroTargets?.fats ?? 0}
                         readOnly
                         className="w-full h-12 bg-secondary/20 opacity-70 border border-border rounded-xl px-2 text-center text-sm font-bold outline-none cursor-not-allowed"
                       />
                       <p className="text-[10px] text-muted-foreground mt-1 text-center font-medium">
-                        ~{Math.round((profile.macroTargets.fats * 9 / targetCalories) * 100)}%
+                        ~{Math.round(((profile.macroTargets?.fats ?? 0) * 9 / targetCalories) * 100)}%
                       </p>
                     </div>
                   </div>
                 </div>
 
-                <ProteinIndicator 
-                  protein={profile.macroTargets.protein} 
-                  weight={profile.weightKg} 
+                <ProteinIndicator
+                  protein={profile.macroTargets?.protein ?? 0}
+                  weight={profile.weightKg}
                 />
               </motion.div>
             )}
@@ -416,32 +388,33 @@ export default function Onboarding({ onComplete }: OnboardingProps) {
             {currentStep === 'ready' && (
               <motion.div
                 key="ready"
-                className="flex-1 flex flex-col items-center justify-center text-center"
+                className="flex-1 flex flex-col items-center justify-start pt-10 text-center"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -20 }}
               >
-                <div className="w-20 h-20 rounded-2xl bg-primary/15 flex items-center justify-center mb-6">
-                  <TrendingDown className="w-10 h-10 text-primary" />
+                <div className="relative mb-6">
+                  <Logo variant="pulse" size={120} />
                 </div>
-                <h2 className="text-2xl font-bold mb-3">Ready</h2>
-                <p className="text-muted-foreground text-sm leading-relaxed max-w-xs">
-                  Your profile is set up. Your daily calorie budget is{' '}
-                  <span className="text-primary font-semibold">{targetCalories} kcal</span>.
-                  Start logging food and exercises to track your body changes.
+                
+                <h2 className="text-[28px] font-bold mb-3 text-white">You're All Set!</h2>
+                <p className="text-gray-400 text-sm leading-relaxed max-w-[280px] mx-auto">
+                  Your calorie budget is ready (<span className="text-[#F59F0A] font-semibold">{targetCalories.toLocaleString()} kcal</span>).<br/>
+                  Start tracking and stay on target.
                 </p>
-                <div className="mt-8 grid grid-cols-3 gap-4 text-center">
-                  <div className="bg-card rounded-xl p-3 border border-border">
-                    <p className="text-lg font-bold">{profile.macroTargets?.protein || 0}g</p>
-                    <p className="text-[10px] text-muted-foreground">Protein</p>
+                
+                <div className="mt-10 grid grid-cols-3 gap-3 w-full max-w-sm mx-auto">
+                  <div className="bg-[#1c1c1e] rounded-2xl py-4 flex flex-col items-center justify-center">
+                    <p className="text-[22px] font-bold text-white">{profile.macroTargets?.protein || 0}g</p>
+                    <p className="text-[11px] text-gray-400 font-medium mt-1">Protein</p>
                   </div>
-                  <div className="bg-card rounded-xl p-3 border border-border">
-                    <p className="text-lg font-bold">{profile.macroTargets?.carbs || 0}g</p>
-                    <p className="text-[10px] text-muted-foreground">Carbs</p>
+                  <div className="bg-[#1c1c1e] rounded-2xl py-4 flex flex-col items-center justify-center">
+                    <p className="text-[22px] font-bold text-white">{profile.macroTargets?.carbs || 0}g</p>
+                    <p className="text-[11px] text-gray-400 font-medium mt-1">Carbs</p>
                   </div>
-                  <div className="bg-card rounded-xl p-3 border border-border">
-                    <p className="text-lg font-bold">{profile.macroTargets?.fats || 0}g</p>
-                    <p className="text-[10px] text-muted-foreground">Fats</p>
+                  <div className="bg-[#1c1c1e] rounded-2xl py-4 flex flex-col items-center justify-center">
+                    <p className="text-[22px] font-bold text-white">{profile.macroTargets?.fats || 0}g</p>
+                    <p className="text-[11px] text-gray-400 font-medium mt-1">Fats</p>
                   </div>
                 </div>
               </motion.div>
@@ -465,13 +438,17 @@ export default function Onboarding({ onComplete }: OnboardingProps) {
           </AnimatePresence>
 
           {/* Bottom Button */}
-          <div className="mt-auto pt-4 px-6 shrink-0">
+          <div className="mt-auto pt-4 px-6 shrink-0 pb-8">
             <button
               onClick={handleNext}
-              className="w-full h-14 bg-primary rounded-xl text-primary-foreground font-semibold text-base flex items-center justify-center gap-2 active:scale-[0.98] transition-transform shadow-lg shadow-primary/20"
+              className="w-full h-14 bg-[#F59F0A] hover:bg-[#F59F0A]/90 rounded-xl text-white font-semibold text-base flex items-center justify-center gap-2 active:scale-[0.98] transition-transform shadow-lg shadow-[#F59F0A]/20"
             >
-              {step === STEPS.length - 1 ? 'Start' : 'Continue'}
-              <ChevronRight className="w-5 h-5" />
+              {step === STEPS.length - 1 ? 'Start My Journey!' : (
+                <>
+                  Continue
+                  <ChevronRight className="w-5 h-5" />
+                </>
+              )}
             </button>
           </div>
         </div>

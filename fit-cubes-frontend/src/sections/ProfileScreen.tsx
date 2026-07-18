@@ -266,11 +266,22 @@ export default function ProfileScreen() {
                 <label className={`text-[10px] font-bold ${m.color} uppercase mb-1 block text-center`}>{m.label}</label>
                 <input
                   type="number"
-                  value={draft.macroTargets?.[m.key as keyof typeof draft.macroTargets] || ''}
+                  value={
+                    m.key === 'protein'
+                      ? draft.macroTargets?.protein || ''
+                      : draft.macroTargets?.[m.key as keyof typeof draft.macroTargets] ?? 0
+                  }
                   readOnly={m.key !== 'protein'}
+                  onKeyDown={(e) => {
+                    if (m.key === 'protein') {
+                      if (['-', 'e', 'E', '+', '.', ','].includes(e.key)) {
+                        e.preventDefault();
+                      }
+                    }
+                  }}
                   onChange={(e) => {
                     if (m.key === 'protein') {
-                      let newProtein = parseInt(e.target.value) || 0;
+                      let newProtein = Math.max(0, parseInt(e.target.value) || 0);
                       const maxProtein = Math.round((draft.weightKg || 0) * 2.5);
                       if (newProtein > maxProtein) newProtein = maxProtein;
                       handleManualProteinChange(newProtein);

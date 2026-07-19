@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { Flame, Footprints, TrendingDown, Beef, Wheat as WheatIcon, Droplets } from 'lucide-react';
 import { useStore } from '@/store/useStore.ts';
-import { calculateTDEE, calculateNetDeficit, getRelativeDateLabel } from '@/utils/calculations.ts';
+import { calculateTDEE, calculateNetDeficit, getRelativeDateLabel, formatLargeNumber } from '@/utils/calculations.ts';
 
 export default function Dashboard() {
   const profile = useStore((state) => state.profile);
@@ -42,9 +42,9 @@ export default function Dashboard() {
   const netDeficit = calculateNetDeficit(tdee, totals.calories, totals.exercise);
 
   const macroTargets = profile.macroTargets;
-  const proteinPct = Math.min(100, (totals.protein / macroTargets.protein) * 100);
-  const carbsPct = Math.min(100, (totals.carbs / macroTargets.carbs) * 100);
-  const fatsPct = Math.min(100, (totals.fats / macroTargets.fats) * 100);
+  const proteinPct = Math.min(100, (totals.protein / (macroTargets.protein || 1)) * 100 || 0);
+  const carbsPct = Math.min(100, (totals.carbs / (macroTargets.carbs || 1)) * 100 || 0);
+  const fatsPct = Math.min(100, (totals.fats / (macroTargets.fats || 1)) * 100 || 0);
 
   return (
     <div className="flex flex-col h-full">
@@ -93,11 +93,11 @@ export default function Dashboard() {
             </svg>
             <div className="absolute inset-0 flex flex-col items-center justify-center">
               <span className="text-4xl font-bold text-foreground">
-                {remaining > 0 ? remaining : 0}
+                {formatLargeNumber(remaining > 0 ? remaining : 0)}
               </span>
               <span className="text-xs text-muted-foreground mt-1 text-center">Remaining</span>
               <span className="text-sm text-primary font-medium mt-1">
-                of {Math.round(tdee + totals.exercise)} kcal
+                of {formatLargeNumber(tdee + totals.exercise)} kcal
               </span>
             </div>
           </div>
@@ -116,7 +116,7 @@ export default function Dashboard() {
               <span className="text-sm text-muted-foreground font-medium">Protein</span>
             </div>
             <span className="text-sm font-medium">
-              {Math.round(totals.protein)}g / {macroTargets.protein}g
+              {formatLargeNumber(totals.protein)}g / {formatLargeNumber(macroTargets.protein)}g
             </span>
           </div>
           <div className="h-2 bg-secondary rounded-full overflow-hidden">
@@ -134,7 +134,7 @@ export default function Dashboard() {
               <span className="text-sm text-muted-foreground font-medium">Carbs</span>
             </div>
             <span className="text-sm font-medium">
-              {Math.round(totals.carbs)}g / {macroTargets.carbs}g
+              {formatLargeNumber(totals.carbs)}g / {formatLargeNumber(macroTargets.carbs)}g
             </span>
           </div>
           <div className="h-2 bg-secondary rounded-full overflow-hidden">
@@ -152,7 +152,7 @@ export default function Dashboard() {
               <span className="text-sm text-muted-foreground font-medium">Fats</span>
             </div>
             <span className="text-sm font-medium">
-              {Math.round(totals.fats)}g / {macroTargets.fats}g
+              {formatLargeNumber(totals.fats)}g / {formatLargeNumber(macroTargets.fats)}g
             </span>
           </div>
           <div className="h-2 bg-secondary rounded-full overflow-hidden">
@@ -177,7 +177,7 @@ export default function Dashboard() {
               <Flame className="w-4 h-4 text-orange-500" />
               <span className="text-xs text-muted-foreground font-medium">Eaten</span>
             </div>
-            <p className="text-xl font-bold mt-1">{Math.round(totals.calories)}</p>
+            <p className="text-xl font-bold mt-1">{formatLargeNumber(totals.calories)}</p>
             <span className="text-xs text-muted-foreground">kcal</span>
           </div>
           <div className="glass-card rounded-2xl p-4">
@@ -185,7 +185,7 @@ export default function Dashboard() {
               <Footprints className="w-4 h-4 text-primary" />
               <span className="text-xs text-muted-foreground font-medium">Burned</span>
             </div>
-            <p className="text-xl font-bold mt-1">{Math.round(totals.exercise)}</p>
+            <p className="text-xl font-bold mt-1">{formatLargeNumber(totals.exercise)}</p>
             <span className="text-xs text-muted-foreground">kcal</span>
           </div>
         </motion.div>
@@ -204,13 +204,13 @@ export default function Dashboard() {
           <p
             className={`text-2xl font-bold mt-1 ${netDeficit > 0 ? 'text-primary' : netDeficit < 0 ? 'text-destructive' : 'text-muted-foreground'}`}
           >
-            {netDeficit > 0 ? `-${netDeficit} kcal` : netDeficit < 0 ? `+${Math.abs(netDeficit)} kcal` : '0 kcal'}
+            {netDeficit > 0 ? `-${formatLargeNumber(netDeficit)} kcal` : netDeficit < 0 ? `+${formatLargeNumber(Math.abs(netDeficit))} kcal` : '0 kcal'}
           </p>
           <span className="text-sm font-medium mt-2 block">
             {netDeficit > 50
-              ? `Expected fat loss: ~${Math.round(netDeficit / 7.7)} g 📉`
+              ? `Expected fat loss: ~${formatLargeNumber(netDeficit / 7.7)} g 📉`
               : netDeficit < -50
-              ? `Expected fat gain: ~${Math.abs(Math.round(netDeficit / 7.7))} g 📈`
+              ? `Expected fat gain: ~${formatLargeNumber(Math.abs(netDeficit / 7.7))} g 📈`
               : 'Maintaining current weight ⚖️'}
           </span>
         </motion.div>

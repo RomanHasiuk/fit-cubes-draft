@@ -9,7 +9,7 @@ import {
   Dumbbell,
 } from 'lucide-react';
 import { useStore } from '@/store/useStore.ts';
-import { addDays, getRelativeDateLabel } from '@/utils/calculations.ts';
+import { addDays, getRelativeDateLabel, formatLargeNumber } from '@/utils/calculations.ts';
 import FoodSearch from './FoodSearch.tsx';
 import FoodAdd from './FoodAdd.tsx';
 import ExerciseLogger from './ExerciseLogger.tsx';
@@ -107,7 +107,7 @@ export default function Diary() {
         <div className="text-center">
           <p className="text-lg font-bold">{getRelativeDateLabel(selectedDate)}</p>
           <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider">
-            {totals.calories} kcal in · {totals.exercise} kcal out
+            {formatLargeNumber(totals.calories)} kcal in · {formatLargeNumber(totals.exercise)} kcal out
           </p>
         </div>
         <button
@@ -150,12 +150,12 @@ export default function Diary() {
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium truncate">{entry.name}</p>
                       <p className="text-[10px] text-muted-foreground uppercase font-medium">
-                        {Math.round(entry.weightGrams)}g · P:{Math.round(entry.protein)}g
-                        C:{Math.round(entry.carbs)}g F:{Math.round(entry.fats)}g
+                        {formatLargeNumber(entry.weightGrams)}g · P:{formatLargeNumber(entry.protein)}g
+                        C:{formatLargeNumber(entry.carbs)}g F:{formatLargeNumber(entry.fats)}g
                       </p>
                     </div>
                     <div className="flex items-center gap-3">
-                      <span className="text-sm font-bold">{Math.round(entry.calories)}</span>
+                      <span className="text-sm font-bold">{formatLargeNumber(entry.calories)}</span>
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
@@ -174,7 +174,7 @@ export default function Diary() {
             {getMealEntries(meal.key).length > 0 && (
               <div className="px-4 py-2 bg-black/5 dark:bg-white/5 text-right">
                 <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
-                  Total: {Math.round(
+                  Total: {formatLargeNumber(
                     getMealEntries(meal.key).reduce((a, e) => a + e.calories, 0)
                   )}{' '}
                   kcal

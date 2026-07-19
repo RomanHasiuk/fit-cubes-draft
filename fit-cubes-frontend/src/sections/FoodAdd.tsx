@@ -147,8 +147,14 @@ export default function FoodAdd({ food, mealType, existingEntry, onClose, onDone
           <div className="relative">
             <input
               type="number"
+              min="0"
+              onKeyDown={(e) => ['-', 'e', 'E', '+'].includes(e.key) && e.preventDefault()}
               value={weight}
-              onChange={(e) => setWeight(e.target.value)}
+              onChange={(e) => {
+                let val = e.target.value;
+                if (val.length > 5) val = val.slice(0, 5);
+                setWeight(val);
+              }}
               className="w-full h-16 bg-card border border-border rounded-xl text-3xl font-bold text-center text-foreground outline-none focus:ring-2 focus:ring-primary/50 transition-all"
             />
             <span className="absolute right-6 top-1/2 -translate-y-1/2 text-muted-foreground text-lg font-medium">

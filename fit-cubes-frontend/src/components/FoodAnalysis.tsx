@@ -3,6 +3,7 @@ import { useMemo } from "react";
 import {
   calculateTDEE,
   calculatePortionOrCookedNutrition,
+  formatLargeNumber
 } from "@/utils/calculations.ts";
 import { useStore } from "@/store/useStore.ts";
 import { motion } from "framer-motion";
@@ -204,7 +205,7 @@ export default function FoodAnalysis({
                 <Flame className="w-3.5 h-3.5 text-purple-400" /> Calories
               </span>
               <span className="font-bold text-foreground">
-                {Math.round(nutrition.calories)} kcal ({portionPct.calories}%)
+                {formatLargeNumber(nutrition.calories)} kcal ({portionPct.calories}%)
               </span>
             </div>
             <div className="w-full bg-secondary h-2.5 rounded-full overflow-hidden relative">
@@ -224,7 +225,7 @@ export default function FoodAnalysis({
                 <Beef className="w-3.5 h-3.5 text-emerald-400" /> Protein
               </span>
               <span className="font-bold text-foreground">
-                {Math.round(nutrition.protein)}g ({portionPct.protein}%)
+                {formatLargeNumber(nutrition.protein)}g ({portionPct.protein}%)
               </span>
             </div>
             <div className="w-full bg-secondary h-2.5 rounded-full overflow-hidden relative">
@@ -244,7 +245,7 @@ export default function FoodAnalysis({
                 <Wheat className="w-3.5 h-3.5 text-blue-400" /> Carbs
               </span>
               <span className="font-bold text-foreground">
-                {Math.round(nutrition.carbs)}g ({portionPct.carbs}%)
+                {formatLargeNumber(nutrition.carbs)}g ({portionPct.carbs}%)
               </span>
             </div>
             <div className="w-full bg-secondary h-2.5 rounded-full overflow-hidden relative">
@@ -264,7 +265,7 @@ export default function FoodAnalysis({
                 <Droplets className="w-3.5 h-3.5 text-amber-400" /> Fats
               </span>
               <span className="font-bold text-foreground">
-                {Math.round(nutrition.fats)}g ({portionPct.fats}%)
+                {formatLargeNumber(nutrition.fats)}g ({portionPct.fats}%)
               </span>
             </div>
             <div className="w-full bg-secondary h-2.5 rounded-full overflow-hidden relative">
@@ -292,7 +293,7 @@ export default function FoodAnalysis({
               <span className="font-semibold text-foreground">10g of protein</span>{" "}
               from this product, you consume{" "}
               <span className="font-bold text-primary">
-                {analysis.proteinCost} kcal
+                {formatLargeNumber(analysis.proteinCost)} kcal
               </span>
               .
             </p>

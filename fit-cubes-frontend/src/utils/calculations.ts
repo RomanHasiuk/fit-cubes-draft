@@ -11,6 +11,16 @@ export function calculateTDEE(profile: UserProfile): number {
   return Math.round(calculateBMR(profile) * profile.activityFactor);
 }
 
+// Format large numbers safely for UI (avoids layout breaking for huge test inputs)
+export function formatLargeNumber(value: number): string {
+  if (!isFinite(value) || isNaN(value)) return '0';
+  if (value > 9999999) return '999M+';
+  if (value >= 10000) {
+    return new Intl.NumberFormat('en-US', { notation: 'compact', maximumFractionDigits: 1 }).format(value);
+  }
+  return Math.round(value).toString();
+}
+
 // 3. Exercise calories
 export function calculateExerciseCalories(
   activity: ActivityConstant,

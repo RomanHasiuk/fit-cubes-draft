@@ -18,10 +18,10 @@ export function WelcomeStep({ onNext }: WelcomeStepProps) {
     >
       {/* Background Image with Zoom Out */}
       <motion.img
-        src="/img/welcome-bg1.webp"
+        src="/img/welcome-bg-gym-c-21.webp"
         alt="Gym Background"
         className="absolute inset-0 w-full h-full object-cover"
-        initial={{ scale: 1.2 }}
+        initial={{ scale: 1.8 }}
         animate={{ scale: 1 }}
         transition={{ duration: 4.0, ease: "easeOut" }}
       />

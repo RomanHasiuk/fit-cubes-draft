@@ -61,8 +61,18 @@ export default function ProfileScreen() {
     updateDraft({ macroTargets: macros });
   };
 
+  const prevDeps = React.useRef({ goal: draft.goal, diet: draft.diet, tdeeBase });
+
   useEffect(() => {
-    applyPreset(draft.diet as DietType, draft.goal as WeightGoal);
+    const depsChanged =
+      prevDeps.current.goal !== draft.goal ||
+      prevDeps.current.diet !== draft.diet ||
+      prevDeps.current.tdeeBase !== tdeeBase;
+
+    if (depsChanged) {
+      applyPreset(draft.diet as DietType, draft.goal as WeightGoal);
+      prevDeps.current = { goal: draft.goal as WeightGoal, diet: draft.diet as DietType, tdeeBase };
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [draft.goal, draft.diet, tdeeBase]);
 
@@ -281,9 +291,9 @@ export default function ProfileScreen() {
                   }}
                   onChange={(e) => {
                     if (m.key === 'protein') {
-                      let newProtein = clampValue(e.target.value, 0, 1000, 0);
-                      const maxProtein = Math.round((draft.weightKg || 0) * 2.5);
-                      if (newProtein > maxProtein) newProtein = maxProtein;
+                      // Prevent UI break by astronomical numbers, but allow up to 100% of calories from protein
+                      const maxProtein = Math.floor(targetCalories / 4);
+                      let newProtein = clampValue(e.target.value, 0, maxProtein, 0);
                       handleManualProteinChange(newProtein);
                     }
                   }}

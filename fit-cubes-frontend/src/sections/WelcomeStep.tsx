@@ -1,12 +1,22 @@
-import { motion } from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Logo } from '@/components/ui/Logo';
+import { useEffect, useState } from 'react';
 
 interface WelcomeStepProps {
   onNext: () => void;
 }
 
 export function WelcomeStep({ onNext }: WelcomeStepProps) {
+  const [showVideo, setShowVideo] = useState(true);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setShowVideo(false);
+    }, 4000);
+    return () => clearTimeout(timer);
+  }, []);
+
   return (
     <motion.div
       key="welcome"
@@ -18,13 +28,31 @@ export function WelcomeStep({ onNext }: WelcomeStepProps) {
     >
       {/* Background Image with Zoom Out */}
       <motion.img
-        src="/img/welcome-bg-gym-c-21.webp"
+        src="/img/welcome-bg-c2.webp"
         alt="Gym Background"
         className="absolute inset-0 w-full h-full object-cover"
         initial={{ scale: 1.8 }}
         animate={{ scale: 1 }}
         transition={{ duration: 4.0, ease: "easeOut" }}
       />
+
+      <AnimatePresence>
+        {showVideo && (
+          <motion.video
+          src="/videos/Woman_exercising_with_ropes.mp4"
+          autoPlay
+          muted
+          loop
+          playsInline
+          onCanPlay={(e) => { e.currentTarget.playbackRate = 0.8; }}
+          className="absolute inset-0 w-full h-full object-cover"
+          initial={{ scale: 1.8 }}
+          animate={{ opacity: 1, scale: 1 }}
+          exit={{ opacity: 0, transition: { duration: 0.8 } }}
+          transition={{ duration: 4.0, ease: "easeOut" }}
+        />
+        )}
+      </AnimatePresence>
       
       {/* Dark Overlay */}
       <div className="absolute inset-0 bg-black/60" />

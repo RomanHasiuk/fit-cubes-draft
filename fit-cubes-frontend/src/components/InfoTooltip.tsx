@@ -64,7 +64,7 @@ export default function InfoTooltip({
             initial={{ opacity: 0, scale: 0.5, y: initialY }}
             animate={{
               opacity: 1,
-              scale: [0.5, 1.1, 1], // Springy "pop-in" effect
+              scale: [0.5, 1.1, 1],
               y: 0
             }}
             exit={{ opacity: 0, scale: 0.5, y: initialY }}

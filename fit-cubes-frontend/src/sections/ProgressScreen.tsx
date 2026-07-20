@@ -13,7 +13,7 @@ import {
 } from 'recharts';
 import { TrendingDown, Scale, Flame, Target } from 'lucide-react';
 import { useStore } from '@/store/useStore.ts';
-import { calculateTDEE, calculateNetDeficit, calculateRollingAverage, getLast7Days } from '@/utils/calculations.ts';
+import { calculateTDEE, calculateNetDeficit, calculateRollingAverage, getLast7Days, formatLargeNumber } from '@/utils/calculations.ts';
 import InfoTooltip from '@/components/InfoTooltip.tsx';
 
 const TIMEFRAMES = [
@@ -163,6 +163,7 @@ export default function ProgressScreen() {
                 title="Daily Deficit" 
                 content="Shows the difference between your daily energy expenditure (TDEE) and your net intake (food - exercise). A positive value means you are in a deficit and losing weight." 
                 align="right"
+                position="bottom"
               />
             </div>
           </div>
@@ -182,13 +183,15 @@ export default function ProgressScreen() {
                   className="text-muted-foreground"
                   axisLine={false}
                   tickLine={false}
+                  minTickGap={15}
                 />
                 <YAxis
                   tick={{ fontSize: 11, fill: 'currentColor' }}
                   className="text-muted-foreground"
                   axisLine={false}
                   tickLine={false}
-                  width={35}
+                  width={45}
+                  tickFormatter={(val) => formatLargeNumber(val)}
                 />
                 <Tooltip
                   content={({ active, payload, label }) => {
@@ -198,7 +201,7 @@ export default function ProgressScreen() {
                           <p className="font-bold mb-1 opacity-70">{label}</p>
                           {payload.map((p, i) => (
                             <p key={i} style={{ color: p.color }}>
-                              {p.name}: {p.value}
+                              {p.name}: {typeof p.value === 'number' ? formatLargeNumber(p.value) : String(p.value)}
                             </p>
                           ))}
                         </div>
@@ -213,6 +216,7 @@ export default function ProgressScreen() {
                   stroke="hsl(var(--primary))"
                   fill="url(#deficitGrad)"
                   strokeWidth={2}
+                  activeDot={{ r: 4 }}
                 />
                 <Line
                   type="monotone"
@@ -221,6 +225,7 @@ export default function ProgressScreen() {
                   strokeWidth={2}
                   strokeDasharray="5 5"
                   dot={false}
+                  activeDot={{ r: 4 }}
                 />
               </AreaChart>
             </ResponsiveContainer>
@@ -265,13 +270,15 @@ export default function ProgressScreen() {
                   className="text-muted-foreground"
                   axisLine={false}
                   tickLine={false}
+                  minTickGap={15}
                 />
                 <YAxis
                   tick={{ fontSize: 11, fill: 'currentColor' }}
                   className="text-muted-foreground"
                   axisLine={false}
                   tickLine={false}
-                  width={35}
+                  width={45}
+                  tickFormatter={(val) => formatLargeNumber(val)}
                 />
                 <Tooltip
                   content={({ active, payload, label }) => {
@@ -281,7 +288,7 @@ export default function ProgressScreen() {
                           <p className="font-bold mb-1 opacity-70">{label}</p>
                           {payload.map((p, i) => (
                             <p key={i} style={{ color: p.color }}>
-                              {p.name}: {p.value}
+                              {p.name}: {typeof p.value === 'number' ? formatLargeNumber(p.value) : String(p.value)}
                             </p>
                           ))}
                         </div>
@@ -296,6 +303,7 @@ export default function ProgressScreen() {
                   stroke="#f97316"
                   strokeWidth={2}
                   dot={{ r: 3, fill: '#f97316' }}
+                  activeDot={{ r: 4 }}
                 />
               </LineChart>
             </ResponsiveContainer>
@@ -330,14 +338,15 @@ export default function ProgressScreen() {
                   className="text-muted-foreground"
                   axisLine={false}
                   tickLine={false}
+                  minTickGap={15}
                 />
                 <YAxis
                   tick={{ fontSize: 11, fill: 'currentColor' }}
                   className="text-muted-foreground"
                   axisLine={false}
                   tickLine={false}
-                  width={40}
-                  tickFormatter={(val) => `${val > 0 ? '+' : ''}${val}g`}
+                  width={45}
+                  tickFormatter={(val) => `${val > 0 ? '+' : ''}${formatLargeNumber(val)}g`}
                 />
                 <Tooltip
                   content={({ active, payload, label }) => {
@@ -348,10 +357,10 @@ export default function ProgressScreen() {
                         <div className="glass-card p-3 rounded-xl shadow-xl text-xs">
                           <p className="font-bold mb-1 opacity-70">{label}</p>
                           <p className="text-emerald-500 font-bold">
-                            Total: {val > 0 ? '+' : ''}{val} g
+                            Total: {val > 0 ? '+' : ''}{formatLargeNumber(val)} g
                           </p>
                           <p className="text-muted-foreground mt-1">
-                            (Per day: {fatChange > 0 ? '-' : '+'}{Math.abs(fatChange)} g)
+                            (Per day: {fatChange > 0 ? '-' : '+'}{formatLargeNumber(Math.abs(fatChange))} g)
                           </p>
                         </div>
                       );
@@ -365,6 +374,7 @@ export default function ProgressScreen() {
                   stroke="#10b981"
                   strokeWidth={2}
                   dot={{ r: 3, fill: '#10b981' }}
+                  activeDot={{ r: 4 }}
                 />
               </LineChart>
             </ResponsiveContainer>
@@ -383,7 +393,7 @@ export default function ProgressScreen() {
               <Target className="w-4 h-4 text-primary" />
               <span className="text-xs text-muted-foreground font-medium">Total Deficit</span>
             </div>
-            <p className="text-xl font-bold mt-2">{stats.totalDeficit}</p>
+            <p className="text-xl font-bold mt-2">{formatLargeNumber(stats.totalDeficit)}</p>
             <span className="text-[10px] text-muted-foreground uppercase">kcal burned</span>
           </div>
           <div className="glass-card rounded-2xl p-4">
@@ -391,7 +401,7 @@ export default function ProgressScreen() {
               <TrendingDown className="w-4 h-4 text-primary" />
               <span className="text-xs text-muted-foreground font-medium">Daily Avg</span>
             </div>
-            <p className="text-xl font-bold mt-2">{stats.avgDailyDeficit}</p>
+            <p className="text-xl font-bold mt-2">{formatLargeNumber(stats.avgDailyDeficit)}</p>
             <span className="text-[10px] text-muted-foreground uppercase">kcal/day</span>
           </div>
           <div className="glass-card rounded-2xl p-4">
@@ -399,7 +409,7 @@ export default function ProgressScreen() {
               <Scale className="w-4 h-4 text-primary" />
               <span className="text-xs text-muted-foreground font-medium">Weekly Loss</span>
             </div>
-            <p className="text-xl font-bold mt-2">{stats.projectedLoss} kg</p>
+            <p className="text-xl font-bold mt-2">{stats.projectedLoss > 999 ? '999+' : stats.projectedLoss} kg</p>
             <span className="text-[10px] text-muted-foreground uppercase">projected</span>
           </div>
           <div className="glass-card rounded-2xl p-4">
@@ -407,7 +417,7 @@ export default function ProgressScreen() {
               <Flame className="w-4 h-4 text-orange-500" />
               <span className="text-xs text-muted-foreground font-medium">Exercise Burn</span>
             </div>
-            <p className="text-xl font-bold mt-2">{stats.totalExercise}</p>
+            <p className="text-xl font-bold mt-2">{formatLargeNumber(stats.totalExercise)}</p>
             <span className="text-[10px] text-muted-foreground uppercase">kcal total</span>
           </div>
         </motion.div>

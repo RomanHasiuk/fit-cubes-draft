@@ -17,6 +17,7 @@ import type { FoodItem } from "@/types";
 import InfoTooltip from "@/components/InfoTooltip.tsx";
 import FoodSearch from "./FoodSearch.tsx";
 import FoodAnalysis from "@/components/FoodAnalysis.tsx";
+import { clampValue } from "@/utils/calculations.ts";
 
 interface Ingredient {
   id: string;
@@ -135,10 +136,7 @@ export default function RecipeBuilder() {
   };
 
   const updateWeight = (id: string, value: string) => {
-    let newWeight: number | "" = value === "" ? "" : parseInt(value);
-    if (typeof newWeight === "number" && newWeight > 10000) {
-      newWeight = 10000;
-    }
+    let newWeight: number | "" = value === "" ? "" : clampValue(value, 0, 10000, 0);
     setIngredients(
       ingredients.map((i) => (i.id === id ? { ...i, weight: newWeight } : i)),
     );
@@ -187,8 +185,8 @@ export default function RecipeBuilder() {
     setSuccess(null);
 
     // 1. Validation: Name
-    if (!recipeName.trim()) {
-      setError("Please provide a recipe name");
+    if (!recipeName.trim() || !/[A-Za-zА-Яа-яЄєІіЇїҐґ]/.test(recipeName)) {
+      setError("Please provide a valid recipe name (must contain letters)");
       return;
     }
 
@@ -338,8 +336,15 @@ export default function RecipeBuilder() {
           </label>
           <input
             type="text"
+            maxLength={50}
             placeholder="e.g. Baked chicken with vegetables..."
             value={recipeName}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                handleSaveClick(false);
+              }
+            }}
             onChange={(e) => {
               const val = e.target.value.replace(/[^0-9\p{L}\s.,'%-]/gu, "");
               setRecipeName(val);
@@ -442,8 +447,7 @@ export default function RecipeBuilder() {
                   placeholder={Math.round(rawWeight).toString()}
                   onChange={(e) => {
                     const val = e.target.value;
-                    let num: number | "" = val === "" ? "" : parseInt(val);
-                    if (typeof num === "number" && num > 10000) num = 10000;
+                    let num: number | "" = val === "" ? "" : clampValue(val, 0, 10000, 0);
                     setFinalWeight(num);
                   }}
                   className="w-full bg-transparent text-xl font-bold text-primary outline-none"

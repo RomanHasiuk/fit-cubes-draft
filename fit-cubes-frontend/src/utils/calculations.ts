@@ -14,11 +14,20 @@ export function calculateTDEE(profile: UserProfile): number {
 // Format large numbers safely for UI (avoids layout breaking for huge test inputs)
 export function formatLargeNumber(value: number): string {
   if (!isFinite(value) || isNaN(value)) return '0';
-  if (value > 9999999) return '999M+';
-  if (value >= 10000) {
+  const absValue = Math.abs(value);
+  const sign = value < 0 ? '-' : '';
+  if (absValue > 9999999) return `${sign}999M+`;
+  if (absValue >= 10000) {
     return new Intl.NumberFormat('en-US', { notation: 'compact', maximumFractionDigits: 1 }).format(value);
   }
   return Math.round(value).toString();
+}
+
+// Clamp a numeric value between a minimum and maximum to prevent UI layout breakage and math errors (e.g. from 7.3e+55 values)
+export function clampValue(value: any, min: number, max: number, fallbackValue: number = 0): number {
+  const parsed = parseFloat(value);
+  if (isNaN(parsed)) return fallbackValue;
+  return Math.min(max, Math.max(min, parsed));
 }
 
 // 3. Exercise calories

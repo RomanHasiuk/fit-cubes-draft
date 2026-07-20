@@ -216,13 +216,13 @@ export default function Diary() {
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium">{entry.activityType}</p>
                     <p className="text-[10px] text-muted-foreground uppercase font-medium">
-                      {entry.metric} {entry.metricLabel}
+                      {formatLargeNumber(entry.metric)} {entry.metricLabel}
                       {entry.rpe ? ` · RPE ${entry.rpe}` : ''}
                     </p>
                   </div>
                   <div className="flex items-center gap-3">
                     <span className="text-sm font-bold text-primary">
-                      +{Math.round(entry.caloriesBurned)}
+                      +{formatLargeNumber(entry.caloriesBurned)}
                     </span>
                     <button
                       onClick={(e) => {

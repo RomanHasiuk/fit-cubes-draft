@@ -10,7 +10,7 @@ import {
 } from 'lucide-react';
 
 import { useStore } from '@/store/useStore';
-import { calculateBMR, calculateTDEE, generateMacroTargets, adjustMacrosForProtein, type DietType, type WeightGoal } from '@/utils/calculations';
+import { calculateBMR, calculateTDEE, generateMacroTargets, adjustMacrosForProtein, clampValue, type DietType, type WeightGoal } from '@/utils/calculations';
 import InfoTooltip from '@/components/InfoTooltip';
 import React, { useState, useEffect } from 'react';
 import { MetricInput } from '@/components/profile/MetricInput';
@@ -190,7 +190,7 @@ export default function ProfileScreen() {
               <MetricInput
                 label="Age"
                 value={draft.age || ''}
-                onChange={(val) => updateDraft({ age: val })}
+                onChange={(val) => updateDraft({ age: clampValue(val, 16, 120, 0) })}
                 tooltipTitle="Age"
                 tooltipContent="Metabolism slows down with age, reducing calorie needs."
                 align="left"
@@ -198,7 +198,7 @@ export default function ProfileScreen() {
               <MetricInput
                 label="Weight (kg)"
                 value={draft.weightKg || ''}
-                onChange={(val) => updateDraft({ weightKg: val })}
+                onChange={(val) => updateDraft({ weightKg: clampValue(val, 30, 300, 0) })}
                 tooltipTitle="Weight"
                 tooltipContent="More weight requires more energy to sustain."
                 step="0.1"
@@ -207,7 +207,7 @@ export default function ProfileScreen() {
               <MetricInput
                 label="Height (cm)"
                 value={draft.heightCm || ''}
-                onChange={(val) => updateDraft({ heightCm: val })}
+                onChange={(val) => updateDraft({ heightCm: clampValue(val, 100, 250, 0) })}
                 tooltipTitle="Height"
                 tooltipContent="Height affects metabolic rate."
                 align="right"
@@ -281,7 +281,7 @@ export default function ProfileScreen() {
                   }}
                   onChange={(e) => {
                     if (m.key === 'protein') {
-                      let newProtein = Math.max(0, parseInt(e.target.value) || 0);
+                      let newProtein = clampValue(e.target.value, 0, 1000, 0);
                       const maxProtein = Math.round((draft.weightKg || 0) * 2.5);
                       if (newProtein > maxProtein) newProtein = maxProtein;
                       handleManualProteinChange(newProtein);
@@ -318,7 +318,12 @@ export default function ProfileScreen() {
             />
           </div>
           <div className="glass-card rounded-2xl divide-y divide-white/5 overflow-hidden">
-            {activities.map((item) => (
+            {activities.map((item) => {
+              let displayKcal = item.kcalPerUnit;
+              if (displayKcal === 0) {
+                displayKcal = (item.met * 3.5 * (draft.weightKg || 75)) / 200;
+              }
+              return (
               <div
                 key={item.name}
                 className="flex items-center justify-between p-4"
@@ -330,7 +335,7 @@ export default function ProfileScreen() {
                   <div>
                     <p className="text-sm font-medium">{item.name}</p>
                     <p className="text-[10px] text-muted-foreground">
-                      {parseFloat(item.kcalPerUnit.toFixed(2))} kcal / {item.metricLabel}
+                      {parseFloat(displayKcal.toFixed(2))} kcal / {item.metricLabel}
                     </p>
                   </div>
                 </div>
@@ -340,7 +345,7 @@ export default function ProfileScreen() {
                   </p>
                 </div>
               </div>
-            ))}
+            )})}
           </div>
         </motion.div>
 

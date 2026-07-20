@@ -8,8 +8,8 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-  AreaChart,
   Area,
+  ComposedChart,
 } from 'recharts';
 import { TrendingDown, Scale, Flame, Target } from 'lucide-react';
 import { useStore } from '@/store/useStore.ts';
@@ -55,7 +55,8 @@ export default function ProgressScreen() {
             calories: 0, 
             weight: log ? (log.weight || null) : null, 
             fatChange: 0, 
-            cumulativeFatChange: Math.round(acc.cumulative) 
+            cumulativeFatChange: Math.round(acc.cumulative),
+            isLogged: false
           });
           return acc;
         }
@@ -77,25 +78,30 @@ export default function ProgressScreen() {
           weight: log.weight || null,
           fatChange: Math.round(fatChange),
           cumulativeFatChange: Math.round(acc.cumulative),
+          isLogged: true
         });
         return acc;
       },
       { cumulative: 0, deficits: [] as any[] }
     );
 
-    const deficitValues = deficits.map((d) => d.deficit);
+    const deficitValues = deficits.map((d) => d.isLogged ? d.deficit : null);
+    const calorieValues = deficits.map((d) => d.isLogged ? d.calories : null);
     const rolling = calculateRollingAverage(deficitValues, days > 7 ? 7 : 3);
+    const rollingCalories = calculateRollingAverage(calorieValues, days > 7 ? 7 : 3);
 
     return deficits.map((d, i) => ({
       ...d,
       label: d.date.slice(5),
       rollingAvg: rolling[i],
+      rollingAvgCalories: rollingCalories[i],
     }));
   })();
 
   const stats = useMemo(() => {
-    const totalDeficit = chartData.reduce((a, d) => a + Math.max(0, d.deficit), 0);
-    const avgDailyDeficit = chartData.length > 0 ? totalDeficit / chartData.length : 0;
+    const loggedDays = chartData.filter((d) => d.isLogged);
+    const totalDeficit = loggedDays.reduce((a, d) => a + Math.max(0, d.deficit), 0);
+    const avgDailyDeficit = loggedDays.length > 0 ? totalDeficit / loggedDays.length : 0;
     const projectedWeeklyLoss = (avgDailyDeficit * 7) / 7700;
     const totalExercise = dailyLogs
       .filter((l) => chartData.some((c) => c.date === l.date))
@@ -169,7 +175,7 @@ export default function ProgressScreen() {
           </div>
           <div className="h-48">
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={chartData}>
+              <ComposedChart data={chartData}>
                 <defs>
                   <linearGradient id="deficitGrad" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={0.3} />
@@ -213,6 +219,7 @@ export default function ProgressScreen() {
                 <Area
                   type="monotone"
                   dataKey="deficit"
+                  name="Deficit"
                   stroke="hsl(var(--primary))"
                   fill="url(#deficitGrad)"
                   strokeWidth={2}
@@ -221,13 +228,14 @@ export default function ProgressScreen() {
                 <Line
                   type="monotone"
                   dataKey="rollingAvg"
-                  stroke="#FBBF24"
+                  name="Rolling Avg"
+                  stroke="#3B82F6"
                   strokeWidth={2}
                   strokeDasharray="5 5"
                   dot={false}
                   activeDot={{ r: 4 }}
                 />
-              </AreaChart>
+              </ComposedChart>
             </ResponsiveContainer>
           </div>
           <div className="flex items-center gap-4 mt-4">
@@ -236,7 +244,7 @@ export default function ProgressScreen() {
               <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">Daily</span>
             </div>
             <div className="flex items-center gap-1.5">
-              <div className="w-3 h-1 rounded-full bg-amber-400" style={{ borderStyle: 'dashed' }} />
+              <div className="w-3 h-1 rounded-full bg-blue-500" style={{ borderStyle: 'dashed' }} />
               <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">Rolling Avg</span>
             </div>
           </div>
@@ -262,7 +270,13 @@ export default function ProgressScreen() {
           </div>
           <div className="h-40">
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={chartData}>
+              <ComposedChart data={chartData}>
+                <defs>
+                  <linearGradient id="calorieGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#f97316" stopOpacity={0.3} />
+                    <stop offset="100%" stopColor="#f97316" stopOpacity={0} />
+                  </linearGradient>
+                </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="currentColor" className="opacity-10" />
                 <XAxis
                   dataKey="label"
@@ -297,16 +311,37 @@ export default function ProgressScreen() {
                     return null;
                   }}
                 />
-                <Line
+                <Area
                   type="monotone"
                   dataKey="calories"
+                  name="Daily Intake"
                   stroke="#f97316"
+                  fill="url(#calorieGrad)"
                   strokeWidth={2}
-                  dot={{ r: 3, fill: '#f97316' }}
                   activeDot={{ r: 4 }}
                 />
-              </LineChart>
+                <Line
+                  type="monotone"
+                  dataKey="rollingAvgCalories"
+                  name="Rolling Avg"
+                  stroke="#3B82F6"
+                  strokeWidth={2}
+                  strokeDasharray="5 5"
+                  dot={false}
+                  activeDot={{ r: 4 }}
+                />
+              </ComposedChart>
             </ResponsiveContainer>
+          </div>
+          <div className="flex items-center gap-4 mt-4">
+            <div className="flex items-center gap-1.5">
+              <div className="w-3 h-1 rounded-full bg-orange-500" />
+              <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">Daily</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <div className="w-3 h-1 rounded-full bg-blue-500" style={{ borderStyle: 'dashed' }} />
+              <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">Rolling Avg</span>
+            </div>
           </div>
         </motion.div>
 

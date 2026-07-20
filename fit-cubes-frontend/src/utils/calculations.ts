@@ -105,15 +105,19 @@ export function calculateNetDeficit(
 
 // 7. 7-day rolling average
 export function calculateRollingAverage(
-  values: number[],
+  values: (number | null)[],
   windowSize: number = 7
-): number[] {
-  const result: number[] = [];
+): (number | null)[] {
+  const result: (number | null)[] = [];
   for (let i = 0; i < values.length; i++) {
     const start = Math.max(0, i - windowSize + 1);
-    const slice = values.slice(start, i + 1);
-    const avg = slice.reduce((a, b) => a + b, 0) / slice.length;
-    result.push(Math.round(avg * 100) / 100);
+    const slice = values.slice(start, i + 1).filter((v): v is number => v !== null);
+    if (slice.length === 0) {
+      result.push(null);
+    } else {
+      const avg = slice.reduce((a, b) => a + b, 0) / slice.length;
+      result.push(Math.round(avg * 100) / 100);
+    }
   }
   return result;
 }

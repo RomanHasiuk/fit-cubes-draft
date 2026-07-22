@@ -98,7 +98,10 @@ function App() {
   if (!mounted) return null;
 
   if (showOnboarding) {
-    return <Onboarding onComplete={() => setShowOnboarding(false)} />;
+    return <Onboarding onComplete={() => {
+      setShowOnboarding(false);
+      navigate('/');
+    }} />;
   }
 
   return (

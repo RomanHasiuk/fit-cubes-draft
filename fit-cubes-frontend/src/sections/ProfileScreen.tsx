@@ -200,7 +200,8 @@ export default function ProfileScreen() {
               <MetricInput
                 label="Age"
                 value={draft.age || ''}
-                onChange={(val) => updateDraft({ age: clampValue(val, 16, 120, 0) })}
+                onChange={(val) => updateDraft({ age: val })}
+                onBlur={() => updateDraft({ age: clampValue(draft.age, 16, 120, 0) })}
                 tooltipTitle="Age"
                 tooltipContent="Metabolism slows down with age, reducing calorie needs."
                 align="left"
@@ -208,7 +209,8 @@ export default function ProfileScreen() {
               <MetricInput
                 label="Weight (kg)"
                 value={draft.weightKg || ''}
-                onChange={(val) => updateDraft({ weightKg: clampValue(val, 30, 300, 0) })}
+                onChange={(val) => updateDraft({ weightKg: val })}
+                onBlur={() => updateDraft({ weightKg: clampValue(draft.weightKg, 30, 300, 0) })}
                 tooltipTitle="Weight"
                 tooltipContent="More weight requires more energy to sustain."
                 step="0.1"
@@ -217,7 +219,8 @@ export default function ProfileScreen() {
               <MetricInput
                 label="Height (cm)"
                 value={draft.heightCm || ''}
-                onChange={(val) => updateDraft({ heightCm: clampValue(val, 100, 250, 0) })}
+                onChange={(val) => updateDraft({ heightCm: val })}
+                onBlur={() => updateDraft({ heightCm: clampValue(draft.heightCm, 100, 250, 0) })}
                 tooltipTitle="Height"
                 tooltipContent="Height affects metabolic rate."
                 align="right"
@@ -345,7 +348,7 @@ export default function ProfileScreen() {
                   <div>
                     <p className="text-sm font-medium">{item.name}</p>
                     <p className="text-[10px] text-muted-foreground">
-                      {parseFloat(displayKcal.toFixed(2))} kcal / {item.metricLabel}
+                      {parseFloat(displayKcal.toFixed(1))} kcal / {item.metricLabel}
                     </p>
                   </div>
                 </div>

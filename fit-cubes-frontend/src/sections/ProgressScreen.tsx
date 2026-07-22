@@ -101,7 +101,7 @@ export default function ProgressScreen() {
   const stats = useMemo(() => {
     const loggedDays = chartData.filter((d) => d.isLogged);
     const totalDeficit = loggedDays.reduce((a, d) => a + Math.max(0, d.deficit), 0);
-    const avgDailyDeficit = loggedDays.length > 0 ? totalDeficit / loggedDays.length : 0;
+    const avgDailyDeficit = chartData.length > 0 ? totalDeficit / chartData.length : 0;
     const projectedWeeklyLoss = (avgDailyDeficit * 7) / 7700;
     const totalExercise = dailyLogs
       .filter((l) => chartData.some((c) => c.date === l.date))

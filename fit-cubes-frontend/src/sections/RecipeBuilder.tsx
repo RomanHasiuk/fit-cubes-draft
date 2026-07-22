@@ -74,7 +74,7 @@ export default function RecipeBuilder() {
           product: originalProduct || {
             id: ing.foodItemId,
             name: ing.name,
-            category: "Мої рецепти",
+            category: "My Recipes",
             caloriesPer100g: ing.calories,
             proteinPer100g: ing.protein,
             carbsPer100g: ing.carbs,
@@ -247,7 +247,7 @@ export default function RecipeBuilder() {
     const newProduct: FoodItem = {
       id: targetId,
       name: finalName,
-      category: "Мої страви",
+      category: "My Meals",
       caloriesPer100g: resultMacros.calories,
       proteinPer100g: resultMacros.protein,
       carbsPer100g: resultMacros.carbs,
@@ -336,7 +336,7 @@ export default function RecipeBuilder() {
           </label>
           <input
             type="text"
-            maxLength={50}
+            maxLength={60}
             placeholder="e.g. Baked chicken with vegetables..."
             value={recipeName}
             onKeyDown={(e) => {
@@ -369,10 +369,13 @@ export default function RecipeBuilder() {
           </div>
 
           {ingredients.length === 0 ? (
-            <div className="p-10 text-center glass-card rounded-2xl border-dashed border-white/10 flex flex-col items-center justify-center gap-3">
+            <div 
+              onClick={() => setShowSearch(true)}
+              className="p-10 text-center glass-card rounded-2xl border-dashed border-white/10 flex flex-col items-center justify-center gap-3 cursor-pointer hover:bg-white/5 active:scale-[0.98] transition-all"
+            >
               <Search className="w-8 h-8 text-muted-foreground/30" />
               <p className="text-xs text-muted-foreground">
-                Use the "ADD" button to find ingredients
+                Tap here or use the "ADD" button to find ingredients
               </p>
             </div>
           ) : (
@@ -579,7 +582,7 @@ export default function RecipeBuilder() {
               food={{
                 id: "recipe",
                 name: recipeName,
-                category: "Мої страви",
+                category: "My Meals",
                 caloriesPer100g: resultMacros.calories,
                 proteinPer100g: resultMacros.protein,
                 carbsPer100g: resultMacros.carbs,

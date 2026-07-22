@@ -18,7 +18,6 @@ export default function FoodCreator({ onClose, editingFood }: FoodCreatorProps) 
   
   const [name, setName] = useState(editingFood?.name || "");
   const [calories, setCalories] = useState<number | "">(editingFood?.caloriesPer100g ?? "");
-  const [isManualCalories, setIsManualCalories] = useState(!!editingFood?.caloriesPer100g);
   const [protein, setProtein] = useState<number | "">(editingFood?.proteinPer100g ?? "");
   const [fats, setFats] = useState<number | "">(editingFood?.fatsPer100g ?? "");
   const [carbs, setCarbs] = useState<number | "">(editingFood?.carbsPer100g ?? "");
@@ -26,19 +25,17 @@ export default function FoodCreator({ onClose, editingFood }: FoodCreatorProps) 
   const [showDuplicateWarning, setShowDuplicateWarning] = useState(false);
 
   useEffect(() => {
-    if (!isManualCalories) {
-      const p = Number(protein) || 0;
-      const c = Number(carbs) || 0;
-      const f = Number(fats) || 0;
-      if (p > 0 || c > 0 || f > 0) {
-        setCalories(Math.round(p * 4 + c * 4 + f * 9));
-      } else if (p === 0 && c === 0 && f === 0 && calories !== "") {
-        setCalories("");
-      }
+    const p = Number(protein) || 0;
+    const c = Number(carbs) || 0;
+    const f = Number(fats) || 0;
+    if (p > 0 || c > 0 || f > 0) {
+      setCalories(Math.round(p * 4 + c * 4 + f * 9));
+    } else if (p === 0 && c === 0 && f === 0 && calories !== "") {
+      setCalories("");
     }
-  }, [protein, carbs, fats, isManualCalories, calories]);
+  }, [protein, carbs, fats, calories]);
   
-  const defaultCategories = ["Мої страви"];
+  const defaultCategories = ["My Meals"];
   const allCategories = [...defaultCategories, ...customCategories];
   
   const [selectedCategory, setSelectedCategory] = useState(editingFood?.category || defaultCategories[0]);
@@ -92,7 +89,9 @@ export default function FoodCreator({ onClose, editingFood }: FoodCreatorProps) 
     onClose();
   };
 
-  const isValid = name.trim().length > 0 && calories !== "";
+  const totalMacros = (Number(protein) || 0) + (Number(carbs) || 0) + (Number(fats) || 0);
+  const isMacrosValid = totalMacros <= 100;
+  const isValid = name.trim().length > 0 && calories !== "" && isMacrosValid;
 
   return (
     <div className="flex flex-col h-full bg-background relative z-50">
@@ -132,6 +131,7 @@ export default function FoodCreator({ onClose, editingFood }: FoodCreatorProps) 
             }}
             className="w-full bg-secondary/50 border border-white/5 rounded-2xl px-4 py-4 outline-none focus:ring-2 focus:ring-primary/50 transition-all font-medium"
             placeholder="e.g. Chicken Soup"
+            maxLength={60}
           />
         </div>
 
@@ -141,15 +141,9 @@ export default function FoodCreator({ onClose, editingFood }: FoodCreatorProps) 
             <label className="text-sm font-medium text-orange-500">Kcal per 100g</label>
             <input
               type="number"
-              min="0"
-              onKeyDown={(e) => ['-', 'e', 'E', '+'].includes(e.key) && e.preventDefault()}
               value={calories}
-              onChange={(e) => {
-                setCalories(e.target.value === "" ? "" : Math.max(0, Number(e.target.value)));
-                setIsManualCalories(true);
-              }}
-              className="w-full bg-secondary/50 border border-white/5 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-orange-500/50"
-              placeholder="0"
+              readOnly
+              className="w-full bg-secondary/20 border border-white/5 rounded-xl px-4 py-3 text-muted-foreground outline-none cursor-not-allowed"
             />
           </div>
           <div className="space-y-2">
@@ -159,7 +153,7 @@ export default function FoodCreator({ onClose, editingFood }: FoodCreatorProps) 
               min="0"
               onKeyDown={(e) => ['-', 'e', 'E', '+'].includes(e.key) && e.preventDefault()}
               value={protein}
-              onChange={(e) => setProtein(e.target.value === "" ? "" : Math.max(0, Number(e.target.value)))}
+              onChange={(e) => setProtein(e.target.value === "" ? "" : Math.min(100, Math.max(0, Number(e.target.value))))}
               className="w-full bg-secondary/50 border border-white/5 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-blue-500/50"
               placeholder="0"
             />
@@ -171,7 +165,7 @@ export default function FoodCreator({ onClose, editingFood }: FoodCreatorProps) 
               min="0"
               onKeyDown={(e) => ['-', 'e', 'E', '+'].includes(e.key) && e.preventDefault()}
               value={fats}
-              onChange={(e) => setFats(e.target.value === "" ? "" : Math.max(0, Number(e.target.value)))}
+              onChange={(e) => setFats(e.target.value === "" ? "" : Math.min(100, Math.max(0, Number(e.target.value))))}
               className="w-full bg-secondary/50 border border-white/5 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-yellow-500/50"
               placeholder="0"
             />
@@ -183,12 +177,17 @@ export default function FoodCreator({ onClose, editingFood }: FoodCreatorProps) 
               min="0"
               onKeyDown={(e) => ['-', 'e', 'E', '+'].includes(e.key) && e.preventDefault()}
               value={carbs}
-              onChange={(e) => setCarbs(e.target.value === "" ? "" : Math.max(0, Number(e.target.value)))}
+              onChange={(e) => setCarbs(e.target.value === "" ? "" : Math.min(100, Math.max(0, Number(e.target.value))))}
               className="w-full bg-secondary/50 border border-white/5 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-green-500/50"
               placeholder="0"
             />
           </div>
         </div>
+        {!isMacrosValid && (
+          <p className="text-xs text-destructive mt-1 font-medium bg-destructive/10 p-2 rounded-lg border border-destructive/20">
+            The sum of protein, fats, and carbs cannot exceed 100g (currently {Math.round(totalMacros * 10) / 10}g).
+          </p>
+        )}
 
         {/* Category */}
         <div className="space-y-3 pt-2 border-t border-border/50">

@@ -23,7 +23,7 @@ export default function FoodAdd({ food, mealType, existingEntry, onClose, onDone
   const [weight, setWeight] = useState(existingEntry ? existingEntry.weightGrams.toString() : '100');
   const [isCooked, setIsCooked] = useState(existingEntry ? !!existingEntry.isCooked : false);
 
-  const isCustomRecipe = food.category === 'Мої страви' || food.category === 'Мої рецепти';
+  const isCustomRecipe = food.category === 'My Meals' || food.category === 'My Recipes';
   const hasConversion = !!(food.rawWeight && food.cookedWeight && !isCustomRecipe);
 
   const nutrition = useMemo(() =>
@@ -92,7 +92,7 @@ export default function FoodAdd({ food, mealType, existingEntry, onClose, onDone
             </p>
           </div>
 
-          {food.category === 'Мої страви' && (
+          {food.category === 'My Meals' && (
             <button
               onClick={() => {
                 setEditingRecipe(food);

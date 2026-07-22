@@ -106,7 +106,7 @@ export default function ExerciseLogger({ onClose, editEntry }: ExerciseLoggerPro
                     <div className="flex-1">
                       <p className="font-medium">{act.name}</p>
                       <p className="text-xs text-muted-foreground">
-                        {Math.round((act.kcalPerUnit > 0 ? act.kcalPerUnit : (act.met * 3.5 * profile.weightKg) / 200) * 100) / 100} kcal/{act.metricLabel} · MET {act.met}
+                        {Math.round((act.kcalPerUnit > 0 ? act.kcalPerUnit : (act.met * 3.5 * profile.weightKg) / 200) * 10) / 10} kcal/{act.metricLabel} · MET {act.met}
                       </p>
                     </div>
                     <ChevronLeft className="w-4 h-4 text-muted-foreground -rotate-180" />
@@ -128,7 +128,7 @@ export default function ExerciseLogger({ onClose, editEntry }: ExerciseLoggerPro
               <div>
                 <h2 className="text-xl font-bold">{activity?.name}</h2>
                 <p className="text-xs text-muted-foreground">
-                  {Math.round((activity?.kcalPerUnit || (activity ? (activity.met * 3.5 * profile.weightKg) / 200 : 0)) * 100) / 100} kcal per {activity?.metricLabel} · MET{' '}
+                  {Math.round((activity?.kcalPerUnit || (activity ? (activity.met * 3.5 * profile.weightKg) / 200 : 0)) * 10) / 10} kcal per {activity?.metricLabel} · MET{' '}
                   {activity?.met}
                 </p>
               </div>
@@ -147,11 +147,24 @@ export default function ExerciseLogger({ onClose, editEntry }: ExerciseLoggerPro
               </label>
               <div className="relative">
                 <input
-                  type="number"
-                  min="0"
+                  type="text"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
                   onKeyDown={(e) => ['-', 'e', 'E', '+'].includes(e.key) && e.preventDefault()}
                   value={metric}
-                  onChange={(e) => setMetric(e.target.value)}
+                  onChange={(e) => {
+                    let val = e.target.value;
+                    if (val !== "") {
+                      val = val.replace(/^0+(?=\d)/, '');
+                      const num = Number(val);
+                      const label = activity?.metricLabel?.toLowerCase() || '';
+                      if (label.includes('min') && num > 1440) val = "1440";
+                      else if (label === 'reps' && num > 10000) val = "10000";
+                      else if (label === 'steps' && num > 100000) val = "100000";
+                      else if (num > 100000) val = "100000"; // Fallback cap
+                    }
+                    setMetric(val);
+                  }}
                   placeholder="0"
                   autoFocus
                   className="w-full h-16 bg-card border border-border rounded-xl text-3xl font-bold text-center text-foreground outline-none focus:ring-2 focus:ring-primary/50"

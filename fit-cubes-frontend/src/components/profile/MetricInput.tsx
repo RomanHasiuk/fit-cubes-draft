@@ -5,12 +5,8 @@ import InfoTooltip from '@/components/InfoTooltip.tsx';
 interface MetricInputProps {
   label: string;
   value: number | string;
-
-  // OPTION 1: Simple onKeyDown block (ACTIVE)
   onChange: (value: number) => void;
-
-  // OPTION 2: Controlled Input with Regex (COMMENTED OUT)
-  // onChange: (value: string) => void;
+  onBlur?: () => void;
   tooltipTitle: string;
   tooltipContent: string;
   step?: string;
@@ -22,17 +18,12 @@ export const MetricInput: React.FC<MetricInputProps> = ({
   label,
   value,
   onChange,
+  onBlur,
   tooltipTitle,
   tooltipContent,
   step = "1",
   align = 'center'
 }) => {
-  // ==========================================
-  // OPTION 1: Simple onKeyDown block (ACTIVE)
-  // Pros: Less code, simple.
-  // Cons: Relies on browser's "number" input quirks.
-  // ==========================================
-  
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     const allowDecimals = step.includes('.');
     
@@ -67,6 +58,7 @@ export const MetricInput: React.FC<MetricInputProps> = ({
         value={value === 0 ? '' : value}
         onKeyDown={handleKeyDown}
         onChange={handleChangeOpt1}
+        onBlur={onBlur}
         className="w-full h-11 bg-secondary/50 border border-white/5 rounded-xl px-2 text-center text-sm font-medium focus:ring-2 focus:ring-primary/50 outline-none transition-all"
       />
     </div>

@@ -24,7 +24,7 @@ interface FoodSearchProps {
 }
 
 const SORT_OPTIONS = [
-  { key: "favorites", label: "Favorites / Frequent" },
+  { key: "usage", label: "Most Used" },
   { key: "name", label: "By name" },
   { key: "calories", label: "Calories" },
   { key: "proteinRatio", label: "Protein density (P/kcal)" },
@@ -50,7 +50,7 @@ export default function FoodSearch({
   const [foodToDelete, setFoodToDelete] = useState<FoodItem | null>(null);
   const [query, setQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All");
-  const [sortBy, setSortBy] = useState<SortKey>("name");
+  const [sortBy, setSortBy] = useState<SortKey>("usage");
   const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
 
   const usageCounts = useMemo(() => {
@@ -74,7 +74,7 @@ export default function FoodSearch({
   const uniqueCategories = useMemo(() => {
     const cats = new Set(products.map((p) => p.category));
     customCategories.forEach((cat) => cats.add(cat));
-    return ["All", ...Array.from(cats)];
+    return ["All", "Favorites", ...Array.from(cats)];
   }, [products, customCategories]);
 
   const filteredFoods = useMemo(() => {
@@ -89,7 +89,9 @@ export default function FoodSearch({
       );
     }
 
-    if (selectedCategory !== "All") {
+    if (selectedCategory === "Favorites") {
+      foods = foods.filter((f) => favoriteProductIds.includes(f.id));
+    } else if (selectedCategory !== "All") {
       foods = foods.filter((f) => f.category === selectedCategory);
     }
 
@@ -120,16 +122,11 @@ export default function FoodSearch({
           valA = a.carbsPer100g;
           valB = b.carbsPer100g;
           break;
-        case "favorites": {
-          const favA = favoriteProductIds.includes(a.id) ? 1 : 0;
-          const favB = favoriteProductIds.includes(b.id) ? 1 : 0;
-          if (favA !== favB) {
-            return sortDirection === "asc" ? favB - favA : favA - favB;
-          }
+        case "usage": {
           const countA = usageCounts[a.id] || 0;
           const countB = usageCounts[b.id] || 0;
           if (countA !== countB) {
-            return sortDirection === "asc" ? countB - countA : countA - countB;
+            return countB - countA;
           }
           valA = a.name.toLowerCase();
           valB = b.name.toLowerCase();
@@ -313,16 +310,18 @@ export default function FoodSearch({
         </div>
 
         {/* Sort Direction Toggle */}
-        <button
-          onClick={() =>
-            setSortDirection((prev) => (prev === "asc" ? "desc" : "asc"))
-          }
-          className="shrink-0 w-8 h-8 flex items-center justify-center bg-primary/10 text-primary rounded-xl hover:bg-primary/20 transition-colors"
-        >
-          <ArrowDown
-            className={`w-4 h-4 transition-transform duration-300 ${sortDirection === "desc" ? "rotate-180" : ""}`}
-          />
-        </button>
+        {sortBy !== "usage" && (
+          <button
+            onClick={() =>
+              setSortDirection((prev) => (prev === "asc" ? "desc" : "asc"))
+            }
+            className="shrink-0 w-8 h-8 flex items-center justify-center bg-primary/10 text-primary rounded-xl hover:bg-primary/20 transition-colors"
+          >
+            <ArrowDown
+              className={`w-4 h-4 transition-transform duration-300 ${sortDirection === "desc" ? "rotate-180" : ""}`}
+            />
+          </button>
+        )}
       </div>
 
       {/* Dropdown Overlay (to close menus when clicking outside) */}
@@ -347,8 +346,8 @@ export default function FoodSearch({
           ) : (
             filteredFoods.map((food, idx) => {
               const isCustom =
-                food.category === "Мої страви" ||
-                food.category === "Мої рецепти" ||
+                food.category === "My Meals" ||
+                food.category === "My Recipes" ||
                 customCategories.includes(food.category);
               return (
                 <motion.div

@@ -15,8 +15,6 @@ export function calculateTDEE(profile: UserProfile): number {
 export function formatLargeNumber(value: number): string {
   if (!isFinite(value) || isNaN(value)) return '0';
   const absValue = Math.abs(value);
-  const sign = value < 0 ? '-' : '';
-  if (absValue > 9999999) return `${sign}999M+`;
   if (absValue >= 10000) {
     return new Intl.NumberFormat('en-US', { notation: 'compact', maximumFractionDigits: 1 }).format(value);
   }

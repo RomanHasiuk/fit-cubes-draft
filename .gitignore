@@ -1,3 +1,30 @@
+# Environment & Secrets
+.env
+*.env
+.env.*
+!.env.sample
+
+# Maven & Java Builds
+target/
+*.class
+*.jar
+*.war
+*.ear
+!.mvn/wrapper/maven-wrapper.jar
+
+# IDEs
+.idea/
+*.iml
+*.ipr
+*.iws
+.settings/
+.classpath
+.project
+
+# Database & Redis Dumps
+*.dump
+*.rdb
+
 # Logs
 logs
 *.log

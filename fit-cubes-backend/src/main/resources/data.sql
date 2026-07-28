@@ -1,0 +1,2 @@
+INSERT INTO roles (id, role_name) VALUES (1, 'USER') ON CONFLICT DO NOTHING;
+INSERT INTO roles (id, role_name) VALUES (2, 'ADMIN') ON CONFLICT DO NOTHING;

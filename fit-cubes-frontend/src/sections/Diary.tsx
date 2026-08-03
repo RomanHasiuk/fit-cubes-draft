@@ -1,21 +1,17 @@
-import { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import {
-  ChevronLeft,
-  ChevronRight,
-  Plus,
-  Trash2,
-  UtensilsCrossed,
-  Dumbbell,
-} from 'lucide-react';
-import { useStore } from '@/store/useStore.ts';
-import { useModalOpen } from '@/hooks/useModalOpen.ts';
-import { addDays, getRelativeDateLabel, formatLargeNumber } from '@/utils/calculations.ts';
-import FoodSearch from './FoodSearch.tsx';
-import FoodAdd from './FoodAdd.tsx';
-import ExerciseLogger from './ExerciseLogger.tsx';
-import type { FoodItem, FoodEntry, ExerciseEntry } from '@/types';
+import { useStore } from '@/store/useStore';
+import { useModalOpen } from '@/hooks/useModalOpen';
+import { addDays } from '@/utils/calculations';
 import { MEAL_TYPE_OPTIONS } from '@/constants';
+import { DiaryDateNav } from '@/components/diary/DiaryDateNav';
+import { MealSection } from '@/components/diary/MealSection';
+import { ExerciseSection } from '@/components/diary/ExerciseSection';
+import { ConfirmModal } from '@/components/ui/ConfirmModal';
+import FoodSearch from './FoodSearch';
+import FoodAdd from './FoodAdd';
+import ExerciseLogger from './ExerciseLogger';
+import type { FoodItem, FoodEntry, ExerciseEntry } from '@/types';
 
 export default function Diary() {
   const selectedDate = useStore((state) => state.selectedDate);
@@ -26,18 +22,22 @@ export default function Diary() {
   const removeExerciseEntry = useStore((state) => state.removeExerciseEntry);
   const pendingFoodLog = useStore((state) => state.pendingFoodLog);
   const setPendingFoodLog = useStore((state) => state.setPendingFoodLog);
+
   const [showFoodSearch, setShowFoodSearch] = useState(false);
   const [selectedMeal, setSelectedMeal] = useState<string>('');
   const [showExercise, setShowExercise] = useState(false);
-  const [directFoodAdd, setDirectFoodAdd] = useState<{ food: FoodItem; mealType: string; existingEntry?: FoodEntry } | null>(null);
+  const [directFoodAdd, setDirectFoodAdd] = useState<{
+    food: FoodItem;
+    mealType: string;
+    existingEntry?: FoodEntry;
+  } | null>(null);
   const [entryToDelete, setEntryToDelete] = useState<FoodEntry | null>(null);
   const [editExercise, setEditExercise] = useState<ExerciseEntry | null>(null);
 
-  // Register modals with global counter to block swipe navigation in App
+  // Register full-screen modal overlays to block navigation swipe gestures
   useModalOpen(showFoodSearch);
   useModalOpen(showExercise);
   useModalOpen(!!directFoodAdd);
-  useModalOpen(!!entryToDelete);
 
   useEffect(() => {
     if (pendingFoodLog) {
@@ -72,177 +72,75 @@ export default function Diary() {
   };
 
   const handleEditEntry = (entry: FoodEntry) => {
-    let originalProduct = products.find(p => p.id === entry.foodItemId);
-    
+    let originalProduct = products.find((p) => p.id === entry.foodItemId);
+
     if (!originalProduct) {
-      // Fallback for custom recipes or older legacy entries
-      originalProduct = products.find(p => p.name === entry.name);
-      
+      // Fallback for custom recipes or legacy entries
+      originalProduct = products.find((p) => p.name === entry.name);
+
       if (!originalProduct) {
-         // Create a temporary FoodItem from entry macros
-         const factor = entry.weightGrams > 0 ? 100 / entry.weightGrams : 1;
+        // Construct a temporary FoodItem from entry macros
+        const factor = entry.weightGrams > 0 ? 100 / entry.weightGrams : 1;
         originalProduct = {
-           id: entry.foodItemId || `temp_${entry.name}_${entry.weightGrams}`,
-           name: entry.name,
-           category: 'Recovered product',
-           caloriesPer100g: entry.calories * factor,
-           proteinPer100g: entry.protein * factor,
-           carbsPer100g: entry.carbs * factor,
-           fatsPer100g: entry.fats * factor,
-         };
+          id: entry.foodItemId || `temp_${entry.name}_${entry.weightGrams}`,
+          name: entry.name,
+          category: 'Recovered product',
+          caloriesPer100g: entry.calories * factor,
+          proteinPer100g: entry.protein * factor,
+          carbsPer100g: entry.carbs * factor,
+          fatsPer100g: entry.fats * factor,
+        };
       }
     }
-    setDirectFoodAdd({ food: originalProduct, mealType: entry.mealType, existingEntry: entry });
+    setDirectFoodAdd({
+      food: originalProduct,
+      mealType: entry.mealType,
+      existingEntry: entry,
+    });
   };
 
   return (
     <div className="flex flex-col h-full">
       {/* Date Navigation */}
-      <div className="shrink-0 flex items-center justify-between px-5 pt-6 pb-4 border-b border-white/5">
-        <button
-          onClick={() => setSelectedDate(addDays(selectedDate, -1))}
-          className="p-2 rounded-xl hover:bg-secondary/50 transition-colors"
-        >
-          <ChevronLeft className="w-5 h-5" />
-        </button>
-        <div className="text-center">
-          <p className="text-lg font-bold">{getRelativeDateLabel(selectedDate)}</p>
-          <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider">
-            {formatLargeNumber(totals.calories)} kcal in · {formatLargeNumber(totals.exercise)} kcal out
-          </p>
-        </div>
-        <button
-          onClick={() => setSelectedDate(addDays(selectedDate, 1))}
-          className="p-2 rounded-xl hover:bg-secondary/50 transition-colors"
-        >
-          <ChevronRight className="w-5 h-5" />
-        </button>
-      </div>
+      <DiaryDateNav
+        selectedDate={selectedDate}
+        caloriesIn={totals.calories}
+        caloriesOut={totals.exercise}
+        onPrevDay={() => setSelectedDate(addDays(selectedDate, -1))}
+        onNextDay={() => setSelectedDate(addDays(selectedDate, 1))}
+      />
 
       {/* Content */}
       <div className="flex-1 px-5 py-4 space-y-4">
         {/* Meals */}
         {MEAL_TYPE_OPTIONS.map((meal) => (
-          <div key={meal.key} className="glass-card rounded-2xl overflow-hidden">
-            <div className="flex items-center justify-between px-4 py-3.5 bg-white/5">
-              <div className="flex items-center gap-2">
-                <UtensilsCrossed className="w-4 h-4 text-primary" />
-                <span className="font-bold text-sm tracking-tight">{meal.label}</span>
-              </div>
-              <button
-                onClick={() => handleAddFood(meal.key)}
-                className="p-1.5 rounded-lg bg-primary/20 text-primary hover:scale-110 active:scale-95 transition-all"
-              >
-                <Plus className="w-4 h-4" />
-              </button>
-            </div>
-
-            <div className="divide-y divide-white/5">
-              <AnimatePresence>
-                {getMealEntries(meal.key).map((entry) => (
-                  <motion.div
-                    key={entry.id}
-                    initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: 'auto' }}
-                    exit={{ opacity: 0, height: 0 }}
-                    className="flex items-center justify-between px-4 py-3 hover:bg-white/5 transition-colors cursor-pointer"
-                    onClick={() => handleEditEntry(entry)}
-                  >
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium truncate">{entry.name}</p>
-                      <p className="text-[10px] text-muted-foreground uppercase font-medium">
-                        {formatLargeNumber(entry.weightGrams)}g · P:{formatLargeNumber(entry.protein)}g
-                        C:{formatLargeNumber(entry.carbs)}g F:{formatLargeNumber(entry.fats)}g
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <span className="text-sm font-bold">{formatLargeNumber(entry.calories)}</span>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setEntryToDelete(entry);
-                        }}
-                        className="p-1.5 text-muted-foreground hover:text-destructive transition-colors"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
-                  </motion.div>
-                ))}
-              </AnimatePresence>
-            </div>
-
-            {getMealEntries(meal.key).length > 0 && (
-              <div className="px-4 py-2 bg-black/5 dark:bg-white/5 text-right">
-                <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
-                  Total: {formatLargeNumber(
-                    getMealEntries(meal.key).reduce((a, e) => a + e.calories, 0)
-                  )}{' '}
-                  kcal
-                </span>
-              </div>
-            )}
-          </div>
+          <MealSection
+            key={meal.key}
+            mealKey={meal.key}
+            mealLabel={meal.label}
+            entries={getMealEntries(meal.key)}
+            onAddFood={handleAddFood}
+            onEditEntry={handleEditEntry}
+            onDeleteEntry={setEntryToDelete}
+          />
         ))}
 
         {/* Exercise Section */}
-        <div className="glass-card rounded-2xl overflow-hidden">
-          <div className="flex items-center justify-between px-4 py-3.5 bg-white/5">
-            <div className="flex items-center gap-2">
-              <Dumbbell className="w-4 h-4 text-primary" />
-              <span className="font-bold text-sm tracking-tight">Exercise</span>
-            </div>
-            <button
-              onClick={() => setShowExercise(true)}
-              className="p-1.5 rounded-lg bg-primary/20 text-primary hover:scale-110 active:scale-95 transition-all"
-            >
-              <Plus className="w-4 h-4" />
-            </button>
-          </div>
-
-                  <div className="divide-y divide-white/5">
-            <AnimatePresence>
-              {dayLog?.exerciseEntries.map((entry: ExerciseEntry) => (
-                <motion.div
-                  key={entry.id}
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: 'auto' }}
-                  exit={{ opacity: 0, height: 0 }}
-                  className="flex items-center justify-between px-4 py-3 hover:bg-white/5 transition-colors cursor-pointer"
-                  onClick={() => {
-                    setEditExercise(entry);
-                    setShowExercise(true);
-                  }}
-                >
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium">{entry.activityType}</p>
-                    <p className="text-[10px] text-muted-foreground uppercase font-medium">
-                      {formatLargeNumber(entry.metric)} {entry.metricLabel}
-                      {entry.rpe ? ` · RPE ${entry.rpe}` : ''}
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <span className="text-sm font-bold text-primary">
-                      +{formatLargeNumber(entry.caloriesBurned)}
-                    </span>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        removeExerciseEntry(selectedDate, entry.id);
-                      }}
-                      className="p-1.5 text-muted-foreground hover:text-destructive transition-colors"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
-                </motion.div>
-              ))}
-            </AnimatePresence>
-          </div>
-        </div>
+        <ExerciseSection
+          entries={dayLog?.exerciseEntries || []}
+          onAddExercise={() => {
+            setEditExercise(null);
+            setShowExercise(true);
+          }}
+          onEditExercise={(entry) => {
+            setEditExercise(entry);
+            setShowExercise(true);
+          }}
+          onDeleteExercise={(id) => removeExerciseEntry(selectedDate, id)}
+        />
       </div>
 
-      {/* Modals */}
+      {/* Full-Screen Overlays */}
       <AnimatePresence>
         {showFoodSearch && (
           <motion.div
@@ -251,8 +149,8 @@ export default function Diary() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
           >
-            <motion.div 
-              className="w-full max-w-[500px] h-[90vh] md:h-[800px] glass rounded-t-[2.5rem] md:rounded-[2.5rem] overflow-hidden"
+            <motion.div
+              className="w-full max-w-[500px] h-[90vh] md:h-[800px] glass rounded-t-[2.5rem] md:rounded-[2.5rem] overflow-hidden bg-background"
               initial={{ y: '100%' }}
               animate={{ y: 0 }}
               exit={{ y: '100%' }}
@@ -265,9 +163,7 @@ export default function Diary() {
             </motion.div>
           </motion.div>
         )}
-      </AnimatePresence>
 
-      <AnimatePresence>
         {showExercise && (
           <motion.div
             className="fixed inset-0 z-[100] bg-background/40 backdrop-blur-3xl flex justify-center items-end md:items-center p-0 md:p-4"
@@ -275,26 +171,24 @@ export default function Diary() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
           >
-            <motion.div 
-              className="w-full max-w-[500px] h-[90vh] md:h-[800px] glass rounded-t-[2.5rem] md:rounded-[2.5rem] overflow-hidden"
+            <motion.div
+              className="w-full max-w-[500px] h-[90vh] md:h-[800px] glass rounded-t-[2.5rem] md:rounded-[2.5rem] overflow-hidden bg-background"
               initial={{ y: '100%' }}
               animate={{ y: 0 }}
               exit={{ y: '100%' }}
               transition={{ type: 'spring', damping: 30, stiffness: 300 }}
             >
-              <ExerciseLogger 
+              <ExerciseLogger
                 onClose={() => {
                   setShowExercise(false);
                   setEditExercise(null);
-                }} 
-                editEntry={editExercise || undefined} 
+                }}
+                editingEntry={editExercise || undefined}
               />
             </motion.div>
           </motion.div>
         )}
-      </AnimatePresence>
 
-      <AnimatePresence>
         {directFoodAdd && (
           <motion.div
             className="fixed inset-0 z-[100] bg-background/40 backdrop-blur-3xl flex justify-center items-end md:items-center p-0 md:p-4"
@@ -302,7 +196,7 @@ export default function Diary() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
           >
-            <motion.div 
+            <motion.div
               className="w-full max-w-[500px] h-[90vh] md:h-[800px] glass rounded-t-[2.5rem] md:rounded-[2.5rem] overflow-hidden bg-background"
               initial={{ y: '100%' }}
               animate={{ y: 0 }}
@@ -321,46 +215,27 @@ export default function Diary() {
         )}
       </AnimatePresence>
 
-      {/* Diary Deletion Confirmation Modal */}
-      <AnimatePresence>
-        {entryToDelete && (
-          <motion.div
-            className="fixed inset-0 z-[110] bg-background/80 backdrop-blur-sm flex items-center justify-center p-4"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-          >
-            <motion.div
-              className="glass border border-white/10 rounded-3xl p-6 w-full max-w-sm text-center shadow-2xl"
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.9, opacity: 0 }}
-            >
-              <h3 className="text-xl font-bold mb-2">Remove food?</h3>
-              <p className="text-sm text-muted-foreground mb-6">
-                Are you sure you want to remove <strong>"{entryToDelete.name}"</strong> from the diary?
-              </p>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => setEntryToDelete(null)}
-                  className="flex-1 py-3 rounded-xl font-bold text-sm bg-secondary text-foreground hover:bg-secondary/80 transition-colors"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={() => {
-                    removeFoodEntry(selectedDate, entryToDelete.id);
-                    setEntryToDelete(null);
-                  }}
-                  className="flex-1 py-3 rounded-xl font-bold text-sm bg-destructive text-destructive-foreground hover:bg-destructive/90 transition-colors"
-                >
-                  Remove
-                </button>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {/* Universal Deletion Confirmation Modal */}
+      <ConfirmModal
+        isOpen={!!entryToDelete}
+        title="Remove food?"
+        description={
+          entryToDelete && (
+            <>
+              Are you sure you want to remove <strong>"{entryToDelete.name}"</strong> from the diary?
+            </>
+          )
+        }
+        confirmText="Remove"
+        variant="destructive"
+        onConfirm={() => {
+          if (entryToDelete) {
+            removeFoodEntry(selectedDate, entryToDelete.id);
+            setEntryToDelete(null);
+          }
+        }}
+        onCancel={() => setEntryToDelete(null)}
+      />
     </div>
   );
 }

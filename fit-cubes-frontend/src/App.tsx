@@ -10,6 +10,7 @@ import ProfileScreen from "@/sections/ProfileScreen.tsx";
 import RecipeBuilder from "@/sections/RecipeBuilder.tsx";
 import Onboarding from "@/sections/Onboarding.tsx";
 import { useDataLoader } from "@/hooks/useDataLoader.ts";
+import { PageTransition } from "@/components/layout/PageTransition.tsx";
 
 const TABS = [
   { path: "/", label: "Home", icon: LayoutDashboard },
@@ -131,71 +132,41 @@ function App() {
               <Route
                 path="/"
                 element={
-                  <motion.div
-                    className="min-h-full"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    transition={{ duration: 0.2 }}
-                  >
+                  <PageTransition>
                     <Dashboard />
-                  </motion.div>
+                  </PageTransition>
                 }
               />
               <Route
                 path="/diary"
                 element={
-                  <motion.div
-                    className="min-h-full"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    transition={{ duration: 0.2 }}
-                  >
+                  <PageTransition>
                     <Diary />
-                  </motion.div>
+                  </PageTransition>
                 }
               />
               <Route
                 path="/kitchen"
                 element={
-                  <motion.div
-                    className="min-h-full"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    transition={{ duration: 0.2 }}
-                  >
+                  <PageTransition>
                     <RecipeBuilder />
-                  </motion.div>
+                  </PageTransition>
                 }
               />
               <Route
                 path="/progress"
                 element={
-                  <motion.div
-                    className="min-h-full"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    transition={{ duration: 0.2 }}
-                  >
+                  <PageTransition>
                     <ProgressScreen />
-                  </motion.div>
+                  </PageTransition>
                 }
               />
               <Route
                 path="/profile"
                 element={
-                  <motion.div
-                    className="min-h-full"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    transition={{ duration: 0.2 }}
-                  >
+                  <PageTransition>
                     <ProfileScreen />
-                  </motion.div>
+                  </PageTransition>
                 }
               />
               <Route path="*" element={<Navigate to="/" replace />} />

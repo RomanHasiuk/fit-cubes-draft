@@ -7,12 +7,18 @@ export interface UISlice {
   setTheme: (theme: 'light' | 'dark' | 'system') => void;
   pendingFoodLog: { food: FoodItem; mealType: string } | null;
   setPendingFoodLog: (log: { food: FoodItem; mealType: string } | null) => void;
+  openModalCount: number;
+  incrementOpenModals: () => void;
+  decrementOpenModals: () => void;
 }
 
 export const createUISlice: StateCreator<StoreState, [], [], UISlice> = (set) => ({
   theme: 'system',
   pendingFoodLog: null,
   setPendingFoodLog: (log) => set({ pendingFoodLog: log }),
+  openModalCount: 0,
+  incrementOpenModals: () => set((state) => ({ openModalCount: state.openModalCount + 1 })),
+  decrementOpenModals: () => set((state) => ({ openModalCount: Math.max(0, state.openModalCount - 1) })),
   setTheme: (theme) => {
     set({ theme });
     const root = window.document.documentElement;

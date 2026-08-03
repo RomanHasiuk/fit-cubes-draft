@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { LayoutDashboard, BookOpen, TrendingUp, User, UtensilsCrossed } from "lucide-react";
 import { Routes, Route, useNavigate, useLocation, Navigate } from "react-router";
@@ -19,9 +19,19 @@ const TABS = [
   { path: "/profile", label: "Profile", icon: User },
 ];
 
+const MIN_SWIPE_DISTANCE = 75;
+
+interface TouchCoordinates {
+  startX: number;
+  startY: number;
+  endX: number;
+  endY: number;
+}
+
 function App() {
   const isOnboarded = useStore(state => state.isOnboarded);
   const theme = useStore(state => state.theme);
+  const openModalCount = useStore(state => state.openModalCount);
   const [showOnboarding, setShowOnboarding] = useState(!isOnboarded);
   const [mounted, setMounted] = useState(false);
   const navigate = useNavigate();
@@ -29,36 +39,37 @@ function App() {
 
   useDataLoader();
 
-  const [touchStartX, setTouchStartX] = useState<number | null>(null);
-  const [touchStartY, setTouchStartY] = useState<number | null>(null);
-  const [touchEndX, setTouchEndX] = useState<number | null>(null);
-  const [touchEndY, setTouchEndY] = useState<number | null>(null);
-
-  const minSwipeDistance = 75;
+  const touchCoords = useRef<TouchCoordinates | null>(null);
 
   const onTouchStart = (e: React.TouchEvent) => {
-    setTouchEndX(null);
-    setTouchEndY(null);
-    setTouchStartX(e.targetTouches[0].clientX);
-    setTouchStartY(e.targetTouches[0].clientY);
+    const touch = e.targetTouches[0];
+    touchCoords.current = {
+      startX: touch.clientX,
+      startY: touch.clientY,
+      endX: touch.clientX,
+      endY: touch.clientY,
+    };
   };
 
   const onTouchMove = (e: React.TouchEvent) => {
-    setTouchEndX(e.targetTouches[0].clientX);
-    setTouchEndY(e.targetTouches[0].clientY);
+    if (touchCoords.current) {
+      touchCoords.current.endX = e.targetTouches[0].clientX;
+      touchCoords.current.endY = e.targetTouches[0].clientY;
+    }
   };
 
   const onTouchEnd = () => {
-    if (touchStartX === null || touchStartY === null || touchEndX === null || touchEndY === null) return;
-    
-    // Check if any modal is open to prevent switching tabs accidentally
-    const hasModal = !!document.querySelector('.z-\\[100\\], .z-\\[110\\]');
-    if (hasModal) return;
+    if (!touchCoords.current) return;
+    const { startX, startY, endX, endY } = touchCoords.current;
+    touchCoords.current = null;
 
-    const distanceX = touchStartX - touchEndX;
-    const distanceY = touchStartY - touchEndY;
+    // Block swipe navigation when any modal is open (declarative state from Zustand)
+    if (openModalCount > 0) return;
+
+    const distanceX = startX - endX;
+    const distanceY = startY - endY;
     const isHorizontalSwipe = Math.abs(distanceX) > Math.abs(distanceY);
-    const isSignificant = Math.abs(distanceX) > minSwipeDistance;
+    const isSignificant = Math.abs(distanceX) > MIN_SWIPE_DISTANCE;
 
     if (isHorizontalSwipe && isSignificant) {
       const currentIndex = TABS.findIndex((tab) => tab.path === location.pathname);

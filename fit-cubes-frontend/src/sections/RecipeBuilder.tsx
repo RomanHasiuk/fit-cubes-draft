@@ -13,6 +13,7 @@ import {
   Check,
 } from "lucide-react";
 import { useStore } from "@/store/useStore.ts";
+import { useModalOpen } from "@/hooks/useModalOpen.ts";
 import type { FoodItem } from "@/types";
 import InfoTooltip from "@/components/InfoTooltip.tsx";
 import FoodSearch from "./FoodSearch.tsx";
@@ -44,6 +45,12 @@ export default function RecipeBuilder() {
   const [showLoadRecipe, setShowLoadRecipe] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [ingredientToDelete, setIngredientToDelete] = useState<Ingredient | null>(null);
+
+  // Register modals with global counter to block swipe navigation in App
+  useModalOpen(showSearch);
+  useModalOpen(showLoadRecipe);
+  useModalOpen(showConfirm);
+  useModalOpen(!!ingredientToDelete);
 
   useEffect(() => {
     if (error) {

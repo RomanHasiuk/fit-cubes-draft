@@ -9,18 +9,13 @@ import {
   Dumbbell,
 } from 'lucide-react';
 import { useStore } from '@/store/useStore.ts';
+import { useModalOpen } from '@/hooks/useModalOpen.ts';
 import { addDays, getRelativeDateLabel, formatLargeNumber } from '@/utils/calculations.ts';
 import FoodSearch from './FoodSearch.tsx';
 import FoodAdd from './FoodAdd.tsx';
 import ExerciseLogger from './ExerciseLogger.tsx';
 import type { FoodItem, FoodEntry, ExerciseEntry } from '@/types';
-
-const MEAL_TYPES = [
-  { key: 'breakfast' as const, label: 'Breakfast' },
-  { key: 'lunch' as const, label: 'Lunch' },
-  { key: 'dinner' as const, label: 'Dinner' },
-  { key: 'snacks' as const, label: 'Snacks' },
-];
+import { MEAL_TYPE_OPTIONS } from '@/constants';
 
 export default function Diary() {
   const selectedDate = useStore((state) => state.selectedDate);
@@ -37,6 +32,12 @@ export default function Diary() {
   const [directFoodAdd, setDirectFoodAdd] = useState<{ food: FoodItem; mealType: string; existingEntry?: FoodEntry } | null>(null);
   const [entryToDelete, setEntryToDelete] = useState<FoodEntry | null>(null);
   const [editExercise, setEditExercise] = useState<ExerciseEntry | null>(null);
+
+  // Register modals with global counter to block swipe navigation in App
+  useModalOpen(showFoodSearch);
+  useModalOpen(showExercise);
+  useModalOpen(!!directFoodAdd);
+  useModalOpen(!!entryToDelete);
 
   useEffect(() => {
     if (pendingFoodLog) {
@@ -121,7 +122,7 @@ export default function Diary() {
       {/* Content */}
       <div className="flex-1 px-5 py-4 space-y-4">
         {/* Meals */}
-        {MEAL_TYPES.map((meal) => (
+        {MEAL_TYPE_OPTIONS.map((meal) => (
           <div key={meal.key} className="glass-card rounded-2xl overflow-hidden">
             <div className="flex items-center justify-between px-4 py-3.5 bg-white/5">
               <div className="flex items-center gap-2">

@@ -3,7 +3,21 @@ import { WelcomeStep } from './WelcomeStep';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronRight, ChevronLeft, AlertCircle } from 'lucide-react';
 import { useStore } from '@/store/useStore.ts';
-import { calculateBMR, calculateTDEE, generateMacroTargets, adjustMacrosForProtein, type DietType, type WeightGoal } from '@/utils/calculations.ts';
+import {
+  calculateBMR,
+  calculateTDEE,
+  calculateTargetCalories,
+  generateMacroTargets,
+  adjustMacrosForProtein,
+} from '@/utils/calculations.ts';
+import {
+  WEIGHT_GOAL,
+  DIET_TYPE,
+  WEIGHT_GOAL_OPTIONS,
+  DIET_TYPE_OPTIONS,
+  type DietType,
+  type WeightGoal,
+} from '@/constants';
 import InfoTooltip from '@/components/InfoTooltip.tsx';
 import { MetricInput } from '@/components/profile/MetricInput.tsx';
 import { OptionSelector } from '@/components/profile/OptionSelector.tsx';
@@ -28,8 +42,8 @@ export default function Onboarding({ onComplete }: OnboardingProps) {
   const updateProfile = useStore((state) => state.updateProfile);
   const completeOnboarding = useStore((state) => state.completeOnboarding);
   const [step, setStep] = useState(0);
-  const [goal, setGoal] = useState<WeightGoal>('maintain');
-  const [diet, setDiet] = useState<DietType>('balanced');
+  const [goal, setGoal] = useState<WeightGoal>(WEIGHT_GOAL.MAINTAIN);
+  const [diet, setDiet] = useState<DietType>(DIET_TYPE.BALANCED);
   const [error, setError] = useState<string | null>(null);
   const currentStep = STEPS[step];
 
@@ -123,7 +137,7 @@ export default function Onboarding({ onComplete }: OnboardingProps) {
   const bmr = calculateBMR(profile);
   const tdeeBase = calculateTDEE(profile);
 
-  const targetCalories = Math.round(goal === 'lose' ? tdeeBase * 0.85 : goal === 'gain' ? tdeeBase * 1.15 : tdeeBase);
+  const targetCalories = calculateTargetCalories(tdeeBase, goal);
 
   // Auto-update macro targets when goal or diet changes
   useEffect(() => {
@@ -284,10 +298,10 @@ export default function Onboarding({ onComplete }: OnboardingProps) {
                   <p className="text-3xl font-bold text-primary">{targetCalories} kcal</p>
                   <div className="flex items-center gap-2 mt-1">
                     <span className="text-xs px-1.5 py-0.5 bg-primary/20 rounded text-primary uppercase font-bold tracking-wider">
-                      {goal === 'lose' ? 'Loss' : goal === 'gain' ? 'Gain' : 'Maintain'}
+                      {goal === WEIGHT_GOAL.LOSE ? 'Loss' : goal === WEIGHT_GOAL.GAIN ? 'Gain' : 'Maintain'}
                     </span>
                     <span className="text-xs text-muted-foreground">
-                      BMR {Math.round(bmr)} × {profile.activityFactor} {goal !== 'maintain' && (goal === 'lose' ? '- 15%' : '+ 15%')}
+                      BMR {Math.round(bmr)} × {profile.activityFactor} {goal !== WEIGHT_GOAL.MAINTAIN && (goal === WEIGHT_GOAL.LOSE ? '- 15%' : '+ 15%')}
                     </span>
                   </div>
                 </div>
@@ -297,22 +311,14 @@ export default function Onboarding({ onComplete }: OnboardingProps) {
                     label="Goal"
                     selectedValue={goal}
                     onSelect={setGoal}
-                    options={[
-                      { id: 'lose', label: 'Loss', tip: 'Deficit: ~15% daily' },
-                      { id: 'maintain', label: 'Maintain', tip: 'Base level: no changes' },
-                      { id: 'gain', label: 'Gain', tip: 'Surplus: ~15% daily' }
-                    ]}
+                    options={WEIGHT_GOAL_OPTIONS}
                   />
 
                   <OptionSelector
                     label="Strategy"
                     selectedValue={diet}
                     onSelect={setDiet}
-                    options={[
-                      { id: 'balanced', label: 'Balanced', tip: 'Optimal macros' },
-                      { id: 'low-carb', label: 'Low-carb', tip: 'Fewer carbs' },
-                      { id: 'keto', label: 'Keto', tip: 'Max fats' }
-                    ]}
+                    options={DIET_TYPE_OPTIONS}
                   />
                 </div>
 

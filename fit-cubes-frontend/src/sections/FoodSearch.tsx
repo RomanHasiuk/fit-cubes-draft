@@ -1,6 +1,7 @@
 import { useState, useMemo } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useStore } from "@/store/useStore.ts";
+import { useModalOpen } from "@/hooks/useModalOpen.ts";
 import FoodAdd from "./FoodAdd.tsx";
 import FoodCreator from "./FoodCreator.tsx";
 import type { FoodItem } from "@/types";
@@ -48,6 +49,9 @@ export default function FoodSearch({
   const toggleFavorite = useStore((state) => state.toggleFavorite);
   const dailyLogs = useStore((state) => state.dailyLogs);
   const [foodToDelete, setFoodToDelete] = useState<FoodItem | null>(null);
+
+  // Register confirmation modal with global counter
+  useModalOpen(!!foodToDelete);
   const [query, setQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [sortBy, setSortBy] = useState<SortKey>("usage");

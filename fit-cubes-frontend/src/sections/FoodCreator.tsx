@@ -1,6 +1,7 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useStore } from "@/store/useStore";
+import { useModalOpen } from "@/hooks/useModalOpen";
 import { ChevronLeft, Plus, X, Check } from "lucide-react";
 import type { FoodItem } from "@/types";
 
@@ -17,23 +18,21 @@ export default function FoodCreator({ onClose, editingFood }: FoodCreatorProps) 
   const addCustomCategory = useStore((state) => state.addCustomCategory);
   
   const [name, setName] = useState(editingFood?.name || "");
-  const [calories, setCalories] = useState<number | "">(editingFood?.caloriesPer100g ?? "");
   const [protein, setProtein] = useState<number | "">(editingFood?.proteinPer100g ?? "");
   const [fats, setFats] = useState<number | "">(editingFood?.fatsPer100g ?? "");
   const [carbs, setCarbs] = useState<number | "">(editingFood?.carbsPer100g ?? "");
   
   const [showDuplicateWarning, setShowDuplicateWarning] = useState(false);
 
-  useEffect(() => {
-    const p = Number(protein) || 0;
-    const c = Number(carbs) || 0;
-    const f = Number(fats) || 0;
-    if (p > 0 || c > 0 || f > 0) {
-      setCalories(Math.round(p * 4 + c * 4 + f * 9));
-    } else if (p === 0 && c === 0 && f === 0 && calories !== "") {
-      setCalories("");
-    }
-  }, [protein, carbs, fats, calories]);
+  // Register confirmation modal with global counter
+  useModalOpen(showDuplicateWarning);
+
+  // Derived value — calories are a pure function of macros, not independent state
+  const p = Number(protein) || 0;
+  const c = Number(carbs) || 0;
+  const f = Number(fats) || 0;
+  const hasAnyMacro = p > 0 || c > 0 || f > 0;
+  const calories: number | "" = hasAnyMacro ? Math.round(p * 4 + c * 4 + f * 9) : "";
   
   const defaultCategories = ["My Meals"];
   const allCategories = [...defaultCategories, ...customCategories];

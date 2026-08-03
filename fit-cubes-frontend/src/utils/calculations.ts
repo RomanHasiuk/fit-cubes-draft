@@ -1,4 +1,12 @@
-import type { UserProfile, FoodItem, ActivityConstant } from '@/types';
+import type { UserProfile, FoodItem } from '@/types';
+import {
+  type ActivityConstant,
+  WEIGHT_GOAL,
+  DIET_TYPE,
+  CALORIE_ADJUSTMENT,
+  type DietType,
+  type WeightGoal,
+} from '@/constants';
 
 // 1. BMR - Mifflin-St Jeor
 export function calculateBMR(profile: UserProfile): number {
@@ -9,6 +17,17 @@ export function calculateBMR(profile: UserProfile): number {
 // 2. TDEE
 export function calculateTDEE(profile: UserProfile): number {
   return Math.round(calculateBMR(profile) * profile.activityFactor);
+}
+
+// Target Calories based on Goal & TDEE
+export function calculateTargetCalories(tdee: number, goal?: WeightGoal): number {
+  if (goal === WEIGHT_GOAL.LOSE) {
+    return Math.round(tdee * CALORIE_ADJUSTMENT.DEFICIT_FACTOR);
+  }
+  if (goal === WEIGHT_GOAL.GAIN) {
+    return Math.round(tdee * CALORIE_ADJUSTMENT.SURPLUS_FACTOR);
+  }
+  return Math.round(tdee);
 }
 
 // Format large numbers safely for UI (avoids layout breaking for huge test inputs)
@@ -179,8 +198,8 @@ export function getLast7Days(): string[] {
 }
 
 // 9. Macro Target Generator
-export type DietType = 'balanced' | 'low-carb' | 'keto';
-export type WeightGoal = 'lose' | 'maintain' | 'gain';
+// Re-export types so existing consumers don't break
+export type { DietType, WeightGoal };
 
 export function generateMacroTargets(
   targetCalories: number,
@@ -191,15 +210,15 @@ export function generateMacroTargets(
   // Protein is calculated based on weight and goal
   let proteinFactor = 1.8;
   
-  if (goal === 'lose') {
+  if (goal === WEIGHT_GOAL.LOSE) {
     // Higher protein to preserve muscle in a deficit
-    proteinFactor = dietType === 'balanced' ? 2.2 : 2.4;
-  } else if (goal === 'gain') {
+    proteinFactor = dietType === DIET_TYPE.BALANCED ? 2.2 : 2.4;
+  } else if (goal === WEIGHT_GOAL.GAIN) {
     // Carbs are protein-sparing in a surplus
-    proteinFactor = dietType === 'balanced' ? 2.0 : 2.2;
+    proteinFactor = dietType === DIET_TYPE.BALANCED ? 2.0 : 2.2;
   } else {
     // Maintain
-    proteinFactor = dietType === 'balanced' ? 1.8 : 2.0;
+    proteinFactor = dietType === DIET_TYPE.BALANCED ? 1.8 : 2.0;
   }
   
   let proteinGrams = Math.round(weightKg * proteinFactor);
@@ -216,9 +235,9 @@ export function generateMacroTargets(
   if (remainingCals < 0) remainingCals = 0;
 
   let cRatio = 4, fRatio = 3;
-  if (dietType === 'low-carb') {
+  if (dietType === DIET_TYPE.LOW_CARB) {
     cRatio = 1; fRatio = 2;
-  } else if (dietType === 'keto') {
+  } else if (dietType === DIET_TYPE.KETO) {
     cRatio = 1; fRatio = 11;
   }
 
@@ -247,9 +266,9 @@ export function adjustMacrosForProtein(
   // low-carb: carbs 20%, fats 40% -> ratio 1:2
   // keto: carbs 5%, fats 55% -> ratio 1:11
   let cRatio = 4, fRatio = 3;
-  if (dietType === 'low-carb') {
+  if (dietType === DIET_TYPE.LOW_CARB) {
     cRatio = 1; fRatio = 2;
-  } else if (dietType === 'keto') {
+  } else if (dietType === DIET_TYPE.KETO) {
     cRatio = 1; fRatio = 11;
   }
 

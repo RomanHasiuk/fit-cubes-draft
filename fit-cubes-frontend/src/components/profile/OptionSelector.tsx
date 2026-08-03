@@ -1,27 +1,26 @@
-import React from 'react';
 import InfoTooltip from '@/components/InfoTooltip.tsx';
 
-interface Option {
-  id: string;
+interface Option<T extends string = string> {
+  id: T;
   label: string;
   tip: string;
 }
 
-interface OptionSelectorProps {
+interface OptionSelectorProps<T extends string = string> {
   label?: string;
-  options: Option[];
-  selectedValue: string;
-  onSelect: (id: any) => void;
+  options: readonly Option<T>[] | ReadonlyArray<Option<T>>;
+  selectedValue: T | string;
+  onSelect: (id: T) => void;
   columns?: number;
 }
 
-export const OptionSelector: React.FC<OptionSelectorProps> = ({
+export function OptionSelector<T extends string>({
   label,
   options,
   selectedValue,
   onSelect,
-  columns = 3
-}) => {
+  columns = 3,
+}: OptionSelectorProps<T>) {
   return (
     <div className="w-full">
       {label && (
@@ -57,4 +56,4 @@ export const OptionSelector: React.FC<OptionSelectorProps> = ({
       </div>
     </div>
   );
-};
+}

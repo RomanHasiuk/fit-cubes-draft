@@ -10,7 +10,21 @@ import {
 } from 'lucide-react';
 
 import { useStore } from '@/store/useStore';
-import { calculateBMR, calculateTDEE, generateMacroTargets, adjustMacrosForProtein, clampValue, type DietType, type WeightGoal } from '@/utils/calculations';
+import { useModalOpen } from '@/hooks/useModalOpen';
+import {
+  calculateBMR,
+  calculateTDEE,
+  calculateTargetCalories,
+  generateMacroTargets,
+  adjustMacrosForProtein,
+  clampValue,
+} from '@/utils/calculations';
+import {
+  WEIGHT_GOAL_OPTIONS,
+  DIET_TYPE_OPTIONS,
+  type DietType,
+  type WeightGoal,
+} from '@/constants';
 import InfoTooltip from '@/components/InfoTooltip';
 import React, { useState, useEffect } from 'react';
 import { MetricInput } from '@/components/profile/MetricInput';
@@ -24,6 +38,9 @@ export default function ProfileScreen() {
   const updateProfile = useStore((state) => state.updateProfile);
   
   const [showResetConfirm, setShowResetConfirm] = useState(false);
+
+  // Register modal with global counter to block swipe navigation in App
+  useModalOpen(showResetConfirm);
 
   // Use a local draft for editing
   const [draft, setDraft] = useState(profile);
@@ -39,9 +56,7 @@ export default function ProfileScreen() {
 
   const bmr = Math.round(calculateBMR(draft));
   const tdeeBase = Math.round(calculateTDEE(draft));
-  const targetCalories = Math.round(
-    draft.goal === 'lose' ? tdeeBase * 0.85 : draft.goal === 'gain' ? tdeeBase * 1.15 : tdeeBase
-  );
+  const targetCalories = calculateTargetCalories(tdeeBase, draft.goal);
 
   // Sync macros when goal/diet changes
   const applyPreset = React.useCallback(
@@ -164,23 +179,15 @@ export default function ProfileScreen() {
             <OptionSelector
               label="Goal"
               selectedValue={draft.goal || ''}
-              onSelect={(val) => updateDraft({ goal: val as WeightGoal })}
-              options={[
-                { id: 'lose', label: 'Loss', tip: 'Deficit: ~15% daily' },
-                { id: 'maintain', label: 'Maintain', tip: 'Base level: no changes' },
-                { id: 'gain', label: 'Gain', tip: 'Surplus: ~15% daily. Requires adequate protein intake' }
-              ]}
+              onSelect={(val) => updateDraft({ goal: val })}
+              options={WEIGHT_GOAL_OPTIONS}
             />
 
             <OptionSelector
               label="Strategy"
               selectedValue={draft.diet || ''}
-              onSelect={(val) => updateDraft({ diet: val as DietType })}
-              options={[
-                { id: 'balanced', label: 'Balanced', tip: 'Optimal macronutrient ratio' },
-                { id: 'low-carb', label: 'Low-carb', tip: 'Reduced carbs in favor of protein and fats' },
-                { id: 'keto', label: 'Keto', tip: 'Minimum carbs, maximum fats' }
-              ]}
+              onSelect={(val) => updateDraft({ diet: val })}
+              options={DIET_TYPE_OPTIONS}
             />
           </div>
         </motion.div>

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { ChevronLeft, Plus, Search } from 'lucide-react';
 import { useStore } from '@/store/useStore';
 import { useFoodFilter } from '@/hooks/useFoodFilter';
@@ -32,7 +32,6 @@ export default function FoodSearch({
   const [isCreatingFood, setIsCreatingFood] = useState(false);
   const [editingFood, setEditingFood] = useState<FoodItem | null>(null);
 
-  // Business logic & filtering hook
   const {
     query,
     setQuery,

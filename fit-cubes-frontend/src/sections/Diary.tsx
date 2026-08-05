@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useStore } from '@/store/useStore';
 import { useModalOpen } from '@/hooks/useModalOpen';
@@ -34,7 +34,6 @@ export default function Diary() {
   const [entryToDelete, setEntryToDelete] = useState<FoodEntry | null>(null);
   const [editExercise, setEditExercise] = useState<ExerciseEntry | null>(null);
 
-  // Register full-screen modal overlays to block navigation swipe gestures
   useModalOpen(showFoodSearch);
   useModalOpen(showExercise);
   useModalOpen(!!directFoodAdd);
@@ -75,11 +74,9 @@ export default function Diary() {
     let originalProduct = products.find((p) => p.id === entry.foodItemId);
 
     if (!originalProduct) {
-      // Fallback for custom recipes or legacy entries
       originalProduct = products.find((p) => p.name === entry.name);
 
       if (!originalProduct) {
-        // Construct a temporary FoodItem from entry macros
         const factor = entry.weightGrams > 0 ? 100 / entry.weightGrams : 1;
         originalProduct = {
           id: entry.foodItemId || `temp_${entry.name}_${entry.weightGrams}`,
@@ -101,7 +98,6 @@ export default function Diary() {
 
   return (
     <div className="flex flex-col h-full">
-      {/* Date Navigation */}
       <DiaryDateNav
         selectedDate={selectedDate}
         caloriesIn={totals.calories}
@@ -110,9 +106,7 @@ export default function Diary() {
         onNextDay={() => setSelectedDate(addDays(selectedDate, 1))}
       />
 
-      {/* Content */}
       <div className="flex-1 px-5 py-4 space-y-4">
-        {/* Meals */}
         {MEAL_TYPE_OPTIONS.map((meal) => (
           <MealSection
             key={meal.key}
@@ -125,7 +119,6 @@ export default function Diary() {
           />
         ))}
 
-        {/* Exercise Section */}
         <ExerciseSection
           entries={dayLog?.exerciseEntries || []}
           onAddExercise={() => {
@@ -140,7 +133,7 @@ export default function Diary() {
         />
       </div>
 
-      {/* Full-Screen Overlays */}
+      {/* Modals */}
       <AnimatePresence>
         {showFoodSearch && (
           <motion.div
@@ -183,7 +176,7 @@ export default function Diary() {
                   setShowExercise(false);
                   setEditExercise(null);
                 }}
-                editingEntry={editExercise || undefined}
+                editEntry={editExercise || undefined}
               />
             </motion.div>
           </motion.div>

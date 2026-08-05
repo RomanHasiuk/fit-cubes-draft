@@ -12,10 +12,19 @@ dist
 dist-ssr
 *.local
 
+# Environment & Secrets
+.env
+.env.*
+!.env.example
+
+# Java / Maven (Backend)
+target/
+*.class
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
-../.idea
+.idea/
 .DS_Store
 *.suo
 *.ntvs*
@@ -27,3 +36,4 @@ dist-ssr
 FRONTEND_NOTES.md
 qa-tests.md
 fit-cubes-frontend/1/
+

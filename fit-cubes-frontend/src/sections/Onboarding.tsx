@@ -136,7 +136,6 @@ export default function Onboarding({ onComplete }: OnboardingProps) {
 
   const bmr = calculateBMR(profile);
   const tdeeBase = calculateTDEE(profile);
-
   const targetCalories = calculateTargetCalories(tdeeBase, goal);
 
   // Auto-update macro targets when goal or diet changes

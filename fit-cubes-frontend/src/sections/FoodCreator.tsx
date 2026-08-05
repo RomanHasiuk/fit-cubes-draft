@@ -24,10 +24,8 @@ export default function FoodCreator({ onClose, editingFood }: FoodCreatorProps) 
   
   const [showDuplicateWarning, setShowDuplicateWarning] = useState(false);
 
-  // Register confirmation modal with global counter
   useModalOpen(showDuplicateWarning);
 
-  // Derived value — calories are a pure function of macros, not independent state
   const p = Number(protein) || 0;
   const c = Number(carbs) || 0;
   const f = Number(fats) || 0;
@@ -41,7 +39,6 @@ export default function FoodCreator({ onClose, editingFood }: FoodCreatorProps) 
   const [newCategoryName, setNewCategoryName] = useState("");
   const [isCreatingCategory, setIsCreatingCategory] = useState(false);
 
-  // Dynamically include the selected category in the list even if it's not saved to the global store yet
   const displayedCategories = allCategories.includes(selectedCategory)
     ? allCategories
     : [selectedCategory, ...allCategories];
@@ -124,7 +121,6 @@ export default function FoodCreator({ onClose, editingFood }: FoodCreatorProps) 
             type="text"
             value={name}
             onChange={(e) => {
-              // \p{L} allows letters from ANY language (Polish, Chinese, Arabic, etc.)
               const val = e.target.value.replace(/[^0-9\p{L}\s.,'%-]/gu, '');
               setName(val);
             }}

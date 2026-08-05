@@ -46,7 +46,6 @@ export default function RecipeBuilder() {
   const [showConfirm, setShowConfirm] = useState(false);
   const [ingredientToDelete, setIngredientToDelete] = useState<Ingredient | null>(null);
 
-  // Register modals with global counter to block swipe navigation in App
   useModalOpen(showSearch);
   useModalOpen(showLoadRecipe);
   useModalOpen(showConfirm);
@@ -149,7 +148,6 @@ export default function RecipeBuilder() {
     );
   };
 
-  // Calculations
   const totals = useMemo(() => {
     return ingredients.reduce(
       (acc, curr) => {
@@ -211,7 +209,6 @@ export default function RecipeBuilder() {
         p.name.toLowerCase() === recipeName.toLowerCase().trim() &&
         p.id !== targetId,
     );
-    // Don't show duplicate error if we are saving as new because we will auto-rename it
     if (isDuplicate && !asNew) {
       setError("A recipe with this name already exists");
       return;
@@ -250,7 +247,6 @@ export default function RecipeBuilder() {
 
     const targetId =
       editingRecipeId && !asNew ? editingRecipeId : `custom_${Date.now()}`;
-    // Create new product
     const newProduct: FoodItem = {
       id: targetId,
       name: finalName,
@@ -281,7 +277,6 @@ export default function RecipeBuilder() {
       addProduct(newProduct);
     }
 
-    // Reset form
     setIngredients([]);
     setRecipeName("");
     setFinalWeight("");

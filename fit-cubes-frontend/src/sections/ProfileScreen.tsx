@@ -39,13 +39,10 @@ export default function ProfileScreen() {
   
   const [showResetConfirm, setShowResetConfirm] = useState(false);
 
-  // Register modal with global counter to block swipe navigation in App
   useModalOpen(showResetConfirm);
 
-  // Use a local draft for editing
   const [draft, setDraft] = useState(profile);
 
-  // Sync draft when profile changes externally (like after Reset)
   useEffect(() => {
     setDraft(profile);
   }, [profile]);
@@ -58,7 +55,6 @@ export default function ProfileScreen() {
   const tdeeBase = Math.round(calculateTDEE(draft));
   const targetCalories = calculateTargetCalories(tdeeBase, draft.goal);
 
-  // Sync macros when goal/diet changes
   const applyPreset = React.useCallback(
     (currentDiet: DietType, currentGoal: WeightGoal) => {
       const macros = generateMacroTargets(targetCalories, currentDiet, draft.weightKg || 0, currentGoal);
@@ -88,12 +84,9 @@ export default function ProfileScreen() {
       applyPreset(draft.diet as DietType, draft.goal as WeightGoal);
       prevDeps.current = { goal: draft.goal as WeightGoal, diet: draft.diet as DietType, tdeeBase };
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [draft.goal, draft.diet, tdeeBase]);
+  }, [draft.goal, draft.diet, tdeeBase, applyPreset]);
 
   const hasChanges = JSON.stringify(profile) !== JSON.stringify(draft);
-
-
 
   return (
     <div className="flex flex-col h-full">

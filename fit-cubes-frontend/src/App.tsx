@@ -11,6 +11,7 @@ import RecipeBuilder from "@/sections/RecipeBuilder.tsx";
 import Onboarding from "@/sections/Onboarding.tsx";
 import { useDataLoader } from "@/hooks/useDataLoader.ts";
 import { PageTransition } from "@/components/layout/PageTransition.tsx";
+import { PageLoader } from "@/components/ui/PageLoader.tsx";
 
 const TABS = [
   { path: "/", label: "Home", icon: LayoutDashboard },
@@ -107,7 +108,9 @@ function App() {
     }
   }, [theme]);
 
-  if (!mounted) return null;
+  if (!mounted) {
+    return <PageLoader text="Завантаження FitCubes..." />;
+  }
 
   if (showOnboarding) {
     return <Onboarding onComplete={() => {

@@ -1,13 +1,25 @@
-import { useMemo } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Flame, Footprints, TrendingDown, Beef, Wheat as WheatIcon, Droplets } from 'lucide-react';
 import { useStore } from '@/store/useStore.ts';
 import { calculateTDEE, calculateNetDeficit, getRelativeDateLabel, formatLargeNumber } from '@/utils/calculations.ts';
+import { DashboardSkeleton } from '@/components/dashboard/DashboardSkeleton';
 
 export default function Dashboard() {
   const profile = useStore((state) => state.profile);
   const dailyLogs = useStore((state) => state.dailyLogs);
   const selectedDate = useStore((state) => state.selectedDate);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Simulated Database API Fetch delay (1500ms) on date change
+  useEffect(() => {
+    setIsLoading(true);
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 1500);
+    return () => clearTimeout(timer);
+  }, [selectedDate]);
+
   const tdee = useMemo(() => calculateTDEE(profile), [profile]);
   const dayLog = useMemo(
     () => dailyLogs.find((l) => l.date === selectedDate),
@@ -45,6 +57,10 @@ export default function Dashboard() {
   const proteinPct = Math.min(100, (totals.protein / (macroTargets.protein || 1)) * 100 || 0);
   const carbsPct = Math.min(100, (totals.carbs / (macroTargets.carbs || 1)) * 100 || 0);
   const fatsPct = Math.min(100, (totals.fats / (macroTargets.fats || 1)) * 100 || 0);
+
+  if (isLoading) {
+    return <DashboardSkeleton />;
+  }
 
   return (
     <div className="flex flex-col h-full">

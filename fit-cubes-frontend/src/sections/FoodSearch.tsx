@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { ChevronLeft, Plus, Search } from 'lucide-react';
 import { useStore } from '@/store/useStore';
 import { useFoodFilter } from '@/hooks/useFoodFilter';
@@ -7,6 +7,7 @@ import { FoodItemCard } from '@/components/food/FoodItemCard';
 import { ConfirmModal } from '@/components/ui/ConfirmModal';
 import FoodAdd from './FoodAdd';
 import FoodCreator from './FoodCreator';
+import { FoodItemCardSkeleton } from '@/components/food/FoodItemCardSkeleton';
 import type { FoodItem } from '@/types';
 
 interface FoodSearchProps {
@@ -31,6 +32,7 @@ export default function FoodSearch({
   const [selectedFood, setSelectedFood] = useState<FoodItem | null>(null);
   const [isCreatingFood, setIsCreatingFood] = useState(false);
   const [editingFood, setEditingFood] = useState<FoodItem | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   const {
     query,
@@ -50,6 +52,15 @@ export default function FoodSearch({
     customCategories,
     favoriteProductIds,
   });
+
+  // Simulated Database API Fetch delay (1500ms)
+  useEffect(() => {
+    setIsLoading(true);
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 1500);
+    return () => clearTimeout(timer);
+  }, [query, selectedCategory]);
 
   const handleSelect = (food: FoodItem) => {
     if (onSelect) {
@@ -126,7 +137,9 @@ export default function FoodSearch({
       {/* Food List */}
       <div className="flex-1 overflow-y-auto no-scrollbar px-4 pt-2">
         <div className="pb-6">
-          {filteredFoods.length === 0 ? (
+          {isLoading ? (
+            <FoodItemCardSkeleton count={5} />
+          ) : filteredFoods.length === 0 ? (
             <div className="text-center py-12">
               <Search className="w-8 h-8 mx-auto text-muted-foreground mb-2" />
               <p className="text-sm text-muted-foreground">No foods found</p>

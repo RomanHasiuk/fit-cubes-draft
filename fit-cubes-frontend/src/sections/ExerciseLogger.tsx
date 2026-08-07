@@ -1,10 +1,11 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { ChevronLeft, Check, Dumbbell, Footprints, Timer, Flame } from 'lucide-react';
 import { useStore } from '@/store/useStore.ts';
 import { calculateExerciseCalories } from '@/utils/calculations.ts';
 import type { ExerciseEntry } from '@/types';
 import InfoTooltip from '@/components/InfoTooltip.tsx';
+import FoodItemCardSkeleton from '@/components/food/FoodItemCardSkeleton';
 
 interface ExerciseLoggerProps {
   onClose: () => void;
@@ -28,6 +29,16 @@ export default function ExerciseLogger({ onClose, editEntry }: ExerciseLoggerPro
   const [selectedActivity, setSelectedActivity] = useState<string | null>(editEntry?.activityType || null);
   const [metric, setMetric] = useState(editEntry ? String(editEntry.metric) : '');
   const [rpe, setRpe] = useState<number>(editEntry?.rpe || 5);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Simulated Database API Fetch delay (1500ms)
+  useEffect(() => {
+    setIsLoading(true);
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 1500);
+    return () => clearTimeout(timer);
+  }, []);
 
   const profile = useStore((state) => state.profile);
   const activity = activities.find((a) => a.name === selectedActivity);
@@ -89,30 +100,34 @@ export default function ExerciseLogger({ onClose, editEntry }: ExerciseLoggerPro
           <>
             <h2 className="text-xl font-bold mb-4">Log Exercise</h2>
             <div className="space-y-2">
-              {activities.map((act, idx) => {
-                const Icon = ICONS[act.name] || Dumbbell;
-                return (
-                  <motion.button
-                    key={act.name}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: idx * 0.05 }}
-                    onClick={() => setSelectedActivity(act.name)}
-                    className="w-full flex items-center gap-4 p-4 bg-card rounded-xl border border-border text-left active:bg-secondary/50 transition-colors"
-                  >
-                    <div className="w-10 h-10 rounded-full bg-primary/15 flex items-center justify-center">
-                      <Icon className="w-5 h-5 text-primary" />
-                    </div>
-                    <div className="flex-1">
-                      <p className="font-medium">{act.name}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {Math.round((act.kcalPerUnit > 0 ? act.kcalPerUnit : (act.met * 3.5 * profile.weightKg) / 200) * 10) / 10} kcal/{act.metricLabel} · MET {act.met}
-                      </p>
-                    </div>
-                    <ChevronLeft className="w-4 h-4 text-muted-foreground -rotate-180" />
-                  </motion.button>
-                );
-              })}
+              {isLoading ? (
+                <FoodItemCardSkeleton variant='exercise' count={6} />
+              ) : (
+                activities.map((act, idx) => {
+                  const Icon = ICONS[act.name] || Dumbbell;
+                  return (
+                    <motion.button
+                      key={act.name}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: idx * 0.05 }}
+                      onClick={() => setSelectedActivity(act.name)}
+                      className="w-full flex items-center gap-4 p-4 bg-card rounded-xl border border-border text-left active:bg-secondary/50 transition-colors"
+                    >
+                      <div className="w-10 h-10 rounded-full bg-primary/15 flex items-center justify-center">
+                        <Icon className="w-5 h-5 text-primary" />
+                      </div>
+                      <div className="flex-1">
+                        <p className="font-medium">{act.name}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {Math.round((act.kcalPerUnit > 0 ? act.kcalPerUnit : (act.met * 3.5 * profile.weightKg) / 200) * 10) / 10} kcal/{act.metricLabel} · MET {act.met}
+                        </p>
+                      </div>
+                      <ChevronLeft className="w-4 h-4 text-muted-foreground -rotate-180" />
+                    </motion.button>
+                  );
+                })
+              )}
             </div>
           </>
         ) : (

@@ -686,7 +686,7 @@ export default function RecipeBuilder() {
       <AnimatePresence>
         {showLoadRecipe && (
           <motion.div
-            className="fixed inset-0 z-[100] bg-background/40 backdrop-blur-3xl flex justify-center items-end md:items-center p-0 md:p-4"
+            className="fixed inset-0 z-[100] bg-black/60 dark:bg-black/80 backdrop-blur-sm flex justify-center items-end md:items-center p-0 md:p-4"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}

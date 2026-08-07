@@ -6,6 +6,7 @@ import { addDays } from '@/utils/calculations';
 import { MEAL_TYPE_OPTIONS } from '@/constants';
 import { DiaryDateNav } from '@/components/diary/DiaryDateNav';
 import { MealSection } from '@/components/diary/MealSection';
+import { MealSectionSkeleton } from '@/components/diary/MealSectionSkeleton';
 import { ExerciseSection } from '@/components/diary/ExerciseSection';
 import { ConfirmModal } from '@/components/ui/ConfirmModal';
 import FoodSearch from './FoodSearch';
@@ -33,10 +34,20 @@ export default function Diary() {
   } | null>(null);
   const [entryToDelete, setEntryToDelete] = useState<FoodEntry | null>(null);
   const [editExercise, setEditExercise] = useState<ExerciseEntry | null>(null);
+  const [isDiaryLoading, setIsDiaryLoading] = useState(true);
 
   useModalOpen(showFoodSearch);
   useModalOpen(showExercise);
   useModalOpen(!!directFoodAdd);
+
+  // Simulated Database API Fetch delay (1500ms) on date change
+  useEffect(() => {
+    setIsDiaryLoading(true);
+    const timer = setTimeout(() => {
+      setIsDiaryLoading(false);
+    }, 1500);
+    return () => clearTimeout(timer);
+  }, [selectedDate]);
 
   useEffect(() => {
     if (pendingFoodLog) {
@@ -96,6 +107,20 @@ export default function Diary() {
     });
   };
 
+  const handleAddExercise = () => {
+    setEditExercise(null);
+    setShowExercise(true);
+  };
+
+  const handleEditExercise = (entry: ExerciseEntry) => {
+    setEditExercise(entry);
+    setShowExercise(true);
+  };
+
+  const handleDeleteExercise = (id: string) => {
+    removeExerciseEntry(selectedDate, id);
+  };
+
   return (
     <div className="flex flex-col h-full">
       <DiaryDateNav
@@ -107,37 +132,42 @@ export default function Diary() {
       />
 
       <div className="flex-1 px-5 py-4 space-y-4">
-        {MEAL_TYPE_OPTIONS.map((meal) => (
-          <MealSection
-            key={meal.key}
-            mealKey={meal.key}
-            mealLabel={meal.label}
-            entries={getMealEntries(meal.key)}
-            onAddFood={handleAddFood}
-            onEditEntry={handleEditEntry}
-            onDeleteEntry={setEntryToDelete}
-          />
-        ))}
+        {isDiaryLoading ? (
+          <>
+            <MealSectionSkeleton itemCount={2} />
+            <MealSectionSkeleton itemCount={1} />
+            <MealSectionSkeleton itemCount={2} />
+            <MealSectionSkeleton itemCount={1} />
+          </>
+        ) : (
+          <>
+            {MEAL_TYPE_OPTIONS.map((meal) => (
+              <MealSection
+                key={meal.key}
+                mealKey={meal.key}
+                mealLabel={meal.label}
+                entries={getMealEntries(meal.key)}
+                onAddFood={handleAddFood}
+                onEditEntry={handleEditEntry}
+                onDeleteEntry={setEntryToDelete}
+              />
+            ))}
 
-        <ExerciseSection
-          entries={dayLog?.exerciseEntries || []}
-          onAddExercise={() => {
-            setEditExercise(null);
-            setShowExercise(true);
-          }}
-          onEditExercise={(entry) => {
-            setEditExercise(entry);
-            setShowExercise(true);
-          }}
-          onDeleteExercise={(id) => removeExerciseEntry(selectedDate, id)}
-        />
+            <ExerciseSection
+              entries={dayLog?.exerciseEntries || []}
+              onAddExercise={handleAddExercise}
+              onEditExercise={handleEditExercise}
+              onDeleteExercise={handleDeleteExercise}
+            />
+          </>
+        )}
       </div>
 
       {/* Modals */}
       <AnimatePresence>
         {showFoodSearch && (
           <motion.div
-            className="fixed inset-0 z-[100] bg-background/40 backdrop-blur-3xl flex justify-center items-end md:items-center p-0 md:p-4"
+            className="fixed inset-0 z-[100] bg-black/60 dark:bg-black/80 backdrop-blur-sm flex justify-center items-end md:items-center p-0 md:p-4"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -159,7 +189,7 @@ export default function Diary() {
 
         {showExercise && (
           <motion.div
-            className="fixed inset-0 z-[100] bg-background/40 backdrop-blur-3xl flex justify-center items-end md:items-center p-0 md:p-4"
+            className="fixed inset-0 z-[100] bg-black/60 dark:bg-black/80 backdrop-blur-sm flex justify-center items-end md:items-center p-0 md:p-4"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -184,7 +214,7 @@ export default function Diary() {
 
         {directFoodAdd && (
           <motion.div
-            className="fixed inset-0 z-[100] bg-background/40 backdrop-blur-3xl flex justify-center items-end md:items-center p-0 md:p-4"
+            className="fixed inset-0 z-[100] bg-black/60 dark:bg-black/80 backdrop-blur-sm flex justify-center items-end md:items-center p-0 md:p-4"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}

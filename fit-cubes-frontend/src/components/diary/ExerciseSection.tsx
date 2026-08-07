@@ -17,6 +17,8 @@ export const ExerciseSection: React.FC<ExerciseSectionProps> = ({
   onEditExercise,
   onDeleteExercise,
 }) => {
+  const totalBurnedCalories = entries.reduce((acc, entry) => acc + entry.caloriesBurned, 0);
+
   return (
     <div className="glass-card rounded-2xl overflow-hidden">
       {/* Header */}
@@ -72,6 +74,15 @@ export const ExerciseSection: React.FC<ExerciseSectionProps> = ({
           ))}
         </AnimatePresence>
       </div>
+
+      {/* Exercise Total Footer */}
+      {entries.length > 0 && (
+        <div className="px-4 py-2 bg-black/5 dark:bg-white/5 text-right">
+          <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
+            Total Burned: -{formatLargeNumber(totalBurnedCalories)} kcal
+          </span>
+        </div>
+      )}
     </div>
   );
 };

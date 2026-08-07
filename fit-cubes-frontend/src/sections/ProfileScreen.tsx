@@ -29,6 +29,7 @@ import InfoTooltip from '@/components/InfoTooltip';
 import React, { useState, useEffect } from 'react';
 import { MetricInput } from '@/components/profile/MetricInput';
 import { ProteinIndicator } from '@/components/profile/ProteinIndicator';
+import { ProfileSkeleton } from '@/components/profile/ProfileSkeleton';
 
 export default function ProfileScreen() {
   const profile = useStore((state) => state.profile);
@@ -38,8 +39,18 @@ export default function ProfileScreen() {
   const updateProfile = useStore((state) => state.updateProfile);
   
   const [showResetConfirm, setShowResetConfirm] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   useModalOpen(showResetConfirm);
+
+  // Simulated Database API Fetch delay (1500ms)
+  useEffect(() => {
+    setIsLoading(true);
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 1500);
+    return () => clearTimeout(timer);
+  }, []);
 
   const [draft, setDraft] = useState(profile);
 
@@ -87,6 +98,10 @@ export default function ProfileScreen() {
   }, [draft.goal, draft.diet, tdeeBase, applyPreset]);
 
   const hasChanges = JSON.stringify(profile) !== JSON.stringify(draft);
+
+  if (isLoading) {
+    return <ProfileSkeleton />;
+  }
 
   return (
     <div className="flex flex-col h-full">

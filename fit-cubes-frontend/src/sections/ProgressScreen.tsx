@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import {
   LineChart,
@@ -15,6 +15,7 @@ import { TrendingDown, Scale, Flame, Target } from 'lucide-react';
 import { useStore } from '@/store/useStore.ts';
 import { calculateTDEE, calculateNetDeficit, calculateRollingAverage, getLast7Days, formatLargeNumber } from '@/utils/calculations.ts';
 import InfoTooltip from '@/components/InfoTooltip.tsx';
+import { ProgressSkeleton } from '@/components/progress/ProgressSkeleton';
 
 const TIMEFRAMES = [
   { key: '1W', label: '7 Days', days: 7 },
@@ -26,6 +27,16 @@ export default function ProgressScreen() {
   const profile = useStore((state) => state.profile);
   const dailyLogs = useStore((state) => state.dailyLogs);
   const [timeframe, setTimeframe] = useState('1W');
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Simulated Database API Fetch delay (1500ms)
+  useEffect(() => {
+    setIsLoading(true);
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 1500);
+    return () => clearTimeout(timer);
+  }, [timeframe]);
 
   const days = TIMEFRAMES.find((t) => t.key === timeframe)?.days || 7;
 
@@ -114,6 +125,10 @@ export default function ProgressScreen() {
       totalExercise: Math.round(totalExercise),
     };
   }, [chartData, dailyLogs]);
+
+  if (isLoading) {
+    return <ProgressSkeleton />;
+  }
 
   return (
     <div className="flex flex-col h-full">

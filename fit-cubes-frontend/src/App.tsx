@@ -89,7 +89,7 @@ function App() {
     // Defer state update to next tick to avoid synchronous setState during render
     const timer = setTimeout(() => {
       setMounted(true);
-    }, 0);
+    }, 5000);
     return () => clearTimeout(timer);
   }, []);
 
@@ -109,7 +109,7 @@ function App() {
   }, [theme]);
 
   if (!mounted) {
-    return <PageLoader text="Завантаження FitCubes..." />;
+    return <PageLoader text="Loading FitCubes..." />;
   }
 
   if (showOnboarding) {

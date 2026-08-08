@@ -1,6 +1,6 @@
-import { motion, type Transition } from 'framer-motion';
+import { motion, type Transition } from "framer-motion";
 
-export type LogoVariant = 'static' | 'draw' | 'spin' | 'pulse';
+export type LogoVariant = "static" | "draw" | "spin" | "pulse";
 
 interface LogoProps {
   className?: string;
@@ -9,36 +9,73 @@ interface LogoProps {
   pulse?: boolean;
 }
 
-export function Logo({ className = '', variant = 'static', size = 134, pulse = false }: LogoProps) {
-  const isDraw = variant === 'draw';
-  const isSpin = variant === 'spin';
-  
-  // Animation configs for the outer circle
-  const outerAnim = isDraw ? { pathLength: 1.02, rotate: 0, opacity: 1 } : isSpin ? { rotate: 360 } : { pathLength: 1, rotate: 0, opacity: 1 };
-  const outerInit = isDraw ? { pathLength: 0, rotate: -180, opacity: 0 } : { pathLength: 1, rotate: 0, opacity: 1 };
-  const outerTrans: Transition = isDraw 
-    ? { delay: 1.0, duration: 3.0, ease: "easeInOut" }
-    : isSpin
-      ? { duration: 15, repeat: Infinity, ease: "linear" }
-      : {};
+export function Logo({
+  className = "",
+  variant = "static",
+  size = 134,
+  pulse = false,
+}: LogoProps) {
+  const isDraw = variant === "draw";
+  const isSpin = variant === "spin";
 
-  // Animation configs for the middle circle
-  const middleAnim = isDraw ? { pathLength: 1.02, rotate: 0, opacity: 1 } : isSpin ? { rotate: -360 } : { pathLength: 1, rotate: 0, opacity: 1 };
-  const middleInit = isDraw ? { pathLength: 0, rotate: 180, opacity: 0 } : { pathLength: 1, rotate: 0, opacity: 1 };
-  const middleTrans: Transition = isDraw 
-    ? { delay: 0.5, duration: 3.5, ease: "easeInOut" }
-    : isSpin
-      ? { duration: 12, repeat: Infinity, ease: "linear" }
-      : {};
+  const CYCLE_DURATION = 3.6;
 
-  // Animation configs for the inner circle
-  const innerAnim = isDraw ? { pathLength: 1.02, rotate: 0, opacity: 1 } : isSpin ? { rotate: 360 } : { pathLength: 1, rotate: 0, opacity: 1 };
-  const innerInit = isDraw ? { pathLength: 0, rotate: -180, opacity: 0 } : { pathLength: 1, rotate: 0, opacity: 1 };
-  const innerTrans: Transition = isDraw 
-    ? { delay: 0, duration: 4.0, ease: "easeInOut" }
-    : isSpin
-      ? { duration: 8, repeat: Infinity, ease: "linear" }
-      : {};
+  const innerSpinAnim = {
+    pathLength: [0, 1, 1, 1, 0],
+    rotate: [0, 360, 360, 360, 720],
+  };
+  const innerSpinTrans: Transition = {
+    duration: CYCLE_DURATION,
+    repeat: Infinity,
+    ease: "easeInOut",
+    times: [0, 0.3, 0.82, 0.92, 1],
+  };
+
+  const middleSpinAnim = {
+    pathLength: [0, 0, 1, 1, 0],
+    rotate: [0, 0, 360, 360, 720],
+  };
+  const middleSpinTrans: Transition = {
+    duration: CYCLE_DURATION,
+    repeat: Infinity,
+    ease: "easeInOut",
+    times: [0, 0.22, 0.54, 0.86, 1],
+  };
+
+  const outerSpinAnim = {
+    pathLength: [0, 0, 1, 1, 0],
+    rotate: [0, 0, 360, 360, 720],
+  };
+  const outerSpinTrans: Transition = {
+    duration: CYCLE_DURATION,
+    repeat: Infinity,
+    ease: "easeInOut",
+    times: [0, 0.44, 0.76, 0.9, 1],
+  };
+
+  const outerDrawAnim = { pathLength: 1.02, rotate: 0, opacity: 1 };
+  const outerDrawInit = { pathLength: 0, rotate: -180, opacity: 0 };
+  const outerDrawTrans: Transition = {
+    delay: 1.0,
+    duration: 3.0,
+    ease: "easeInOut",
+  };
+
+  const middleDrawAnim = { pathLength: 1.02, rotate: 0, opacity: 1 };
+  const middleDrawInit = { pathLength: 0, rotate: 180, opacity: 0 };
+  const middleDrawTrans: Transition = {
+    delay: 0.5,
+    duration: 3.5,
+    ease: "easeInOut",
+  };
+
+  const innerDrawAnim = { pathLength: 1.02, rotate: 0, opacity: 1 };
+  const innerDrawInit = { pathLength: 0, rotate: -180, opacity: 0 };
+  const innerDrawTrans: Transition = {
+    delay: 0,
+    duration: 4.0,
+    ease: "easeInOut",
+  };
 
   const svgContent = (
     <svg
@@ -49,44 +86,94 @@ export function Logo({ className = '', variant = 'static', size = 134, pulse = f
       xmlns="http://www.w3.org/2000/svg"
       className={className}
     >
-      {/* Outer */}
+      {/* Outer Circle */}
       <motion.circle
-        cx="67" cy="67" r="63"
-        stroke="#F59F0A" strokeWidth="8"
+        cx="67"
+        cy="67"
+        r="63"
+        stroke="#F59F0A"
+        strokeWidth="8"
         strokeLinecap="round"
-        style={{ transformOrigin: 'center' }}
-        initial={outerInit}
-        animate={outerAnim}
-        transition={outerTrans}
+        style={{ transformOrigin: "67px 67px" }}
+        initial={
+          isDraw
+            ? outerDrawInit
+            : isSpin
+              ? { pathLength: 0, rotate: 0 }
+              : { pathLength: 1, rotate: 0 }
+        }
+        animate={
+          isDraw
+            ? outerDrawAnim
+            : isSpin
+              ? outerSpinAnim
+              : { pathLength: 1, rotate: 0 }
+        }
+        transition={
+          isDraw ? outerDrawTrans : isSpin ? outerSpinTrans : undefined
+        }
       />
-      {/* Middle */}
+
+      {/* Middle Circle */}
       <motion.circle
-        cx="67" cy="67" r="41"
-        stroke="#F59F0A" strokeWidth="8"
+        cx="67"
+        cy="67"
+        r="41"
+        stroke="#F59F0A"
+        strokeWidth="8"
         strokeLinecap="round"
-        style={{ transformOrigin: 'center' }}
-        initial={middleInit}
-        animate={middleAnim}
-        transition={middleTrans}
+        style={{ transformOrigin: "67px 67px" }}
+        initial={
+          isDraw
+            ? middleDrawInit
+            : isSpin
+              ? { pathLength: 0, rotate: 0 }
+              : { pathLength: 1, rotate: 0 }
+        }
+        animate={
+          isDraw
+            ? middleDrawAnim
+            : isSpin
+              ? middleSpinAnim
+              : { pathLength: 1, rotate: 0 }
+        }
+        transition={
+          isDraw ? middleDrawTrans : isSpin ? middleSpinTrans : undefined
+        }
       />
-      {/* Inner */}
+
+      {/* Inner (Center) Circle */}
       <motion.circle
-        cx="67.5" cy="66.5" r="20.5"
-        stroke="#F59F0A" strokeWidth="8"
+        cx="67.5"
+        cy="66.5"
+        r="20.5"
+        stroke="#F59F0A"
+        strokeWidth="8"
         strokeLinecap="round"
-        style={{ transformOrigin: 'center' }}
-        initial={innerInit}
-        animate={innerAnim}
-        transition={innerTrans}
+        style={{ transformOrigin: "67.5px 66.5px" }}
+        initial={
+          isDraw
+            ? innerDrawInit
+            : isSpin
+              ? { pathLength: 0, rotate: 0 }
+              : { pathLength: 1, rotate: 0 }
+        }
+        animate={
+          isDraw
+            ? innerDrawAnim
+            : isSpin
+              ? innerSpinAnim
+              : { pathLength: 1, rotate: 0 }
+        }
+        transition={
+          isDraw ? innerDrawTrans : isSpin ? innerSpinTrans : undefined
+        }
       />
     </svg>
   );
 
-  // Calculate pulse delay: if we are drawing, wait for it to finish (4 seconds) before pulsing
-  const pulseDelay = isDraw ? 4.0 : 0;
-
-  // For pulse mode, we wrap the static logo in a breathing animation container
-  if (variant === 'pulse' || pulse) {
+  // Pulse mode wrapper
+  if (variant === "pulse" || pulse) {
     return (
       <motion.div
         animate={{
@@ -94,10 +181,15 @@ export function Logo({ className = '', variant = 'static', size = 134, pulse = f
           filter: [
             "drop-shadow(0px 0px 0px rgba(245, 159, 10, 0))",
             "drop-shadow(0px 0px 10px rgba(245, 159, 10, 0.6))",
-            "drop-shadow(0px 0px 0px rgba(245, 159, 10, 0))"
-          ]
+            "drop-shadow(0px 0px 0px rgba(245, 159, 10, 0))",
+          ],
         }}
-        transition={{ duration: 2, repeat: Infinity, ease: "easeInOut", delay: pulseDelay }}
+        transition={{
+          duration: 2,
+          repeat: Infinity,
+          ease: "easeInOut",
+          delay: isDraw ? 4.0 : 0,
+        }}
         className="inline-flex items-center justify-center"
       >
         {svgContent}
@@ -107,3 +199,5 @@ export function Logo({ className = '', variant = 'static', size = 134, pulse = f
 
   return svgContent;
 }
+
+export default Logo;

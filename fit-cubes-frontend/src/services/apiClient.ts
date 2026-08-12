@@ -5,7 +5,8 @@ export interface ApiResponse<T = unknown> {
   ok: boolean;
 }
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api/v1';
+const RAW_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api/v1';
+const API_BASE_URL = RAW_BASE_URL.replace(/\/+$/, '');
 
 class ApiClient {
   private getAuthToken(): string | null {
@@ -17,7 +18,8 @@ class ApiClient {
   }
 
   private async request<T>(endpoint: string, options: RequestInit = {}): Promise<ApiResponse<T>> {
-    const url = endpoint.startsWith('http') ? endpoint : `${API_BASE_URL}${endpoint}`;
+    const cleanEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
+    const url = endpoint.startsWith('http') ? endpoint : `${API_BASE_URL}${cleanEndpoint}`;
     const token = this.getAuthToken();
 
     const headers: HeadersInit = {
@@ -78,18 +80,6 @@ class ApiClient {
 
   public delete<T>(endpoint: string, options?: RequestInit): Promise<ApiResponse<T>> {
     return this.request<T>(endpoint, { ...options, method: 'DELETE' });
-  }
-
-  public async checkBackendHealth(): Promise<{ online: boolean; message: string }> {
-    try {
-      const res = await this.get<{ status?: string }>('/health');
-      if (res.ok) {
-        return { online: true, message: 'Backend connected successfully' };
-      }
-      return { online: false, message: `Backend responded with status ${res.status}` };
-    } catch {
-      return { online: false, message: 'Backend connection unreachable' };
-    }
   }
 }
 

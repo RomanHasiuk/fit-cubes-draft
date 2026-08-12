@@ -12,7 +12,6 @@ import Onboarding from "@/sections/Onboarding.tsx";
 import { useDataLoader } from "@/hooks/useDataLoader.ts";
 import { PageTransition } from "@/components/layout/PageTransition.tsx";
 import { PageLoader } from "@/components/ui/PageLoader.tsx";
-import { apiClient } from "@/services/apiClient.ts";
 
 const TABS = [
   { path: "/", label: "Home", icon: LayoutDashboard },
@@ -87,8 +86,6 @@ function App() {
   };
 
   useEffect(() => {
-    apiClient.checkBackendHealth();
-
     const timer = setTimeout(() => {
       setMounted(true);
     }, 5000);

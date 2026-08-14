@@ -6,6 +6,7 @@ import { calculateExerciseCalories } from '@/utils/calculations.ts';
 import type { ExerciseEntry } from '@/types';
 import InfoTooltip from '@/components/InfoTooltip.tsx';
 import FoodItemCardSkeleton from '@/components/food/FoodItemCardSkeleton';
+import { blockInvalidNumberInput } from '@/utils/inputHandlers.ts';
 
 interface ExerciseLoggerProps {
   onClose: () => void;
@@ -45,6 +46,20 @@ export default function ExerciseLogger({ onClose, editEntry }: ExerciseLoggerPro
   const calories = activity
     ? calculateExerciseCalories(activity, parseFloat(metric) || 0, profile.weightKg, rpe)
     : 0;
+
+  const handleMetricChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    let val = e.target.value;
+    if (val !== "") {
+      val = val.replace(/^0+(?=\d)/, '');
+      const num = Number(val);
+      const label = activity?.metricLabel?.toLowerCase() || '';
+      if (label.includes('min') && num > 1440) val = "1440";
+      else if (label === 'reps' && num > 10000) val = "10000";
+      else if (label === 'steps' && num > 100000) val = "100000";
+      else if (num > 100000) val = "100000";
+    }
+    setMetric(val);
+  };
 
   const handleSave = () => {
     if (!activity || !metric || parseFloat(metric) <= 0) return;
@@ -165,21 +180,9 @@ export default function ExerciseLogger({ onClose, editEntry }: ExerciseLoggerPro
                   type="text"
                   inputMode="numeric"
                   pattern="[0-9]*"
-                  onKeyDown={(e) => ['-', 'e', 'E', '+'].includes(e.key) && e.preventDefault()}
+                  onKeyDown={blockInvalidNumberInput}
                   value={metric}
-                  onChange={(e) => {
-                    let val = e.target.value;
-                    if (val !== "") {
-                      val = val.replace(/^0+(?=\d)/, '');
-                      const num = Number(val);
-                      const label = activity?.metricLabel?.toLowerCase() || '';
-                      if (label.includes('min') && num > 1440) val = "1440";
-                      else if (label === 'reps' && num > 10000) val = "10000";
-                      else if (label === 'steps' && num > 100000) val = "100000";
-                      else if (num > 100000) val = "100000"; // Fallback cap
-                    }
-                    setMetric(val);
-                  }}
+                  onChange={handleMetricChange}
                   placeholder="0"
                   autoFocus
                   className="w-full h-16 bg-card border border-border rounded-xl text-3xl font-bold text-center text-foreground outline-none focus:ring-2 focus:ring-primary/50"

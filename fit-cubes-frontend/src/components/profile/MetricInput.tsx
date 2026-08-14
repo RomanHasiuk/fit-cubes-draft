@@ -1,6 +1,7 @@
 // OPTION 2:
 // import React, { useState, useEffect } from 'react';
 import InfoTooltip from '@/components/InfoTooltip.tsx';
+import { blockInvalidNumberInput, blockInvalidIntegerInput } from '@/utils/inputHandlers.ts';
 
 interface MetricInputProps {
   label: string;
@@ -25,15 +26,10 @@ export const MetricInput: React.FC<MetricInputProps> = ({
   align = 'center'
 }) => {
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    const allowDecimals = step.includes('.');
-    
-    // Block dot/comma if decimals are not allowed (Age, Height)
-    if (!allowDecimals && ['.', ','].includes(e.key)) {
-      e.preventDefault();
-    }
-    // Block math symbols and exponent for all metric fields
-    if (['e', 'E', '-', '+'].includes(e.key)) {
-      e.preventDefault();
+    if (step.includes('.')) {
+      blockInvalidNumberInput(e);
+    } else {
+      blockInvalidIntegerInput(e);
     }
   };
 

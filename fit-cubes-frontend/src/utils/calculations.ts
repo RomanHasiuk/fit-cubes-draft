@@ -80,7 +80,7 @@ export function calculateCookedNutrition(
   food: FoodItem,
   cookedWeightGrams: number
 ): { calories: number; protein: number; carbs: number; fats: number } {
-  if (!food.rawWeight || !food.cookedWeight || food.rawWeight === 0) {
+  if (!food.rawWeight || !food.cookedWeight || food.rawWeight <= 0 || food.cookedWeight <= 0) {
     return {
       calories: (food.caloriesPer100g * cookedWeightGrams) / 100,
       protein: (food.proteinPer100g * cookedWeightGrams) / 100,

@@ -1,13 +1,11 @@
-import type { MealType, WeightGoal, DietType } from '@/constants';
+import type { MealType, WeightGoal, DietType, Gender } from '@/constants';
 
-// Re-export domain types from their single source of truth
-export type { MealType, WeightGoal, DietType };
-// Re-export runtime constants for consumers that import from '@/types'
-export { ACTIVITY_CONSTANTS, type ActivityConstant } from '@/constants';
+export type { MealType, WeightGoal, DietType, Gender };
+export { ACTIVITY_CONSTANTS, GENDER_OPTIONS, type ActivityConstant } from '@/constants';
 
 export interface UserProfile {
   name: string;
-  gender: 'male' | 'female';
+  gender: Gender;
   age: number;
   weightKg: number;
   heightCm: number;

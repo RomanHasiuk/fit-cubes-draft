@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { WelcomeStep } from './WelcomeStep';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronRight, ChevronLeft, AlertCircle } from 'lucide-react';
@@ -15,13 +15,16 @@ import {
   DIET_TYPE,
   WEIGHT_GOAL_OPTIONS,
   DIET_TYPE_OPTIONS,
+  GENDER_OPTIONS,
   type DietType,
   type WeightGoal,
+  type Gender,
 } from '@/constants';
 import InfoTooltip from '@/components/InfoTooltip.tsx';
 import { MetricInput } from '@/components/profile/MetricInput.tsx';
 import { OptionSelector } from '@/components/profile/OptionSelector.tsx';
 import { ProteinIndicator } from '@/components/profile/ProteinIndicator.tsx';
+import { blockInvalidIntegerInput, sanitizeNameInput } from '@/utils/inputHandlers.ts';
 import { Logo } from '@/components/ui/Logo';
 
 interface OnboardingProps {
@@ -47,14 +50,48 @@ export default function Onboarding({ onComplete }: OnboardingProps) {
   const [error, setError] = useState<string | null>(null);
   const currentStep = STEPS[step];
 
+  const bmr = calculateBMR(profile);
+  const tdeeBase = calculateTDEE(profile);
+  const targetCalories = calculateTargetCalories(tdeeBase, goal);
+
+  const macroPercentages = useMemo(() => {
+    if (!targetCalories || targetCalories <= 0) {
+      return { protein: 0, carbs: 0, fats: 0 };
+    }
+    const targets = profile.macroTargets || { protein: 0, carbs: 0, fats: 0 };
+    return {
+      protein: Math.round(((targets.protein * 4) / targetCalories) * 100),
+      carbs: Math.round(((targets.carbs * 4) / targetCalories) * 100),
+      fats: Math.round(((targets.fats * 9) / targetCalories) * 100),
+    };
+  }, [profile.macroTargets, targetCalories]);
+
   const handleGenderChange = (val: string) => {
-    if (val === 'female' && profile.gender === 'male' && profile.age === 28 && profile.weightKg === 85.5 && profile.heightCm === 180) {
+    const gender = val as Gender;
+    if (gender === 'female' && profile.gender === 'male' && profile.age === 28 && profile.weightKg === 85.5 && profile.heightCm === 180) {
       updateProfile({ gender: 'female', age: 25, weightKg: 65, heightCm: 168 });
-    } else if (val === 'male' && profile.gender === 'female' && profile.age === 25 && profile.weightKg === 65 && profile.heightCm === 168) {
+    } else if (gender === 'male' && profile.gender === 'female' && profile.age === 25 && profile.weightKg === 65 && profile.heightCm === 168) {
       updateProfile({ gender: 'male', age: 28, weightKg: 85.5, heightCm: 180 });
     } else {
-      updateProfile({ gender: val as any });
+      updateProfile({ gender });
     }
+  };
+
+  const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    updateProfile({ name: sanitizeNameInput(e.target.value) });
+  };
+
+  const handleActivityFactorChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    updateProfile({ activityFactor: parseFloat(e.target.value) });
+  };
+
+  const handleProteinTargetChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (error) setError(null);
+    let newProtein = Math.max(0, parseInt(e.target.value, 10) || 0);
+    const absoluteMaxProtein = Math.floor(targetCalories / 4);
+    if (newProtein > absoluteMaxProtein) newProtein = absoluteMaxProtein;
+    const macros = adjustMacrosForProtein(targetCalories, newProtein, diet);
+    updateProfile({ macroTargets: macros });
   };
 
   const handleNext = () => {
@@ -134,10 +171,6 @@ export default function Onboarding({ onComplete }: OnboardingProps) {
     }
   };
 
-  const bmr = calculateBMR(profile);
-  const tdeeBase = calculateTDEE(profile);
-  const targetCalories = calculateTargetCalories(tdeeBase, goal);
-
   // Auto-update macro targets when goal or diet changes
   useEffect(() => {
     if (currentStep === 'targets') {
@@ -201,10 +234,7 @@ export default function Onboarding({ onComplete }: OnboardingProps) {
                       maxLength={50}
                       minLength={2}
                       value={profile.name}
-                      onChange={(e) => {
-                        const val = e.target.value.replace(/[^0-9\p{L}\s.,'%-]/gu, '');
-                        updateProfile({ name: val });
-                      }}
+                      onChange={handleNameChange}
                       className="w-full h-12 bg-card border border-border rounded-xl px-4 text-sm outline-none focus:ring-2 focus:ring-primary/50"
                     />
                   </div>
@@ -214,10 +244,7 @@ export default function Onboarding({ onComplete }: OnboardingProps) {
                     selectedValue={profile.gender}
                     onSelect={handleGenderChange}
                     columns={2}
-                    options={[
-                      { id: 'male', label: 'Male', tip: 'Calculation using male formula' },
-                      { id: 'female', label: 'Female', tip: 'Calculation using female formula' }
-                    ]}
+                    options={GENDER_OPTIONS}
                   />
 
                   <div className="flex gap-3">
@@ -262,11 +289,7 @@ export default function Onboarding({ onComplete }: OnboardingProps) {
                       max="1.9"
                       step="0.05"
                       value={profile.activityFactor}
-                      onChange={(e) =>
-                        updateProfile({
-                          activityFactor: parseFloat(e.target.value),
-                        })
-                      }
+                      onChange={handleActivityFactorChange}
                       className="w-full mt-3 accent-primary"
                     />
                     <div className="flex justify-between text-[10px] text-muted-foreground mt-1">
@@ -334,19 +357,12 @@ export default function Onboarding({ onComplete }: OnboardingProps) {
                       <input
                         type="number"
                         value={profile.macroTargets?.protein || ''}
-                        onKeyDown={(e) => ['-', 'e', 'E', '+', '.', ','].includes(e.key) && e.preventDefault()}
-                        onChange={(e) => {
-                          if (error) setError(null);
-                          let newProtein = Math.max(0, parseInt(e.target.value) || 0);
-                          const absoluteMaxProtein = Math.floor(targetCalories / 4);
-                          if (newProtein > absoluteMaxProtein) newProtein = absoluteMaxProtein;
-                          const macros = adjustMacrosForProtein(targetCalories, newProtein, diet);
-                          updateProfile({ macroTargets: macros });
-                        }}
+                        onKeyDown={blockInvalidIntegerInput}
+                        onChange={handleProteinTargetChange}
                         className="w-full h-12 bg-card border border-border rounded-xl px-2 text-center text-sm font-bold outline-none focus:ring-2 focus:ring-primary/50"
                       />
                       <p className="text-[10px] text-muted-foreground mt-1 text-center font-medium">
-                        ~{Math.round(((profile.macroTargets?.protein ?? 0) * 4 / targetCalories) * 100)}%
+                        ~{macroPercentages.protein}%
                       </p>
                     </div>
 
@@ -361,7 +377,7 @@ export default function Onboarding({ onComplete }: OnboardingProps) {
                         className="w-full h-12 bg-secondary/20 opacity-70 border border-border rounded-xl px-2 text-center text-sm font-bold outline-none cursor-not-allowed"
                       />
                       <p className="text-[10px] text-muted-foreground mt-1 text-center font-medium">
-                        ~{Math.round(((profile.macroTargets?.carbs ?? 0) * 4 / targetCalories) * 100)}%
+                        ~{macroPercentages.carbs}%
                       </p>
                     </div>
 
@@ -376,7 +392,7 @@ export default function Onboarding({ onComplete }: OnboardingProps) {
                         className="w-full h-12 bg-secondary/20 opacity-70 border border-border rounded-xl px-2 text-center text-sm font-bold outline-none cursor-not-allowed"
                       />
                       <p className="text-[10px] text-muted-foreground mt-1 text-center font-medium">
-                        ~{Math.round(((profile.macroTargets?.fats ?? 0) * 9 / targetCalories) * 100)}%
+                        ~{macroPercentages.fats}%
                       </p>
                     </div>
                   </div>

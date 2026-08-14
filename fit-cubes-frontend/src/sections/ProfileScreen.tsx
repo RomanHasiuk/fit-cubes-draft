@@ -22,10 +22,13 @@ import {
 import {
   WEIGHT_GOAL_OPTIONS,
   DIET_TYPE_OPTIONS,
+  GENDER_OPTIONS,
   type DietType,
   type WeightGoal,
+  type Gender,
 } from '@/constants';
 import InfoTooltip from '@/components/InfoTooltip';
+import { blockInvalidIntegerInput, sanitizeNameInput } from '@/utils/inputHandlers';
 import React, { useState, useEffect } from 'react';
 import { MetricInput } from '@/components/profile/MetricInput';
 import { ProteinIndicator } from '@/components/profile/ProteinIndicator';
@@ -83,6 +86,20 @@ export default function ProfileScreen() {
     updateDraft({ macroTargets: macros });
   };
 
+  const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    updateDraft({ name: sanitizeNameInput(e.target.value) });
+  };
+
+  const handleActivityFactorChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    updateDraft({ activityFactor: parseFloat(e.target.value) });
+  };
+
+  const handleProteinInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const maxProtein = Math.floor(targetCalories / 4);
+    const newProtein = clampValue(e.target.value, 0, maxProtein, 0);
+    handleManualProteinChange(newProtein);
+  };
+
   const prevDeps = React.useRef({ goal: draft.goal, diet: draft.diet, tdeeBase });
 
   useEffect(() => {
@@ -111,7 +128,7 @@ export default function ProfileScreen() {
           <input
             type="text"
             value={draft.name || ''}
-            onChange={(e) => updateDraft({ name: e.target.value })}
+            onChange={handleNameChange}
             placeholder="Your Name"
             className="bg-transparent text-2xl font-bold outline-none placeholder:text-muted-foreground/50 w-full"
           />
@@ -122,15 +139,15 @@ export default function ProfileScreen() {
 
         {/* Compact Theme Switcher */}
         <div className="flex bg-secondary/30 p-1 rounded-xl border border-white/5 backdrop-blur-md">
-          {[
+          {([
             { key: 'light', icon: Sun, label: 'Light Mode' },
             { key: 'dark', icon: Moon, label: 'Dark Mode' },
             { key: 'system', icon: Monitor, label: 'System Default' },
-          ].map((t) => (
+          ] as const).map((t) => (
             <button
               key={t.key}
               title={t.label}
-              onClick={() => setTheme(t.key as any)}
+              onClick={() => setTheme(t.key)}
               className={`p-2 rounded-lg transition-all ${
                 theme === t.key
                   ? 'bg-primary text-primary-foreground shadow-sm'
@@ -211,6 +228,14 @@ export default function ProfileScreen() {
             Body Metrics
           </h3>
           <div className="glass-card rounded-2xl p-4 space-y-4">
+            <OptionSelector
+              label="Gender"
+              selectedValue={draft.gender}
+              onSelect={(val) => updateDraft({ gender: val as Gender })}
+              columns={2}
+              options={GENDER_OPTIONS}
+            />
+
             <div className="flex gap-3">
               <MetricInput
                 label="Age"
@@ -256,7 +281,7 @@ export default function ProfileScreen() {
                 max="1.9"
                 step="0.05"
                 value={draft.activityFactor}
-                onChange={(e) => updateDraft({ activityFactor: parseFloat(e.target.value) })}
+                onChange={handleActivityFactorChange}
                 className="w-full accent-primary"
               />
               <div className="flex justify-between text-[10px] text-muted-foreground mt-1 px-1">
@@ -300,21 +325,8 @@ export default function ProfileScreen() {
                       : draft.macroTargets?.[m.key as keyof typeof draft.macroTargets] ?? 0
                   }
                   readOnly={m.key !== 'protein'}
-                  onKeyDown={(e) => {
-                    if (m.key === 'protein') {
-                      if (['-', 'e', 'E', '+', '.', ','].includes(e.key)) {
-                        e.preventDefault();
-                      }
-                    }
-                  }}
-                  onChange={(e) => {
-                    if (m.key === 'protein') {
-                      // Prevent UI break by astronomical numbers, but allow up to 100% of calories from protein
-                      const maxProtein = Math.floor(targetCalories / 4);
-                      let newProtein = clampValue(e.target.value, 0, maxProtein, 0);
-                      handleManualProteinChange(newProtein);
-                    }
-                  }}
+                  onKeyDown={m.key === 'protein' ? blockInvalidIntegerInput : undefined}
+                  onChange={m.key === 'protein' ? handleProteinInputChange : undefined}
                   className={`w-full h-10 ${m.key !== 'protein' ? 'bg-secondary/20 opacity-70 cursor-not-allowed' : 'bg-secondary/50'} border border-white/5 rounded-lg text-center text-sm font-bold outline-none`}
                 />
               </div>

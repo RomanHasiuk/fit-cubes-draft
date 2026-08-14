@@ -5,6 +5,7 @@ import { useStore } from '@/store/useStore.ts';
 import { calculatePortionOrCookedNutrition } from '@/utils/calculations.ts';
 import type { FoodItem, FoodEntry } from '@/types';
 import FoodAnalysis from '@/components/FoodAnalysis.tsx';
+import { blockInvalidNumberInput, sanitizePositiveInt } from '@/utils/inputHandlers.ts';
 
 interface FoodAddProps {
   food: FoodItem;
@@ -22,6 +23,17 @@ export default function FoodAdd({ food, mealType, existingEntry, onClose, onDone
   const navigate = useNavigate();
   const [weight, setWeight] = useState(existingEntry ? existingEntry.weightGrams.toString() : '100');
   const [isCooked, setIsCooked] = useState(existingEntry ? !!existingEntry.isCooked : false);
+
+  const handleWeightChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = sanitizePositiveInt(e.target.value, 99999);
+    setWeight(val === "" ? "" : val.toString());
+  };
+
+  const handleWeightBlur = () => {
+    if (!weight || Number(weight) <= 0) {
+      setWeight('100');
+    }
+  };
 
   const isCustomRecipe = food.category === 'My Meals' || food.category === 'My Recipes';
   const hasConversion = !!(food.rawWeight && food.cookedWeight && !isCustomRecipe);
@@ -147,15 +159,14 @@ export default function FoodAdd({ food, mealType, existingEntry, onClose, onDone
           <div className="relative">
             <input
               type="number"
-              min="0"
-              onKeyDown={(e) => ['-', 'e', 'E', '+'].includes(e.key) && e.preventDefault()}
-              value={weight}
-              onChange={(e) => {
-                let val = e.target.value;
-                if (val.length > 5) val = val.slice(0, 5);
-                setWeight(val);
-              }}
-              className="w-full h-16 bg-card border border-border rounded-xl text-3xl font-bold text-center text-foreground outline-none focus:ring-2 focus:ring-primary/50 transition-all"
+              min="1"
+              max="99999"
+              placeholder="100"
+              onKeyDown={blockInvalidNumberInput}
+              value={weight === '0' ? '' : weight}
+              onChange={handleWeightChange}
+              onBlur={handleWeightBlur}
+              className="w-full h-16 bg-card border border-border rounded-xl text-3xl font-bold text-center text-foreground outline-none focus:ring-2 focus:ring-primary/50 transition-all placeholder:text-muted-foreground/40"
             />
             <span className="absolute right-6 top-1/2 -translate-y-1/2 text-muted-foreground text-lg font-medium">
               g

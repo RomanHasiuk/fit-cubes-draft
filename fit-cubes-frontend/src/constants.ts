@@ -17,6 +17,20 @@ export const MEAL_TYPE_OPTIONS: ReadonlyArray<{ key: MealType; label: string }> 
   { key: MEAL_TYPE.SNACKS, label: 'Snacks' },
 ];
 
+// ─── Gender ───────────────────────────────────────────────────
+export const GENDER = {
+  MALE: 'male',
+  FEMALE: 'female',
+} as const;
+
+/** Union type derived from GENDER values */
+export type Gender = typeof GENDER[keyof typeof GENDER];
+
+export const GENDER_OPTIONS: ReadonlyArray<{ id: Gender; label: string; tip: string }> = [
+  { id: GENDER.MALE, label: 'Male', tip: 'Calculation using male Mifflin-St Jeor formula (+5 kcal)' },
+  { id: GENDER.FEMALE, label: 'Female', tip: 'Calculation using female Mifflin-St Jeor formula (-161 kcal)' },
+];
+
 // ─── Weight Goals ─────────────────────────────────────────────
 export const WEIGHT_GOAL = {
   LOSE: 'lose',

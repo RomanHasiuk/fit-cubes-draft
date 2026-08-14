@@ -4,6 +4,7 @@ import { useStore } from "@/store/useStore";
 import { useModalOpen } from "@/hooks/useModalOpen";
 import { ChevronLeft, Plus, X, Check } from "lucide-react";
 import type { FoodItem } from "@/types";
+import { blockInvalidNumberInput, sanitizeNameInput, sanitizeMacroInput } from "@/utils/inputHandlers";
 
 interface FoodCreatorProps {
   onClose: () => void;
@@ -44,6 +45,35 @@ export default function FoodCreator({ onClose, editingFood }: FoodCreatorProps) 
     : [selectedCategory, ...allCategories];
 
   const allExistingCategories = Array.from(new Set(products.map(p => p.category)));
+
+  const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setName(sanitizeNameInput(e.target.value));
+  };
+
+  const handleProteinChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setProtein(sanitizeMacroInput(e.target.value));
+  };
+
+  const handleFatsChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFats(sanitizeMacroInput(e.target.value));
+  };
+
+  const handleCarbsChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setCarbs(sanitizeMacroInput(e.target.value));
+  };
+
+  const handleNewCategoryNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setNewCategoryName(sanitizeNameInput(e.target.value));
+  };
+
+  const handleNewCategoryKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter' && newCategoryName.trim()) {
+      e.preventDefault();
+      setSelectedCategory(newCategoryName.trim());
+      setIsCreatingCategory(false);
+      setNewCategoryName("");
+    }
+  };
 
   const handleSaveClick = () => {
     if (!name.trim()) return;
@@ -120,10 +150,7 @@ export default function FoodCreator({ onClose, editingFood }: FoodCreatorProps) 
           <input
             type="text"
             value={name}
-            onChange={(e) => {
-              const val = e.target.value.replace(/[^0-9\p{L}\s.,'%-]/gu, '');
-              setName(val);
-            }}
+            onChange={handleNameChange}
             className="w-full bg-secondary/50 border border-white/5 rounded-2xl px-4 py-4 outline-none focus:ring-2 focus:ring-primary/50 transition-all font-medium"
             placeholder="e.g. Chicken Soup"
             maxLength={60}
@@ -146,9 +173,9 @@ export default function FoodCreator({ onClose, editingFood }: FoodCreatorProps) 
             <input
               type="number"
               min="0"
-              onKeyDown={(e) => ['-', 'e', 'E', '+'].includes(e.key) && e.preventDefault()}
+              onKeyDown={blockInvalidNumberInput}
               value={protein}
-              onChange={(e) => setProtein(e.target.value === "" ? "" : Math.min(100, Math.max(0, Number(e.target.value))))}
+              onChange={handleProteinChange}
               className="w-full bg-secondary/50 border border-white/5 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-blue-500/50"
               placeholder="0"
             />
@@ -158,9 +185,9 @@ export default function FoodCreator({ onClose, editingFood }: FoodCreatorProps) 
             <input
               type="number"
               min="0"
-              onKeyDown={(e) => ['-', 'e', 'E', '+'].includes(e.key) && e.preventDefault()}
+              onKeyDown={blockInvalidNumberInput}
               value={fats}
-              onChange={(e) => setFats(e.target.value === "" ? "" : Math.min(100, Math.max(0, Number(e.target.value))))}
+              onChange={handleFatsChange}
               className="w-full bg-secondary/50 border border-white/5 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-yellow-500/50"
               placeholder="0"
             />
@@ -170,9 +197,9 @@ export default function FoodCreator({ onClose, editingFood }: FoodCreatorProps) 
             <input
               type="number"
               min="0"
-              onKeyDown={(e) => ['-', 'e', 'E', '+'].includes(e.key) && e.preventDefault()}
+              onKeyDown={blockInvalidNumberInput}
               value={carbs}
-              onChange={(e) => setCarbs(e.target.value === "" ? "" : Math.min(100, Math.max(0, Number(e.target.value))))}
+              onChange={handleCarbsChange}
               className="w-full bg-secondary/50 border border-white/5 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-green-500/50"
               placeholder="0"
             />
@@ -217,15 +244,8 @@ export default function FoodCreator({ onClose, editingFood }: FoodCreatorProps) 
                 list="category-suggestions"
                 type="text"
                 value={newCategoryName}
-                onChange={(e) => setNewCategoryName(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' && newCategoryName.trim()) {
-                    e.preventDefault();
-                    setSelectedCategory(newCategoryName.trim());
-                    setIsCreatingCategory(false);
-                    setNewCategoryName("");
-                  }
-                }}
+                onChange={handleNewCategoryNameChange}
+                onKeyDown={handleNewCategoryKeyDown}
                 autoFocus
                 className="flex-1 bg-secondary/50 border border-white/5 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-primary/50 text-sm"
                 placeholder="Start typing name..."

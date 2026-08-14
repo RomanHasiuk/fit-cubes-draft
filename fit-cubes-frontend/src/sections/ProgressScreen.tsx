@@ -93,7 +93,18 @@ export default function ProgressScreen() {
         });
         return acc;
       },
-      { cumulative: 0, deficits: [] as any[] }
+      {
+        cumulative: 0,
+        deficits: [] as {
+          date: string;
+          deficit: number;
+          calories: number;
+          weight: number | null;
+          fatChange: number;
+          cumulativeFatChange: number;
+          isLogged: boolean;
+        }[],
+      }
     );
 
     const deficitValues = deficits.map((d) => d.isLogged ? d.deficit : null);

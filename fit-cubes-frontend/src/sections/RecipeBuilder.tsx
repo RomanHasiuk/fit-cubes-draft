@@ -18,7 +18,7 @@ import type { FoodItem } from "@/types";
 import InfoTooltip from "@/components/InfoTooltip.tsx";
 import FoodSearch from "./FoodSearch.tsx";
 import FoodAnalysis from "@/components/FoodAnalysis.tsx";
-import { clampValue } from "@/utils/calculations.ts";
+import { blockInvalidNumberInput, sanitizePositiveInt, sanitizeNameInput } from "@/utils/inputHandlers.ts";
 
 interface Ingredient {
   id: string;
@@ -142,10 +142,44 @@ export default function RecipeBuilder() {
   };
 
   const updateWeight = (id: string, value: string) => {
-    let newWeight: number | "" = value === "" ? "" : clampValue(value, 0, 10000, 0);
-    setIngredients(
-      ingredients.map((i) => (i.id === id ? { ...i, weight: newWeight } : i)),
+    const newWeight = sanitizePositiveInt(value);
+    setIngredients((prev) =>
+      prev.map((i) => (i.id === id ? { ...i, weight: newWeight } : i)),
     );
+  };
+
+  const handleCookedWeightChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFinalWeight(sanitizePositiveInt(e.target.value));
+  };
+
+  const handleRecipeNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setRecipeName(sanitizeNameInput(e.target.value));
+  };
+
+  const handleRecipeNameKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      handleSaveClick(false);
+    }
+  };
+
+  const handleIngredientBlur = (id: string) => {
+    setIngredients((prev) =>
+      prev.map((i) => {
+        if (i.id === id) {
+          const val = Number(i.weight);
+          // If left empty or <= 0 on blur, auto-restore 100g default
+          return { ...i, weight: !i.weight || val <= 0 ? 100 : val };
+        }
+        return i;
+      }),
+    );
+  };
+
+  const handleCookedWeightBlur = () => {
+    if (finalWeight !== "" && Number(finalWeight) <= 0) {
+      setFinalWeight("");
+    }
   };
 
   const totals = useMemo(() => {
@@ -195,13 +229,28 @@ export default function RecipeBuilder() {
       return;
     }
 
-    // 2. Validation: Ingredients
+    // 2. Validation: Ingredients presence
     if (ingredients.length === 0) {
       setError("Add at least one ingredient");
       return;
     }
 
-    // 3. Validation: Duplicates
+    // 3. Validation: Ingredient weights (>0g)
+    const invalidIngredient = ingredients.find(
+      (ing) => ing.weight === "" || Number(ing.weight) <= 0
+    );
+    if (invalidIngredient) {
+      setError(`Please enter a valid weight (>0g) for "${invalidIngredient.product.name}"`);
+      return;
+    }
+
+    // 4. Validation: Cooked weight (must be >0g if provided)
+    if (finalWeight !== "" && Number(finalWeight) <= 0) {
+      setError("Cooked weight must be greater than 0g");
+      return;
+    }
+
+    // 5. Validation: Duplicates
     const targetId = editingRecipeId ? editingRecipeId : null;
 
     const isDuplicate = products.some(
@@ -341,16 +390,8 @@ export default function RecipeBuilder() {
             maxLength={60}
             placeholder="e.g. Baked chicken with vegetables..."
             value={recipeName}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") {
-                e.preventDefault();
-                handleSaveClick(false);
-              }
-            }}
-            onChange={(e) => {
-              const val = e.target.value.replace(/[^0-9\p{L}\s.,'%-]/gu, "");
-              setRecipeName(val);
-            }}
+            onKeyDown={handleRecipeNameKeyDown}
+            onChange={handleRecipeNameChange}
             className="w-full bg-secondary/30 border border-white/5 rounded-xl px-4 py-3 text-sm font-medium focus:ring-2 focus:ring-primary/50 outline-none transition-all"
           />
         </div>
@@ -401,9 +442,14 @@ export default function RecipeBuilder() {
                   <div className="relative w-20">
                     <input
                       type="number"
-                      value={ing.weight}
+                      min="1"
+                      max="10000"
+                      placeholder="100"
+                      onKeyDown={blockInvalidNumberInput}
+                      value={ing.weight === 0 ? "" : ing.weight}
                       onChange={(e) => updateWeight(ing.id, e.target.value)}
-                      className="w-full bg-secondary/50 border border-white/5 rounded-lg px-2 py-1 text-right text-sm font-bold pr-6 outline-none"
+                      onBlur={() => handleIngredientBlur(ing.id)}
+                      className="w-full bg-secondary/50 border border-white/5 rounded-lg px-2 py-1 text-right text-sm font-bold pr-6 outline-none focus:ring-1 focus:ring-primary/50"
                     />
                     <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-muted-foreground">
                       g
@@ -448,14 +494,14 @@ export default function RecipeBuilder() {
               <div className="flex items-center gap-1">
                 <input
                   type="number"
-                  value={finalWeight}
+                  min="1"
+                  max="10000"
+                  onKeyDown={blockInvalidNumberInput}
+                  value={finalWeight === 0 ? "" : finalWeight}
                   placeholder={Math.round(rawWeight).toString()}
-                  onChange={(e) => {
-                    const val = e.target.value;
-                    let num: number | "" = val === "" ? "" : clampValue(val, 0, 10000, 0);
-                    setFinalWeight(num);
-                  }}
-                  className="w-full bg-transparent text-xl font-bold text-primary outline-none"
+                  onChange={handleCookedWeightChange}
+                  onBlur={handleCookedWeightBlur}
+                  className="w-full bg-transparent text-xl font-bold text-primary outline-none placeholder:text-primary/40"
                 />
                 <span className="text-xs font-medium text-primary/60">g</span>
               </div>

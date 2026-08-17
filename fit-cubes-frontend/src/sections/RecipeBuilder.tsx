@@ -18,7 +18,7 @@ import type { FoodItem } from "@/types";
 import InfoTooltip from "@/components/InfoTooltip.tsx";
 import FoodSearch from "./FoodSearch.tsx";
 import FoodAnalysis from "@/components/FoodAnalysis.tsx";
-import { blockInvalidNumberInput, sanitizePositiveInt, sanitizeNameInput } from "@/utils/inputHandlers.ts";
+import { blockInvalidIntegerInput, sanitizePositiveInt, sanitizeNameInput } from "@/utils/inputHandlers.ts";
 
 interface Ingredient {
   id: string;
@@ -445,7 +445,7 @@ export default function RecipeBuilder() {
                       min="1"
                       max="10000"
                       placeholder="100"
-                      onKeyDown={blockInvalidNumberInput}
+                      onKeyDown={blockInvalidIntegerInput}
                       value={ing.weight === 0 ? "" : ing.weight}
                       onChange={(e) => updateWeight(ing.id, e.target.value)}
                       onBlur={() => handleIngredientBlur(ing.id)}
@@ -496,7 +496,7 @@ export default function RecipeBuilder() {
                   type="number"
                   min="1"
                   max="10000"
-                  onKeyDown={blockInvalidNumberInput}
+                  onKeyDown={blockInvalidIntegerInput}
                   value={finalWeight === 0 ? "" : finalWeight}
                   placeholder={Math.round(rawWeight).toString()}
                   onChange={handleCookedWeightChange}

@@ -5,7 +5,7 @@ import { useStore } from '@/store/useStore.ts';
 import { calculatePortionOrCookedNutrition } from '@/utils/calculations.ts';
 import type { FoodItem, FoodEntry } from '@/types';
 import FoodAnalysis from '@/components/FoodAnalysis.tsx';
-import { blockInvalidNumberInput, sanitizePositiveInt } from '@/utils/inputHandlers.ts';
+import { blockInvalidIntegerInput, sanitizePositiveInt } from '@/utils/inputHandlers.ts';
 
 interface FoodAddProps {
   food: FoodItem;
@@ -162,7 +162,7 @@ export default function FoodAdd({ food, mealType, existingEntry, onClose, onDone
               min="1"
               max="99999"
               placeholder="100"
-              onKeyDown={blockInvalidNumberInput}
+              onKeyDown={blockInvalidIntegerInput}
               value={weight === '0' ? '' : weight}
               onChange={handleWeightChange}
               onBlur={handleWeightBlur}

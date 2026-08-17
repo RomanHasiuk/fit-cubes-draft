@@ -6,7 +6,7 @@ import { calculateExerciseCalories } from '@/utils/calculations.ts';
 import type { ExerciseEntry } from '@/types';
 import InfoTooltip from '@/components/InfoTooltip.tsx';
 import FoodItemCardSkeleton from '@/components/food/FoodItemCardSkeleton';
-import { blockInvalidNumberInput } from '@/utils/inputHandlers.ts';
+import { blockInvalidIntegerInput, blockInvalidNumberInput } from '@/utils/inputHandlers.ts';
 
 interface ExerciseLoggerProps {
   onClose: () => void;
@@ -48,17 +48,31 @@ export default function ExerciseLogger({ onClose, editEntry }: ExerciseLoggerPro
     : 0;
 
   const handleMetricChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    let val = e.target.value;
-    if (val !== "") {
-      val = val.replace(/^0+(?=\d)/, '');
-      const num = Number(val);
-      const label = activity?.metricLabel?.toLowerCase() || '';
-      if (label.includes('min') && num > 1440) val = "1440";
-      else if (label === 'reps' && num > 10000) val = "10000";
-      else if (label === 'steps' && num > 100000) val = "100000";
-      else if (num > 100000) val = "100000";
+    const raw = e.target.value;
+    const isMinutes = activity?.metricLabel?.toLowerCase().includes('min');
+
+    if (isMinutes) {
+      let clean = raw.replace(/,/g, '.').replace(/[^0-9.]/g, '');
+      const parts = clean.split('.');
+      if (parts.length > 2) {
+        clean = parts[0] + '.' + parts.slice(1).join('');
+      }
+      if (parts[1]?.length > 1) {
+        clean = parts[0] + '.' + parts[1].slice(0, 1);
+      }
+      if (clean.length > 1 && clean.startsWith('0') && clean[1] !== '.') {
+        clean = clean.replace(/^0+/, '');
+      }
+      if (parseFloat(clean) > 1440) clean = '1440';
+      setMetric(clean);
+    } else {
+      let clean = raw.replace(/\D/g, '').replace(/^0+/, '');
+      const num = Number(clean);
+      if (activity?.metricLabel === 'reps' && num > 10000) clean = '10000';
+      else if (activity?.metricLabel === 'steps' && num > 100000) clean = '100000';
+      else if (num > 100000) clean = '100000';
+      setMetric(clean);
     }
-    setMetric(val);
   };
 
   const handleSave = () => {
@@ -88,12 +102,22 @@ export default function ExerciseLogger({ onClose, editEntry }: ExerciseLoggerPro
     onClose();
   };
 
+  const handleBack = () => {
+    if (selectedActivity && !editEntry) {
+      setSelectedActivity(null);
+      setMetric('');
+      setRpe(5);
+    } else {
+      onClose();
+    }
+  };
+
   return (
     <div className="flex flex-col h-full">
       {/* Header */}
       <div className="shrink-0 px-4 pt-4 pb-2 flex items-center justify-between">
         <button
-          onClick={onClose}
+          onClick={handleBack}
           className="p-2 rounded-lg active:bg-secondary transition-colors"
         >
           <ChevronLeft className="w-5 h-5" />
@@ -178,9 +202,8 @@ export default function ExerciseLogger({ onClose, editEntry }: ExerciseLoggerPro
               <div className="relative">
                 <input
                   type="text"
-                  inputMode="numeric"
-                  pattern="[0-9]*"
-                  onKeyDown={blockInvalidNumberInput}
+                  inputMode="decimal"
+                  onKeyDown={activity?.metricLabel?.toLowerCase().includes('min') ? blockInvalidNumberInput : blockInvalidIntegerInput}
                   value={metric}
                   onChange={handleMetricChange}
                   placeholder="0"
@@ -190,39 +213,6 @@ export default function ExerciseLogger({ onClose, editEntry }: ExerciseLoggerPro
                 <span className="absolute right-6 top-1/2 -translate-y-1/2 text-muted-foreground text-lg">
                   {activity?.metricLabel}
                 </span>
-              </div>
-
-              {/* Quick select */}
-              <div className="flex gap-2 mt-3 flex-wrap">
-                {activity?.metricLabel === 'reps'
-                  ? [10, 20, 30, 50, 60].map((v) => (
-                      <button
-                        key={v}
-                        onClick={() => setMetric(String(v))}
-                        className={`px-4 py-2 rounded-lg text-xs font-medium transition-colors ${
-                          metric === String(v)
-                            ? 'bg-primary text-primary-foreground'
-                            : 'bg-secondary text-muted-foreground'
-                        }`}
-                      >
-                        {v}
-                      </button>
-                    ))
-                  : activity?.metricLabel === 'minutes'
-                    ? [1, 2, 5, 10, 15].map((v) => (
-                        <button
-                          key={v}
-                          onClick={() => setMetric(String(v))}
-                          className={`px-4 py-2 rounded-lg text-xs font-medium transition-colors ${
-                            metric === String(v)
-                              ? 'bg-primary text-primary-foreground'
-                              : 'bg-secondary text-muted-foreground'
-                          }`}
-                        >
-                          {v} min
-                        </button>
-                      ))
-                    : null}
               </div>
             </div>
 
@@ -284,11 +274,7 @@ export default function ExerciseLogger({ onClose, editEntry }: ExerciseLoggerPro
 
             {/* Back to list */}
             <button
-              onClick={() => {
-                setSelectedActivity(null);
-                setMetric('');
-                setRpe(5);
-              }}
+              onClick={handleBack}
               className="w-full mt-6 py-3 text-sm text-muted-foreground text-center"
             >
               Choose different exercise

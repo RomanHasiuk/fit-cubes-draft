@@ -145,7 +145,7 @@ export default function FoodSearch({
               <p className="text-sm text-muted-foreground">No foods found</p>
             </div>
           ) : (
-            filteredFoods.map((food, idx) => {
+            filteredFoods.map((food) => {
               const isCustom =
                 food.category === 'My Meals' ||
                 food.category === 'My Recipes' ||
@@ -155,7 +155,6 @@ export default function FoodSearch({
                 <FoodItemCard
                   key={food.id}
                   food={food}
-                  index={idx}
                   usageCount={usageCounts[food.id] || 0}
                   isFavorite={favoriteProductIds.includes(food.id)}
                   isCustom={isCustom}

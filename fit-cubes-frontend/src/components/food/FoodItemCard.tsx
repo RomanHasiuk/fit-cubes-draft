@@ -5,7 +5,6 @@ import type { FoodItem } from '@/types';
 
 interface FoodItemCardProps {
   food: FoodItem;
-  index: number;
   usageCount: number;
   isFavorite: boolean;
   isCustom: boolean;
@@ -17,7 +16,6 @@ interface FoodItemCardProps {
 
 export const FoodItemCard: React.FC<FoodItemCardProps> = ({
   food,
-  index,
   usageCount,
   isFavorite,
   isCustom,

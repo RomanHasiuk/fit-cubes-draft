@@ -97,12 +97,12 @@ export default function FoodSearch({
   return (
     <div className="flex flex-col h-full bg-background relative">
       {/* Header */}
-      <div className="shrink-0 px-4 pt-4 pb-2 flex items-center justify-between">
+      <div className="shrink-0 px-4 pt-safe pb-2 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <button
             type="button"
             onClick={onClose}
-            className="p-2 rounded-lg active:bg-secondary transition-colors"
+            className="p-2.5 rounded-xl active:bg-secondary transition-colors cursor-pointer"
           >
             <ChevronLeft className="w-5 h-5" />
           </button>
@@ -111,7 +111,7 @@ export default function FoodSearch({
         <button
           type="button"
           onClick={() => setIsCreatingFood(true)}
-          className="flex items-center gap-1.5 px-3 py-1.5 bg-primary/20 text-primary rounded-lg text-[10px] font-bold hover:scale-105 active:scale-95 transition-all"
+          className="flex items-center gap-1.5 px-3 py-1.5 bg-primary/20 text-primary rounded-lg text-[10px] font-bold hover:scale-105 active:scale-95 transition-all cursor-pointer"
         >
           <Plus className="w-3 h-3" />
           ADD

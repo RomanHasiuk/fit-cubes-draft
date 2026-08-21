@@ -295,3 +295,23 @@ export function calculatePortionOrCookedNutrition(
   return calculatePortionNutrition(food, weight);
 }
 
+/**
+ * Cross-browser safe unique ID generator (supports iOS Safari, webviews, non-secure contexts)
+ */
+export function generateSafeId(prefix: string = 'id'): string {
+  const timestamp = Date.now().toString(36);
+  let randomPart = '';
+  try {
+    if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+      randomPart = crypto.randomUUID().slice(0, 8);
+    }
+  } catch {
+    // Fallback if crypto.randomUUID fails
+  }
+  if (!randomPart) {
+    randomPart = Math.random().toString(36).slice(2, 10);
+  }
+  return `${prefix}_${timestamp}_${randomPart}`;
+}
+
+

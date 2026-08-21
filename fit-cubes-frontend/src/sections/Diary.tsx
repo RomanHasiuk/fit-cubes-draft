@@ -173,7 +173,7 @@ export default function Diary() {
             exit={{ opacity: 0 }}
           >
             <motion.div
-              className="w-full max-w-[500px] h-[90vh] md:h-[800px] glass rounded-t-[2.5rem] md:rounded-[2.5rem] overflow-hidden bg-background"
+              className="w-full max-w-[500px] h-[90dvh] max-h-[90dvh] md:h-[800px] glass rounded-t-[2.5rem] md:rounded-[2.5rem] overflow-hidden bg-background"
               initial={{ y: '100%' }}
               animate={{ y: 0 }}
               exit={{ y: '100%' }}
@@ -195,7 +195,7 @@ export default function Diary() {
             exit={{ opacity: 0 }}
           >
             <motion.div
-              className="w-full max-w-[500px] h-[90vh] md:h-[800px] glass rounded-t-[2.5rem] md:rounded-[2.5rem] overflow-hidden bg-background"
+              className="w-full max-w-[500px] h-[90dvh] max-h-[90dvh] md:h-[800px] glass rounded-t-[2.5rem] md:rounded-[2.5rem] overflow-hidden bg-background"
               initial={{ y: '100%' }}
               animate={{ y: 0 }}
               exit={{ y: '100%' }}
@@ -220,7 +220,7 @@ export default function Diary() {
             exit={{ opacity: 0 }}
           >
             <motion.div
-              className="w-full max-w-[500px] h-[90vh] md:h-[800px] glass rounded-t-[2.5rem] md:rounded-[2.5rem] overflow-hidden bg-background"
+              className="w-full max-w-[500px] h-[90dvh] max-h-[90dvh] md:h-[800px] glass rounded-t-[2.5rem] md:rounded-[2.5rem] overflow-hidden bg-background"
               initial={{ y: '100%' }}
               animate={{ y: 0 }}
               exit={{ y: '100%' }}

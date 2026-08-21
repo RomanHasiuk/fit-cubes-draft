@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react';
 import { ChevronLeft, Check, Edit3 } from 'lucide-react';
 import { useNavigate } from 'react-router';
 import { useStore } from '@/store/useStore.ts';
-import { calculatePortionOrCookedNutrition } from '@/utils/calculations.ts';
+import { calculatePortionOrCookedNutrition, generateSafeId } from '@/utils/calculations.ts';
 import type { FoodItem, FoodEntry } from '@/types';
 import FoodAnalysis from '@/components/FoodAnalysis.tsx';
 import { blockInvalidIntegerInput, sanitizePositiveInt } from '@/utils/inputHandlers.ts';
@@ -52,7 +52,7 @@ export default function FoodAdd({ food, mealType, existingEntry, onClose, onDone
     if (!w || w <= 0) return;
 
     const entry: FoodEntry = {
-      id: existingEntry ? existingEntry.id : `fe_${Date.now()}_${crypto.randomUUID().slice(0, 5)}`,
+      id: existingEntry ? existingEntry.id : generateSafeId('fe'),
       foodItemId: food.id,
       name: food.name,
       weightGrams: w,
@@ -76,10 +76,11 @@ export default function FoodAdd({ food, mealType, existingEntry, onClose, onDone
   return (
     <div className="flex flex-col h-full bg-background text-foreground">
       {/* Header */}
-      <div className="shrink-0 px-4 pt-4 pb-2 flex items-center justify-between border-b border-border/40">
+      <div className="shrink-0 px-4 pt-safe pb-2 flex items-center justify-between border-b border-border/40">
         <button
+          type="button"
           onClick={onClose}
-          className="p-2 rounded-xl active:bg-secondary hover:bg-secondary/60 transition-colors"
+          className="p-2.5 rounded-xl active:bg-secondary hover:bg-secondary/60 transition-colors cursor-pointer"
         >
           <ChevronLeft className="w-5 h-5 text-muted-foreground" />
         </button>

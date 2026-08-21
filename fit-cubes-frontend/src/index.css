@@ -97,6 +97,22 @@
   .text-gradient {
     @apply bg-clip-text text-transparent bg-gradient-to-r from-amber-500 to-orange-400;
   }
+
+  .pt-safe {
+    padding-top: max(env(safe-area-inset-top, 0px), 16px);
+  }
+
+  .pb-safe {
+    padding-bottom: max(env(safe-area-inset-bottom, 0px), 16px);
+  }
+
+  .pl-safe {
+    padding-left: env(safe-area-inset-left, 0px);
+  }
+
+  .pr-safe {
+    padding-right: env(safe-area-inset-right, 0px);
+  }
 }
 
 input[type="number"]::-webkit-inner-spin-button,

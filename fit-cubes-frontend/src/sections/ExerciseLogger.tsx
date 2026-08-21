@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { ChevronLeft, Check, Dumbbell, Footprints, Timer, Flame } from 'lucide-react';
 import { useStore } from '@/store/useStore.ts';
-import { calculateExerciseCalories } from '@/utils/calculations.ts';
+import { calculateExerciseCalories, generateSafeId } from '@/utils/calculations.ts';
 import type { ExerciseEntry } from '@/types';
 import InfoTooltip from '@/components/InfoTooltip.tsx';
 import FoodItemCardSkeleton from '@/components/food/FoodItemCardSkeleton';
@@ -83,7 +83,7 @@ export default function ExerciseLogger({ onClose, editEntry }: ExerciseLoggerPro
       activity.met < 4 ? 'low' : activity.met < 8 ? 'medium' : 'high';
 
     const entry: ExerciseEntry = {
-      id: editEntry ? editEntry.id : `ex_${Date.now()}_${crypto.randomUUID().slice(0, 5)}`,
+      id: editEntry ? editEntry.id : generateSafeId('ex'),
       activityType: activity.name,
       metric: parseFloat(metric),
       metricLabel: activity.metricLabel,
@@ -115,10 +115,11 @@ export default function ExerciseLogger({ onClose, editEntry }: ExerciseLoggerPro
   return (
     <div className="flex flex-col h-full">
       {/* Header */}
-      <div className="shrink-0 px-4 pt-4 pb-2 flex items-center justify-between">
+      <div className="shrink-0 px-4 pt-safe pb-2 flex items-center justify-between">
         <button
+          type="button"
           onClick={handleBack}
-          className="p-2 rounded-lg active:bg-secondary transition-colors"
+          className="p-2.5 rounded-lg active:bg-secondary transition-colors cursor-pointer"
         >
           <ChevronLeft className="w-5 h-5" />
         </button>

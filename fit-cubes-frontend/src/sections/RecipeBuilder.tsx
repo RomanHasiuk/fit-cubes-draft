@@ -19,6 +19,7 @@ import InfoTooltip from "@/components/InfoTooltip.tsx";
 import FoodSearch from "./FoodSearch.tsx";
 import FoodAnalysis from "@/components/FoodAnalysis.tsx";
 import { blockInvalidIntegerInput, sanitizePositiveInt, sanitizeNameInput } from "@/utils/inputHandlers.ts";
+import { generateSafeId } from "@/utils/calculations.ts";
 
 interface Ingredient {
   id: string;
@@ -76,7 +77,7 @@ export default function RecipeBuilder() {
         const originalProduct = products.find((p) => p.id === ing.foodItemId);
 
         return {
-          id: crypto.randomUUID().slice(0, 9),
+          id: generateSafeId('ing'),
           product: originalProduct || {
             id: ing.foodItemId,
             name: ing.name,
@@ -127,7 +128,7 @@ export default function RecipeBuilder() {
 
   const addIngredient = (product: FoodItem) => {
     const newIngredient: Ingredient = {
-      id: crypto.randomUUID().slice(0, 9),
+      id: generateSafeId('ing'),
       product,
       weight: 100,
     };

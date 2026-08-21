@@ -36,7 +36,7 @@ export const FoodItemCard: React.FC<FoodItemCardProps> = ({
       <button
         type="button"
         onClick={() => onSelect(food)}
-        className="flex-1 text-left min-w-0 py-1"
+        className="flex-1 text-left min-w-0 py-1 cursor-pointer touch-manipulation active:opacity-75"
       >
         <p className="text-sm font-medium flex items-center gap-2">
           <span className="truncate">{food.name}</span>
@@ -65,7 +65,7 @@ export const FoodItemCard: React.FC<FoodItemCardProps> = ({
             e.stopPropagation();
             onToggleFavorite(food.id);
           }}
-          className="p-2 text-rose-400 hover:bg-rose-400/10 rounded-lg transition-all"
+          className="p-2.5 text-rose-400 hover:bg-rose-400/10 active:scale-110 rounded-xl transition-all cursor-pointer touch-manipulation"
           title="Add to favorites"
         >
           <Heart

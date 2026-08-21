@@ -44,6 +44,13 @@ function App() {
   const touchCoords = useRef<TouchCoordinates | null>(null);
 
   const onTouchStart = (e: React.TouchEvent) => {
+    // Ignore swipe gesture if touching interactive controls to prevent iOS Safari click suppression
+    const target = e.target as HTMLElement | null;
+    if (target?.closest('button, a, input, select, textarea, [role="button"], [data-slot="button"]')) {
+      touchCoords.current = null;
+      return;
+    }
+
     const touch = e.targetTouches[0];
     touchCoords.current = {
       startX: touch.clientX,

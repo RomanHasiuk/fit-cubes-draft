@@ -179,12 +179,16 @@ export default function Onboarding({ onComplete }: OnboardingProps) {
     }
   }, [targetCalories, diet, profile.weightKg, goal, currentStep, updateProfile]);
 
+  if (currentStep === 'welcome') {
+    return <WelcomeStep onNext={handleNext} />;
+  }
+
   return (
     <div className="h-screen w-full bg-background flex justify-center items-center p-0 md:p-4">
       <div className="w-full max-w-[430px] h-[100dvh] md:h-[850px] bg-background rounded-none overflow-hidden shadow-2xl relative isolate flex flex-col">
         <div className="flex-1 flex flex-col pt-8 pb-6 overflow-hidden">
           {/* Header with Back button and Progress dots */}
-          <div className={`relative flex items-center justify-center mb-6 px-6 shrink-0 ${currentStep === 'welcome' ? 'hidden' : ''}`}>
+          <div className="relative flex items-center justify-center mb-6 px-6 shrink-0">
             {step > 0 && (
               <button
                 onClick={handleBack}
@@ -207,10 +211,6 @@ export default function Onboarding({ onComplete }: OnboardingProps) {
 
           <div className="flex-1 overflow-y-auto overflow-x-hidden px-6 pb-4 custom-scrollbar">
             <AnimatePresence mode="wait">
-            {/* Welcome Step */}
-            {currentStep === 'welcome' && (
-              <WelcomeStep onNext={handleNext} />
-            )}
 
             {/* Basics Step */}
             {currentStep === 'basics' && (

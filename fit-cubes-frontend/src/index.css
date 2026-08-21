@@ -56,6 +56,11 @@
     @apply border-border;
   }
 
+  button, [role="button"], a, input, select, textarea, label {
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+  }
+
   body {
     @apply text-foreground transition-colors duration-500 min-h-screen;
     -webkit-tap-highlight-color: transparent;

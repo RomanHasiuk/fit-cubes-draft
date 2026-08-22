@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { WelcomeStep } from './WelcomeStep';
+import { AuthStep } from './AuthStep';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronRight, ChevronLeft, AlertCircle } from 'lucide-react';
 import { useStore } from '@/store/useStore.ts';
@@ -38,7 +39,7 @@ const LIMITS = {
   name: { min: 2, max: 50 }
 };
 
-const STEPS = ['welcome', 'basics', 'targets', 'ready'] as const;
+const STEPS = ['welcome', 'auth', 'basics', 'targets', 'ready'] as const;
 
 export default function Onboarding({ onComplete }: OnboardingProps) {
   const profile = useStore((state) => state.profile);
@@ -181,6 +182,10 @@ export default function Onboarding({ onComplete }: OnboardingProps) {
 
   if (currentStep === 'welcome') {
     return <WelcomeStep onNext={handleNext} />;
+  }
+
+  if (currentStep === 'auth') {
+    return <AuthStep onSuccess={handleNext} onSkip={handleNext} />;
   }
 
   return (

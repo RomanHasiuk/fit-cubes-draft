@@ -62,7 +62,7 @@ export function WelcomeStep({ onNext }: WelcomeStepProps) {
       </div>
 
       {/* Bottom Action Area (Responsive: 90px side padding on mobile, 110px on larger screens, max-w 560px) */}
-      <div className="relative z-10 w-full px-[90px] sm:px-[110px] pb-10 sm:pb-[70px] md:pb-16 flex justify-center mt-auto">
+      <div className="relative z-10 w-full px-[90px] sm:px-[110px] pb-[70px] md:pb-[100px] lg:pb-[132px] flex justify-center mt-auto">
         <Button
           className="w-full max-w-[560px] h-[46px] text-base sm:text-lg font-semibold bg-[#F59F0A] hover:bg-[#F59F0A]/90 text-white rounded-[10px] shadow-lg shadow-amber-500/20 active:scale-[0.98] transition-all flex items-center justify-center"
           onClick={onNext}

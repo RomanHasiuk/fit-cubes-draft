@@ -24,7 +24,7 @@ export function OptionSelector<T extends string>({
   return (
     <div className="w-full">
       {label && (
-        <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-2 block px-1">
+        <label className="font-serif text-sm font-semibold text-foreground mb-2 block px-1">
           {label}
         </label>
       )}

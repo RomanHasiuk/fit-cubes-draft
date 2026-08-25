@@ -1,77 +1,57 @@
+import { motion, type Variants } from 'framer-motion';
+import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { authItemVariants, authLayoutTransition } from './authAnimations';
+import type { SocialProvider } from '@/services/authService';
 
 interface SocialAuthButtonsProps {
-  onSocialAuth: (provider: 'Apple' | 'Google' | 'Facebook') => void;
+  onSocialAuth: (provider: SocialProvider) => void;
   isLoading?: boolean;
   className?: string;
+  itemVariants?: Variants;
 }
+
+const SOCIAL_PROVIDERS: ReadonlyArray<{
+  provider: SocialProvider;
+  label: string;
+  icon: string;
+}> = [
+  { provider: 'apple', label: 'Continue with Apple', icon: '/icons/apple-icons.svg' },
+  { provider: 'google', label: 'Continue with Google', icon: '/icons/Google-icon.svg' },
+  { provider: 'facebook', label: 'Continue with Facebook', icon: '/icons/facebook-icon.svg' },
+];
 
 export function SocialAuthButtons({
   onSocialAuth,
   isLoading,
   className,
+  itemVariants = authItemVariants,
 }: SocialAuthButtonsProps) {
   return (
     <div className={cn('flex flex-col gap-3 w-full', className)}>
-      {/* Apple Button */}
-      <button
-        type="button"
-        disabled={isLoading}
-        onClick={() => onSocialAuth('Apple')}
-        className={cn(
-          'w-full h-[46px] px-4 rounded-[10px] border border-white/10 bg-[#16191E]/60 backdrop-blur-sm',
-          'text-white text-sm font-medium flex items-center justify-center gap-3',
-          'hover:bg-[#16191E] hover:border-white/20 active:bg-[#111317]',
-          'transition-all cursor-pointer touch-manipulation select-none disabled:opacity-50'
-        )}
-      >
-        <img
-          src="/icons/apple-icons.svg"
-          alt="Apple"
-          className="w-5 h-5 pointer-events-none object-contain"
-        />
-        <span>Continue with Apple</span>
-      </button>
-
-      {/* Google Button */}
-      <button
-        type="button"
-        disabled={isLoading}
-        onClick={() => onSocialAuth('Google')}
-        className={cn(
-          'w-full h-[46px] px-4 rounded-[10px] border border-white/10 bg-[#16191E]/60 backdrop-blur-sm',
-          'text-white text-sm font-medium flex items-center justify-center gap-3',
-          'hover:bg-[#16191E] hover:border-white/20 active:bg-[#111317]',
-          'transition-all cursor-pointer touch-manipulation select-none disabled:opacity-50'
-        )}
-      >
-        <img
-          src="/icons/Google-icon.svg"
-          alt="Google"
-          className="w-5 h-5 pointer-events-none object-contain"
-        />
-        <span>Continue with Google</span>
-      </button>
-
-      {/* Facebook Button */}
-      <button
-        type="button"
-        disabled={isLoading}
-        onClick={() => onSocialAuth('Facebook')}
-        className={cn(
-          'w-full h-[46px] px-4 rounded-[10px] border border-white/10 bg-[#16191E]/60 backdrop-blur-sm',
-          'text-white text-sm font-medium flex items-center justify-center gap-3',
-          'hover:bg-[#16191E] hover:border-white/20 active:bg-[#111317]',
-          'transition-all cursor-pointer touch-manipulation select-none disabled:opacity-50'
-        )}
-      >
-        <img
-          src="/icons/facebook-icon.svg"
-          alt="Facebook"
-          className="w-5 h-5 pointer-events-none object-contain"
-        />
-        <span>Continue with Facebook</span>
-      </button>
+      {SOCIAL_PROVIDERS.map(({ provider, label, icon }) => (
+        <motion.div
+          key={provider}
+          variants={itemVariants}
+          layout
+          transition={{ layout: authLayoutTransition }}
+        >
+          <Button
+            type="button"
+            variant="secondary"
+            disabled={isLoading}
+            onClick={() => onSocialAuth(provider)}
+            className="w-full gap-3"
+          >
+            <img
+              src={icon}
+              alt={provider}
+              className="w-6 h-6 pointer-events-none object-contain"
+            />
+            <span>{label}</span>
+          </Button>
+        </motion.div>
+      ))}
     </div>
   );
 }

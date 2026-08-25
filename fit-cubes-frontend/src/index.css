@@ -23,7 +23,7 @@
     --border: 220 13% 91%;
     --input: 220 13% 91%;
     --ring: 33 95% 44%;
-    --radius: 1rem;
+    --radius: 5px;
 
     --bg-gradient: linear-gradient(-45deg, #faf8ef 0%, #f1d3b5 100%);
   }
@@ -62,7 +62,7 @@
   }
 
   body {
-    @apply text-foreground transition-colors duration-500 min-h-screen;
+    @apply font-sans antialiased text-foreground transition-colors duration-500 min-h-screen;
     -webkit-tap-highlight-color: transparent;
     touch-action: manipulation;
     overscroll-behavior-y: none;
@@ -117,6 +117,23 @@
 
   .pr-safe {
     padding-right: env(safe-area-inset-right, 0px);
+  }
+
+  .py-safe {
+    padding-top: max(env(safe-area-inset-top, 0px), 16px);
+    padding-bottom: max(env(safe-area-inset-bottom, 0px), 16px);
+  }
+
+  .page-padding {
+    @apply px-4 pt-16 pb-8 sm:px-8 sm:pt-14 sm:pb-10 lg:px-8 lg:pt-6 lg:pb-6;
+  }
+
+  .page-pt {
+    @apply pt-16 sm:pt-10 lg:pt-6;
+  }
+
+  .page-pb {
+    @apply pb-8 sm:pb-10 lg:pb-6;
   }
 }
 

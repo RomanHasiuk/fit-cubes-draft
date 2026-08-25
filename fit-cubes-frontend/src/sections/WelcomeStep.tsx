@@ -12,7 +12,7 @@ export function WelcomeStep({ onNext }: WelcomeStepProps) {
   return (
     <motion.div
       key="welcome"
-      className="relative w-full h-full min-h-[100dvh] flex flex-col items-center justify-between overflow-hidden bg-[#0F1114] select-none pt-safe pb-safe"
+      className="relative w-full min-h-[100dvh] flex flex-col items-center justify-between overflow-hidden bg-[#0F1114] select-none"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0, scale: 0.96 }}
@@ -32,9 +32,9 @@ export function WelcomeStep({ onNext }: WelcomeStepProps) {
       <div className="absolute inset-0 bg-black/60 backdrop-blur-[1.5px] pointer-events-none" />
 
       {/* Center Hero Content (Logo + Animated Typography) */}
-      <div className="relative z-10 flex flex-col items-center justify-center md:justify-start w-full flex-1 px-6 max-w-xl mx-auto pt-16 sm:pt-20 md:pt-[126px]">
+      <div className="relative z-10 flex flex-col items-center justify-start w-full flex-1 px-6 max-w-xl mx-auto pt-[130px]">
         {/* Animated 3-Ring Golden Logo */}
-        <div className="mb-6 sm:mb-8 md:mb-10 flex items-center justify-center">
+        <div className="mb-6 md:mb-10 flex items-center justify-center">
           <Logo
             className="w-[134px] h-[134px] md:w-[254px] md:h-[254px] transition-all duration-300"
             variant="draw"
@@ -43,7 +43,7 @@ export function WelcomeStep({ onNext }: WelcomeStepProps) {
         </div>
 
         {/* Responsive Heading */}
-        <h1 className="text-[28px] leading-[35px] sm:text-4xl md:text-5xl text-white flex flex-col sm:flex-row items-center justify-center tracking-tight font-medium text-center">
+        <h1 className="text-[28px] md:leading-[1.2] sm:text-4xl md:text-5xl font-serif text-white flex flex-col sm:flex-row items-center justify-center tracking-tight font-semibold text-center">
           <span className="text-white/95 sm:mr-2">Welcome to</span>
           <span className="inline-flex items-center font-semibold text-[#F59F0A]">
             {BRAND_NAME.split("").map((char, index) => (
@@ -61,10 +61,11 @@ export function WelcomeStep({ onNext }: WelcomeStepProps) {
         </h1>
       </div>
 
-      {/* Bottom Action Area (Responsive: 90px side padding on mobile, 110px on larger screens, max-w 560px) */}
-      <div className="relative z-10 w-full px-[90px] sm:px-[110px] pb-[70px] md:pb-[100px] lg:pb-[132px] flex justify-center mt-auto">
+      {/* Bottom Action Area */}
+      <div className="relative z-10 w-full px-4 sm:px-6 pb-[76px] md:pb-24 lg:pb-[108px] flex justify-center mt-auto">
         <Button
-          className="w-full max-w-[560px] h-[46px] text-base sm:text-lg font-semibold bg-[#F59F0A] hover:bg-[#F59F0A]/90 text-white rounded-[10px] shadow-lg shadow-amber-500/20 active:scale-[0.98] transition-all flex items-center justify-center"
+          variant="default"
+          className="w-full max-w-[552px] antialiased"
           onClick={onNext}
         >
           Get Started!

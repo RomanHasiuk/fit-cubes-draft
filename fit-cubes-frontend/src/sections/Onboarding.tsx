@@ -185,7 +185,7 @@ export default function Onboarding({ onComplete }: OnboardingProps) {
   }
 
   if (currentStep === 'auth') {
-    return <AuthStep onSuccess={handleNext} onSkip={handleNext} />;
+    return <AuthStep onSuccess={handleNext} />;
   }
 
   return (
@@ -226,14 +226,14 @@ export default function Onboarding({ onComplete }: OnboardingProps) {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -20 }}
               >
-                <h2 className="text-2xl font-bold mb-1">Your Profile</h2>
+                <h2 className="text-2xl font-serif font-bold mb-1">Your Profile</h2>
                 <p className="text-muted-foreground text-sm mb-6">
                   This data is used to calculate your basal metabolic rate and daily needs.
                 </p>
 
                 <div className="space-y-4">
                   <div>
-                    <label className="text-sm font-medium mb-1.5 block">Name</label>
+                    <label className="text-sm font-serif font-semibold mb-1.5 block">Name</label>
                     <input
                       type="text"
                       maxLength={50}
@@ -283,7 +283,7 @@ export default function Onboarding({ onComplete }: OnboardingProps) {
                   <div className="bg-card rounded-xl p-4 border border-border mt-4">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
-                        <span className="text-sm text-muted-foreground">Activity factor</span>
+                        <span className="text-sm font-serif font-semibold text-foreground">Activity factor</span>
                         <InfoTooltip title="Activity" content="Multiplier from 1.2 to 1.9. Greatly impacts TDEE." />
                       </div>
                       <span className="text-sm font-medium">{profile.activityFactor}</span>
@@ -315,7 +315,7 @@ export default function Onboarding({ onComplete }: OnboardingProps) {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -20 }}
               >
-                <h2 className="text-2xl font-bold mb-1">Macro Targets</h2>
+                <h2 className="text-2xl font-serif font-bold mb-1">Macro Targets</h2>
                 <p className="text-muted-foreground text-sm mb-6">
                   Set your daily targets or use auto-calculation.
                 </p>
@@ -351,7 +351,7 @@ export default function Onboarding({ onComplete }: OnboardingProps) {
 
                 <div className="mt-8 space-y-4">
                   <div className="flex items-center justify-between">
-                    <h3 className="text-sm font-bold">Manual protein adjustment</h3>
+                    <h3 className="text-sm font-serif font-bold">Manual protein adjustment</h3>
                     <span className="text-[10px] text-muted-foreground italic">Can be changed later</span>
                   </div>
                   <div className="grid grid-cols-3 gap-3">
@@ -423,7 +423,7 @@ export default function Onboarding({ onComplete }: OnboardingProps) {
                   <Logo variant="pulse" size={120} />
                 </div>
                 
-                <h2 className="text-[28px] font-bold mb-3 text-white">You're All Set!</h2>
+                <h2 className="text-[28px] font-serif font-bold mb-3 text-white">You're All Set!</h2>
                 <p className="text-gray-400 text-sm leading-relaxed max-w-[280px] mx-auto">
                   Your calorie budget is ready (<span className="text-[#F59F0A] font-semibold">{targetCalories.toLocaleString()} kcal</span>).<br/>
                   Start tracking and stay on target.

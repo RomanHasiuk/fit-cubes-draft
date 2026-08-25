@@ -45,7 +45,7 @@ export const MetricInput: React.FC<MetricInputProps> = ({
   return (
     <div className="flex-1">
       <div className="flex items-center justify-between mb-1.5 px-1">
-        <label className="text-[10px] font-bold text-muted-foreground uppercase">{label}</label>
+        <label className="font-serif text-sm font-semibold text-foreground">{label}</label>
         <InfoTooltip title={tooltipTitle} content={tooltipContent} align={align} />
       </div>
       <input

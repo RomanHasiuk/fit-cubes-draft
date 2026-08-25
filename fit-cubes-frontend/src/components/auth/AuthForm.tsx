@@ -1,274 +1,305 @@
-import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Check, Loader2 } from 'lucide-react';
 import { AuthInput } from './AuthInput';
 import { SocialAuthButtons } from './SocialAuthButtons';
-import { authService } from '@/services/authService';
+import { ForgotPasswordModal } from './ForgotPasswordModal';
+import { Button } from '@/components/ui/button';
+import { useAuthForm, type AuthMode } from './useAuthForm';
+import {
+  authContainerVariants,
+  authItemVariants,
+  authLayoutTransition,
+  AUTH_CUBIC_BEZIER,
+} from './authAnimations';
 
-export type AuthMode = 'login' | 'signup';
+export type { AuthMode };
 
 interface AuthFormProps {
   initialMode?: AuthMode;
   onSuccess: () => void;
-  onSkip?: () => void;
 }
 
 export function AuthForm({
   initialMode = 'login',
   onSuccess,
-  onSkip,
 }: AuthFormProps) {
-  const [mode, setMode] = useState<AuthMode>(initialMode);
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [staySignedIn, setStaySignedIn] = useState(true);
-  const [agreeTerms, setAgreeTerms] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  const isLogin = mode === 'login';
-
-  const handleModeToggle = (newMode: AuthMode) => {
-    setError(null);
-    setMode(newMode);
-  };
-
-  const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setName(e.target.value);
-    if (error) setError(null);
-  };
-
-  const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setEmail(e.target.value);
-    if (error) setError(null);
-  };
-
-  const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setPassword(e.target.value);
-    if (error) setError(null);
-  };
-
-  const handleToggleStaySignedIn = () => {
-    setStaySignedIn((prev) => !prev);
-  };
-
-  const handleToggleAgreeTerms = () => {
-    setAgreeTerms((prev) => !prev);
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError(null);
-
-    if (!email.trim()) {
-      setError('Please enter your email address');
-      return;
-    }
-    if (!password) {
-      setError('Please enter your password');
-      return;
-    }
-    if (!isLogin && !name.trim()) {
-      setError('Please enter your name');
-      return;
-    }
-    if (!isLogin && !agreeTerms) {
-      setError('You must agree to the Terms of Service & Privacy Policy');
-      return;
-    }
-
-    setIsLoading(true);
-    try {
-      if (isLogin) {
-        const res = await authService.login({
-          email: email.trim(),
-          password,
-        });
-        if (res.ok) {
-          onSuccess();
-        } else {
-          // Prototype fallback for local offline testing
-          onSuccess();
-        }
-      } else {
-        const res = await authService.register({
-          name: name.trim(),
-          email: email.trim(),
-          password,
-        });
-        if (res.ok) {
-          onSuccess();
-        } else {
-          onSuccess();
-        }
-      }
-    } catch {
-      // Prototype fallback
-      onSuccess();
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleSocialAuth = (_provider: 'Apple' | 'Google' | 'Facebook') => {
-    setIsLoading(true);
-    setTimeout(() => {
-      setIsLoading(false);
-      onSuccess();
-    }, 600);
-  };
+  const {
+    mode,
+    isLogin,
+    name,
+    email,
+    password,
+    staySignedIn,
+    agreeTerms,
+    isLoading,
+    fieldErrors,
+    generalError,
+    isForgotPasswordOpen,
+    handleModeToggle,
+    handleNameChange,
+    handleEmailChange,
+    handlePasswordChange,
+    handleEmailBlur,
+    handlePasswordBlur,
+    handleNameBlur,
+    handleToggleStaySignedIn,
+    handleToggleAgreeTerms,
+    handleOpenForgotPassword,
+    handleCloseForgotPassword,
+    handleSubmit,
+    handleSocialAuth,
+  } = useAuthForm({ initialMode, onSuccess });
 
   return (
-    <div className="w-full flex flex-col">
-      {/* Title Header with Elegant Serif Typography */}
-      <motion.h1
+    <motion.div
+      layout
+      variants={authContainerVariants}
+      initial="hidden"
+      animate="visible"
+      className="w-full flex flex-col"
+    >
+      <motion.h2
         key={mode}
-        className="text-3xl sm:text-4xl font-serif tracking-tight text-white mb-6 sm:mb-8 text-left"
-        initial={{ opacity: 0, y: -8 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3 }}
+        layout
+        variants={authItemVariants}
+        className="text-[22px] md:text-[26px] leading-[1.2] font-semibold font-serif tracking-tight text-[#F5F6FA] mb-4 md:mb-10 lg:mb-6 text-left"
       >
         {isLogin ? 'Log in' : 'Sign up'}
-      </motion.h1>
+      </motion.h2>
 
-      {/* Error Message */}
-      {error && (
+      {/* General Server Error Banner (Only for network/server errors) */}
+      {generalError && (
         <motion.div
-          className="mb-4 px-3.5 py-2.5 rounded-[8px] bg-red-500/15 border border-red-500/30 text-red-400 text-xs font-medium"
-          initial={{ opacity: 0, y: -4 }}
-          animate={{ opacity: 1, y: 0 }}
+          layout
+          variants={authItemVariants}
+          className="mb-4 px-3.5 py-2.5 rounded-[5px] bg-red-500/15 border border-red-500/30 text-red-400 text-xs font-medium"
         >
-          {error}
+          {generalError}
         </motion.div>
       )}
 
       {/* Main Input Form */}
-      <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-        <AnimatePresence mode="popLayout">
+      <motion.form
+        layout
+        noValidate
+        onSubmit={handleSubmit}
+        className="flex flex-col gap-3"
+      >
+        <AnimatePresence initial={false}>
           {!isLogin && (
             <motion.div
+              layout
               key="name-field"
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: 'auto' }}
-              exit={{ opacity: 0, height: 0 }}
-              transition={{ duration: 0.25 }}
+              initial={{ opacity: 0, height: 0, marginBottom: -12 }}
+              animate={{ opacity: 1, height: 'auto', marginBottom: 0 }}
+              exit={{ opacity: 0, height: 0, marginBottom: -12 }}
+              transition={{
+                opacity: { duration: 0.2 },
+                height: { duration: 0.35, ease: AUTH_CUBIC_BEZIER },
+                marginBottom: { duration: 0.35, ease: AUTH_CUBIC_BEZIER },
+                layout: authLayoutTransition,
+              }}
+              className="overflow-hidden"
             >
               <AuthInput
                 type="text"
                 value={name}
                 onChange={handleNameChange}
+                onBlur={handleNameBlur}
                 placeholder="Full Name"
                 autoComplete="name"
+                label="Full Name"
+                error={fieldErrors.name}
+                hasError={Boolean(fieldErrors.name)}
               />
             </motion.div>
           )}
+        </AnimatePresence>
 
+        <motion.div
+          layout
+          key="email-wrapper"
+          variants={authItemVariants}
+          transition={{ layout: authLayoutTransition }}
+        >
           <AuthInput
             key="email-field"
             type="email"
             value={email}
             onChange={handleEmailChange}
+            onBlur={handleEmailBlur}
             placeholder="example@fitcubes.uk"
             autoComplete="email"
+            label="Email"
+            error={fieldErrors.email}
+            hasError={Boolean(fieldErrors.email || generalError)}
           />
+        </motion.div>
 
+        <motion.div
+          layout
+          key="password-wrapper"
+          variants={authItemVariants}
+          transition={{ layout: authLayoutTransition }}
+        >
           <AuthInput
             key="password-field"
             type="password"
             value={password}
             onChange={handlePasswordChange}
+            onBlur={handlePasswordBlur}
             placeholder="Password"
+            label="Password"
             autoComplete={isLogin ? 'current-password' : 'new-password'}
+            error={fieldErrors.password}
+            hasError={Boolean(fieldErrors.password || generalError)}
           />
-        </AnimatePresence>
+        </motion.div>
 
-        {/* Checkbox Options */}
-        <div className="flex items-center justify-between text-xs text-white/70 pt-1">
-          {isLogin ? (
-            <>
-              <label className="flex items-center gap-2 cursor-pointer select-none">
-                <input
-                  type="checkbox"
-                  checked={staySignedIn}
-                  onChange={handleToggleStaySignedIn}
-                  className="sr-only"
-                />
-                <div
-                  className={`w-4 h-4 rounded-[4px] border transition-colors flex items-center justify-center ${
-                    staySignedIn
-                      ? 'bg-[#F59F0A] border-[#F59F0A] text-black'
-                      : 'border-white/20 bg-white/5 hover:border-white/40'
-                  }`}
-                >
-                  {staySignedIn && <Check className="w-3 h-3 stroke-[3]" />}
-                </div>
-                <span>Stay signed in</span>
-              </label>
-
-              <button
-                type="button"
-                className="text-[#F59F0A] hover:underline transition-all"
-              >
-                Forgot password?
-              </button>
-            </>
-          ) : (
-            <label className="flex items-start gap-2 cursor-pointer select-none">
+        {/* Checkbox Options with Atomic Morphing */}
+        <motion.div
+          layout
+          key="checkbox-wrapper"
+          variants={authItemVariants}
+          transition={{ layout: authLayoutTransition }}
+          className="flex flex-col gap-2.5 text-xs text-white/80 pt-1"
+        >
+          {/* Row 1: Permanent Stay Signed In + Dynamic Forgot Password */}
+          <div className="flex items-center justify-between">
+            <label className="flex items-center gap-2 cursor-pointer select-none">
               <input
                 type="checkbox"
-                checked={agreeTerms}
-                onChange={handleToggleAgreeTerms}
+                checked={staySignedIn}
+                onChange={handleToggleStaySignedIn}
                 className="sr-only"
               />
               <div
-                className={`w-4 h-4 rounded-[4px] border shrink-0 mt-0.5 transition-colors flex items-center justify-center ${
-                  agreeTerms
-                    ? 'bg-[#F59F0A] border-[#F59F0A] text-black'
+                className={`w-[18px] h-[18px] rounded-[4px] border transition-colors flex items-center justify-center ${
+                  staySignedIn
+                    ? 'bg-[#F59F0A] border-[#F59F0A] text-white'
                     : 'border-white/20 bg-white/5 hover:border-white/40'
                 }`}
               >
-                {agreeTerms && <Check className="w-3 h-3 stroke-[3]" />}
+                {staySignedIn && <Check className="w-3 h-3 stroke-[3]" />}
               </div>
-              <span className="leading-snug text-white/60">
-                I agree to the{' '}
-                <a href="#terms" className="text-[#F59F0A] hover:underline">
-                  Terms of Service
-                </a>{' '}
-                &{' '}
-                <a href="#privacy" className="text-[#F59F0A] hover:underline">
-                  Privacy Policy
-                </a>
-              </span>
+              <span>Stay signed in</span>
             </label>
-          )}
-        </div>
 
-        {/* Primary Submit Button with UI Kit States: Default #F59F0A -> Hover #C27803 -> Pressed #8F5600 */}
-        <button
-          type="submit"
-          disabled={isLoading}
-          className="mt-2 w-full h-[46px] rounded-[10px] bg-[#F59F0A] hover:bg-[#C27803] active:bg-[#8F5600] disabled:bg-white/10 disabled:text-white/30 text-white font-medium text-sm flex items-center justify-center gap-2 shadow-lg shadow-[#F59F0A]/20 transition-all cursor-pointer touch-manipulation select-none disabled:cursor-not-allowed"
+            <AnimatePresence>
+              {isLogin && (
+                <motion.button
+                  key="forgot-password-btn"
+                  type="button"
+                  initial={{ opacity: 0, x: 6 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: 6 }}
+                  transition={{ duration: 0.2 }}
+                  onClick={handleOpenForgotPassword}
+                  className="text-[#F59F0A] hover:underline transition-all cursor-pointer select-none text-xs"
+                >
+                  Forgot password?
+                </motion.button>
+              )}
+            </AnimatePresence>
+          </div>
+
+          {/* Row 2: Dynamic Smooth Expansion for Terms & Privacy */}
+          <AnimatePresence initial={false}>
+            {!isLogin && (
+              <motion.div
+                layout
+                key="terms-checkbox"
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                transition={{
+                  opacity: { duration: 0.2 },
+                  height: { duration: 0.35, ease: AUTH_CUBIC_BEZIER },
+                  layout: authLayoutTransition,
+                }}
+                className="overflow-hidden flex flex-col gap-1.5 pt-0.5"
+              >
+                <label className="flex items-start gap-2 cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    checked={agreeTerms}
+                    onChange={handleToggleAgreeTerms}
+                    className="sr-only"
+                  />
+                  <div
+                    className={`w-[18px] h-[18px] rounded-[4px] border shrink-0 mt-0.5 transition-colors flex items-center justify-center ${
+                      agreeTerms
+                        ? 'bg-[#F59F0A] border-[#F59F0A] text-white'
+                        : fieldErrors.terms
+                        ? 'border-red-500/80 bg-red-500/10 shadow-[0_0_6px_rgba(239,68,68,0.2)]'
+                        : 'border-white/20 bg-white/5 hover:border-white/40'
+                    }`}
+                  >
+                    {agreeTerms && <Check className="w-3 h-3 stroke-[3]" />}
+                  </div>
+                  <span className="leading-snug text-white/70">
+                    By signing up you are giving the thumbs up to our{' '}
+                    <a href="#terms" className="text-[#F59F0A] hover:underline">
+                      Terms of Service
+                    </a>{' '}
+                    and{' '}
+                    <a href="#privacy" className="text-[#F59F0A] hover:underline">
+                      Privacy Policy
+                    </a>
+                    .
+                  </span>
+                </label>
+
+                {fieldErrors.terms && (
+                  <p className="text-xs text-red-400 font-medium pl-1 flex items-center gap-1.5 animate-in fade-in slide-in-from-top-1 duration-200">
+                    <span>{fieldErrors.terms}</span>
+                  </p>
+                )}
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </motion.div>
+
+        {/* Primary Submit Button with UI Kit States & Unified Design System */}
+        <motion.div
+          layout
+          variants={authItemVariants}
+          transition={{ layout: authLayoutTransition }}
         >
-          {isLoading ? (
-            <Loader2 className="w-5 h-5 animate-spin" />
-          ) : isLogin ? (
-            'Log in'
-          ) : (
-            'Create account'
-          )}
-        </button>
-      </form>
+          <Button
+            type="submit"
+            variant="default"
+            disabled={isLoading}
+            className="mt-2 w-full"
+          >
+            {isLoading ? (
+              <>
+                <Loader2 className="w-5 h-5 animate-spin pointer-events-none" />
+                <span>Please wait...</span>
+              </>
+            ) : isLogin ? (
+              'Log in'
+            ) : (
+              'Create account'
+            )}
+          </Button>
+        </motion.div>
+      </motion.form>
 
       {/* Mode Switcher */}
-      <div className="mt-4 text-center text-xs text-white/60">
+      <motion.div
+        layout
+        variants={authItemVariants}
+        transition={{ layout: authLayoutTransition }}
+        className="mt-2 text-center text-xs sm:text-sm text-white/80"
+      >
         {isLogin ? (
           <p>
             Don't have an account?{' '}
             <button
               type="button"
               onClick={() => handleModeToggle('signup')}
-              className="text-[#F59F0A] hover:underline font-medium cursor-pointer"
+              className="ml-2 text-[#F59F0A] hover:underline font-medium cursor-pointer"
             >
               Sign up
             </button>
@@ -285,36 +316,35 @@ export function AuthForm({
             </button>
           </p>
         )}
-      </div>
+      </motion.div>
 
       {/* Separator */}
-      <div className="relative my-6 text-center">
-        <div className="absolute inset-0 flex items-center">
-          <div className="w-full border-t border-white/10" />
-        </div>
-        <span className="relative px-3 bg-[#0F1114] text-[11px] uppercase tracking-wider text-white/40">
+      <motion.div
+        layout
+        variants={authItemVariants}
+        transition={{ layout: authLayoutTransition }}
+        className="flex items-center gap-3 mt-3 mb-4 sm:mt-5 sm:mb-11"
+      >
+        <div className="flex-1 h-px bg-white/10" />
+        <span className="text-[#F5F6FA] text-[16px] font-medium leading-none -translate-y-[1.5px] select-none">
           or
         </span>
-      </div>
+        <div className="flex-1 h-px bg-white/10" />
+      </motion.div>
 
-      {/* Social Authorization Buttons */}
+      {/* Social Authorization Buttons (Each button cascades individually) */}
       <SocialAuthButtons
         onSocialAuth={handleSocialAuth}
         isLoading={isLoading}
+        itemVariants={authItemVariants}
       />
 
-      {/* Optional Guest Skip */}
-      {onSkip && (
-        <div className="mt-6 text-center">
-          <button
-            type="button"
-            onClick={onSkip}
-            className="text-xs text-white/40 hover:text-white/80 transition-colors underline cursor-pointer"
-          >
-            Continue without account (Guest)
-          </button>
-        </div>
-      )}
-    </div>
+      {/* Custom Forgot Password Modal (Supports Light & Dark Theme) */}
+      <ForgotPasswordModal
+        isOpen={isForgotPasswordOpen}
+        initialEmail={email}
+        onClose={handleCloseForgotPassword}
+      />
+    </motion.div>
   );
 }

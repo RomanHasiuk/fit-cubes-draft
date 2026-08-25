@@ -1,4 +1,5 @@
 import { motion, type Transition } from "framer-motion";
+import { cn } from "@/lib/utils.ts";
 
 export type LogoVariant = "static" | "draw" | "spin" | "pulse";
 
@@ -81,10 +82,10 @@ export function Logo({
     <svg
       width={size}
       height={size}
-      viewBox="-4 -4 142 142"
+      viewBox="0 0 134 134"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
-      className={className}
+      className={pulse || variant === "pulse" ? "w-full h-full" : className}
     >
       {/* Outer Circle */}
       <motion.circle
@@ -144,13 +145,13 @@ export function Logo({
 
       {/* Inner (Center) Circle */}
       <motion.circle
-        cx="67.5"
-        cy="66.5"
+        cx="67"
+        cy="67"
         r="20.5"
         stroke="#F59F0A"
         strokeWidth="8"
         strokeLinecap="round"
-        style={{ transformOrigin: "67.5px 66.5px" }}
+        style={{ transformOrigin: "67px 67px" }}
         initial={
           isDraw
             ? innerDrawInit
@@ -186,11 +187,11 @@ export function Logo({
         }}
         transition={{
           duration: 2,
-          repeat: Infinity,
+          repeat: 2,
           ease: "easeInOut",
           delay: isDraw ? 4.0 : 0,
         }}
-        className="inline-flex items-center justify-center"
+        className={cn("inline-flex items-center justify-center", className)}
       >
         {svgContent}
       </motion.div>

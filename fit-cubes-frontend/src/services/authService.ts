@@ -23,6 +23,8 @@ export interface AuthResponseData {
   user: AuthUser;
 }
 
+export type SocialProvider = 'apple' | 'google' | 'facebook';
+
 export const authService = {
   async login(payload: LoginPayload): Promise<ApiResponse<AuthResponseData>> {
     const res = await apiClient.post<AuthResponseData>('/auth/login', payload);
@@ -51,5 +53,14 @@ export const authService = {
 
   isAuthenticated(): boolean {
     return Boolean(localStorage.getItem('fitcubes_auth_token') || localStorage.getItem('token'));
+  },
+
+  /**
+   * OAuth 2.0 Social Login Initiation (Google, Apple, Facebook)
+   * Pre-wired for Stage 2 backend integration with Spring Boot OAuth2 endpoints.
+   */
+  initiateSocialAuth(provider: SocialProvider): void {
+    // window.location.href = `/api/oauth2/authorization/${provider}`;
+    console.log(`[OAuth2] Initiating social authorization for ${provider}`);
   },
 };

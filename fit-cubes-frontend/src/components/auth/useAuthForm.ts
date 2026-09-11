@@ -4,9 +4,9 @@ import { authService, type SocialProvider } from '@/services/authService';
 export type AuthMode = 'login' | 'signup';
 
 export interface FieldErrors {
-  name?: string;
   email?: string;
   password?: string;
+  repeatedPassword?: string;
   terms?: string;
 }
 
@@ -20,9 +20,9 @@ const EMAIL_LATIN_REGEX = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
 
 export function useAuthForm({ initialMode = 'login', onSuccess }: UseAuthFormOptions) {
   const [mode, setMode] = useState<AuthMode>(initialMode);
-  const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [repeatedPassword, setRepeatedPassword] = useState('');
   const [staySignedIn, setStaySignedIn] = useState(true);
   const [agreeTerms, setAgreeTerms] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -38,14 +38,6 @@ export function useAuthForm({ initialMode = 'login', onSuccess }: UseAuthFormOpt
     setMode(newMode);
   };
 
-  const handleNameChange = (e: ChangeEvent<HTMLInputElement>) => {
-    setName(e.target.value);
-    if (fieldErrors.name) {
-      setFieldErrors((prev) => ({ ...prev, name: undefined }));
-    }
-    if (generalError) setGeneralError(null);
-  };
-
   const handleEmailChange = (e: ChangeEvent<HTMLInputElement>) => {
     setEmail(e.target.value);
     if (fieldErrors.email) {
@@ -58,6 +50,17 @@ export function useAuthForm({ initialMode = 'login', onSuccess }: UseAuthFormOpt
     setPassword(e.target.value);
     if (fieldErrors.password) {
       setFieldErrors((prev) => ({ ...prev, password: undefined }));
+    }
+    if (fieldErrors.repeatedPassword && repeatedPassword && e.target.value === repeatedPassword) {
+      setFieldErrors((prev) => ({ ...prev, repeatedPassword: undefined }));
+    }
+    if (generalError) setGeneralError(null);
+  };
+
+  const handleRepeatedPasswordChange = (e: ChangeEvent<HTMLInputElement>) => {
+    setRepeatedPassword(e.target.value);
+    if (fieldErrors.repeatedPassword) {
+      setFieldErrors((prev) => ({ ...prev, repeatedPassword: undefined }));
     }
     if (generalError) setGeneralError(null);
   };
@@ -98,11 +101,19 @@ export function useAuthForm({ initialMode = 'login', onSuccess }: UseAuthFormOpt
     }
   };
 
-  const handleNameBlur = () => {
-    if (!isLogin && name && !name.trim()) {
+  const handleRepeatedPasswordBlur = () => {
+    if (isLogin) return;
+    if (!repeatedPassword) return;
+
+    if (CYRILLIC_REGEX.test(repeatedPassword)) {
       setFieldErrors((prev) => ({
         ...prev,
-        name: 'Please enter your full name',
+        repeatedPassword: 'Password must contain only Latin characters (a-z)',
+      }));
+    } else if (repeatedPassword !== password) {
+      setFieldErrors((prev) => ({
+        ...prev,
+        repeatedPassword: 'Passwords do not match',
       }));
     }
   };
@@ -154,12 +165,16 @@ export function useAuthForm({ initialMode = 'login', onSuccess }: UseAuthFormOpt
       errors.password = 'Password must contain at least one letter and one number';
     }
 
-    if (!isLogin && !name.trim()) {
-      errors.name = 'Please enter your full name';
-    }
+    if (!isLogin) {
+      if (!repeatedPassword) {
+        errors.repeatedPassword = 'Please confirm your password';
+      } else if (repeatedPassword !== password) {
+        errors.repeatedPassword = 'Passwords do not match';
+      }
 
-    if (!isLogin && !agreeTerms) {
-      errors.terms = 'You must agree to the Terms of Service & Privacy Policy';
+      if (!agreeTerms) {
+        errors.terms = 'You must agree to the Terms of Service & Privacy Policy';
+      }
     }
 
     if (Object.keys(errors).length > 0) {
@@ -181,9 +196,9 @@ export function useAuthForm({ initialMode = 'login', onSuccess }: UseAuthFormOpt
         }
       } else {
         const res = await authService.register({
-          name: name.trim(),
           email: trimmedEmail,
           password,
+          repeatedPassword,
         });
         if (res.ok) {
           onSuccess();
@@ -213,9 +228,9 @@ export function useAuthForm({ initialMode = 'login', onSuccess }: UseAuthFormOpt
   return {
     mode,
     isLogin,
-    name,
     email,
     password,
+    repeatedPassword,
     staySignedIn,
     agreeTerms,
     isLoading,
@@ -223,12 +238,12 @@ export function useAuthForm({ initialMode = 'login', onSuccess }: UseAuthFormOpt
     generalError,
     isForgotPasswordOpen,
     handleModeToggle,
-    handleNameChange,
     handleEmailChange,
     handlePasswordChange,
+    handleRepeatedPasswordChange,
     handleEmailBlur,
     handlePasswordBlur,
-    handleNameBlur,
+    handleRepeatedPasswordBlur,
     handleToggleStaySignedIn,
     handleToggleAgreeTerms,
     handleOpenForgotPassword,

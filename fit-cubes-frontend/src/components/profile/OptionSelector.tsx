@@ -1,4 +1,4 @@
-import InfoTooltip from '@/components/InfoTooltip.tsx';
+import InfoTooltip from '@/components/InfoTooltip';
 
 interface Option<T extends string = string> {
   id: T;

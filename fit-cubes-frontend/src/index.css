@@ -23,6 +23,7 @@
     --border: 220 13% 91%;
     --input: 220 13% 91%;
     --ring: 33 95% 44%;
+    --link: 213 83% 55%;
     --radius: 5px;
 
     --bg-gradient: linear-gradient(-45deg, #faf8ef 0%, #f1d3b5 100%);
@@ -48,6 +49,7 @@
     --border: 220 10% 22%;
     --input: 220 10% 18%;
     --ring: 38 92% 50%;
+    --link: 213 83% 55%;
 
     --bg-gradient: linear-gradient(-45deg, #080606 0%, #280000 50%, #3b0303 100%);
   }
@@ -89,6 +91,72 @@
   .no-scrollbar {
     -ms-overflow-style: none;
     scrollbar-width: none;
+  }
+
+  /* Custom Scrollbar matching Figma specifications (12px width, 8px radius, #32363E border, 3px thumb insets) */
+  /* Hidden on mobile/tablet touch devices (<1024px) */
+  @media (max-width: 1023px) {
+    .custom-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+    .custom-scrollbar::-webkit-scrollbar {
+      display: none;
+      width: 0;
+      height: 0;
+    }
+  }
+
+  /* Desktop (>=1024px): 12px custom scrollbar with auto-hide track & thumb */
+  @media (min-width: 1024px) {
+    .custom-scrollbar::-webkit-scrollbar {
+      display: block;
+      width: 12px;
+      height: 12px;
+    }
+
+    .custom-scrollbar::-webkit-scrollbar-track {
+      background-color: transparent;
+      border: 1px solid transparent;
+      border-radius: 8px;
+      margin: 4px 0;
+      box-sizing: border-box;
+      transition: border-color 0.25s ease-in-out;
+    }
+
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background-color: transparent;
+      border: 3px solid transparent;
+      background-clip: padding-box;
+      border-radius: 8px;
+      box-sizing: border-box;
+      transition: background-color 0.25s ease-in-out;
+    }
+
+    /* Reveal whole scrollbar (transparent track with #32363E border, and blue thumb with 3px insets) during scroll or direct track/thumb hover */
+    .custom-scrollbar[data-scrolling="true"]::-webkit-scrollbar-track,
+    .custom-scrollbar::-webkit-scrollbar-track:hover {
+      border-color: #32363E;
+    }
+
+    .custom-scrollbar[data-scrolling="true"]::-webkit-scrollbar-thumb,
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+      background-color: #3B82F6;
+    }
+
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+      background-color: #60A5FA;
+    }
+
+    .custom-scrollbar::-webkit-scrollbar-thumb:active {
+      background-color: #2563EB;
+    }
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-button {
+    display: none !important;
+    width: 0 !important;
+    height: 0 !important;
   }
 
   .glass {
@@ -135,6 +203,28 @@
   .page-pb {
     @apply pb-8 sm:pb-10 lg:pb-6;
   }
+
+  /* Project(Web)/H1 Figma Token: Merriweather, 26px mobile (120%) / 48px desktop (110%) */
+  .heading-h1 {
+    @apply font-serif font-medium text-[26px] leading-[1.2] md:text-[48px] md:leading-[1.1] text-foreground;
+  }
+
+  /* Project(Web)/H2 Figma Token: Merriweather, 18px mobile / 26px desktop, 120% line-height */
+  .heading-h2 {
+    @apply font-serif font-medium text-[18px] leading-[1.15] md:text-[26px] md:leading-[1.2] text-foreground;
+  }
+
+  /* Form Label Figma Token: Merriweather, 16px mobile (115%) / 18px tablet & desktop (115%) */
+  .form-label {
+    @apply font-serif font-medium text-[16px] md:text-[18px] leading-[1.15] text-foreground;
+  }
+}
+
+/* Global scrollbar arrow removal */
+::-webkit-scrollbar-button {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
 }
 
 input[type="number"]::-webkit-inner-spin-button,

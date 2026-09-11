@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
-import { useStore } from '@/store/useStore.ts';
-import { api } from '@/lib/api.ts';
+import { useStore } from '@/store/useStore';
+import { api } from '@/lib/api';
 
 export function useDataLoader() {
   const { products, setProducts, setActivities, setIsLoadingData } = useStore();

@@ -1,5 +1,5 @@
 import { motion, type Transition } from "framer-motion";
-import { cn } from "@/lib/utils.ts";
+import { cn } from "@/lib/utils";
 
 export type LogoVariant = "static" | "draw" | "spin" | "pulse";
 

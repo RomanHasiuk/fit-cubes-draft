@@ -1,6 +1,6 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { Check, Loader2 } from 'lucide-react';
-import { AuthInput } from './AuthInput';
+import { Input } from '@/components/ui/input';
 import { SocialAuthButtons } from './SocialAuthButtons';
 import { ForgotPasswordModal } from './ForgotPasswordModal';
 import { Button } from '@/components/ui/button';
@@ -24,50 +24,51 @@ export function AuthForm({
   onSuccess,
 }: AuthFormProps) {
   const {
-    mode,
     isLogin,
-    name,
     email,
     password,
+    repeatedPassword,
     staySignedIn,
     agreeTerms,
     isLoading,
-    fieldErrors,
     generalError,
+    fieldErrors,
     isForgotPasswordOpen,
-    handleModeToggle,
-    handleNameChange,
     handleEmailChange,
-    handlePasswordChange,
     handleEmailBlur,
+    handlePasswordChange,
     handlePasswordBlur,
-    handleNameBlur,
+    handleRepeatedPasswordChange,
+    handleRepeatedPasswordBlur,
     handleToggleStaySignedIn,
     handleToggleAgreeTerms,
+    handleModeToggle,
     handleOpenForgotPassword,
     handleCloseForgotPassword,
-    handleSubmit,
     handleSocialAuth,
+    handleSubmit,
   } = useAuthForm({ initialMode, onSuccess });
 
   return (
     <motion.div
-      layout
       variants={authContainerVariants}
       initial="hidden"
       animate="visible"
-      className="w-full flex flex-col"
+      className="w-full flex flex-col justify-center h-full select-none"
     >
-      <motion.h2
-        key={mode}
+      {/* Dynamic Animated Header */}
+      <motion.div
         layout
         variants={authItemVariants}
-        className="text-[22px] md:text-[26px] leading-[1.2] font-semibold font-serif tracking-tight text-[#F5F6FA] mb-4 md:mb-10 lg:mb-6 text-left"
+        transition={{ layout: authLayoutTransition }}
+        className="text-center mb-4 sm:mb-6 md:mb-6"
       >
-        {isLogin ? 'Log in' : 'Sign up'}
-      </motion.h2>
+        <h2 className="heading-h2 font-normal">
+          {isLogin ? 'Log in' : 'Sign up'}
+        </h2>
+      </motion.div>
 
-      {/* General Server Error Banner (Only for network/server errors) */}
+      {/* Global Form Level Error Banner */}
       {generalError && (
         <motion.div
           layout
@@ -78,51 +79,21 @@ export function AuthForm({
         </motion.div>
       )}
 
-      {/* Main Input Form */}
+      {/* Main Input Form: 1. Email, 2. Password, 3. Confirm Password (animated) */}
       <motion.form
         layout
         noValidate
         onSubmit={handleSubmit}
         className="flex flex-col gap-3"
       >
-        <AnimatePresence initial={false}>
-          {!isLogin && (
-            <motion.div
-              layout
-              key="name-field"
-              initial={{ opacity: 0, height: 0, marginBottom: -12 }}
-              animate={{ opacity: 1, height: 'auto', marginBottom: 0 }}
-              exit={{ opacity: 0, height: 0, marginBottom: -12 }}
-              transition={{
-                opacity: { duration: 0.2 },
-                height: { duration: 0.35, ease: AUTH_CUBIC_BEZIER },
-                marginBottom: { duration: 0.35, ease: AUTH_CUBIC_BEZIER },
-                layout: authLayoutTransition,
-              }}
-              className="overflow-hidden"
-            >
-              <AuthInput
-                type="text"
-                value={name}
-                onChange={handleNameChange}
-                onBlur={handleNameBlur}
-                placeholder="Full Name"
-                autoComplete="name"
-                label="Full Name"
-                error={fieldErrors.name}
-                hasError={Boolean(fieldErrors.name)}
-              />
-            </motion.div>
-          )}
-        </AnimatePresence>
-
+        {/* 1. Email Input (Always 1st) */}
         <motion.div
           layout
           key="email-wrapper"
           variants={authItemVariants}
           transition={{ layout: authLayoutTransition }}
         >
-          <AuthInput
+          <Input
             key="email-field"
             type="email"
             value={email}
@@ -136,13 +107,14 @@ export function AuthForm({
           />
         </motion.div>
 
+        {/* 2. Password Input (Always 2nd) */}
         <motion.div
           layout
           key="password-wrapper"
           variants={authItemVariants}
           transition={{ layout: authLayoutTransition }}
         >
-          <AuthInput
+          <Input
             key="password-field"
             type="password"
             value={password}
@@ -155,6 +127,43 @@ export function AuthForm({
             hasError={Boolean(fieldErrors.password || generalError)}
           />
         </motion.div>
+
+        {/* 3. Confirm Password Input (Only for Sign Up, placed right below Password) */}
+        <AnimatePresence initial={false}>
+          {!isLogin && (
+            <motion.div
+              layout
+              key="repeated-password-field"
+              initial={{ opacity: 0, height: 0, overflow: 'hidden', marginBottom: -12 }}
+              animate={{
+                opacity: 1,
+                height: 'auto',
+                marginBottom: 0,
+                transitionEnd: { overflow: 'visible' }
+              }}
+              exit={{ opacity: 0, height: 0, overflow: 'hidden', marginBottom: -12 }}
+              transition={{
+                opacity: { duration: 0.2 },
+                height: { duration: 0.35, ease: AUTH_CUBIC_BEZIER },
+                marginBottom: { duration: 0.35, ease: AUTH_CUBIC_BEZIER },
+                layout: authLayoutTransition,
+              }}
+            >
+              <Input
+                type="password"
+                value={repeatedPassword}
+                onChange={handleRepeatedPasswordChange}
+                onBlur={handleRepeatedPasswordBlur}
+                placeholder="Confirm Password"
+                autoComplete="new-password"
+                label="Confirm Password"
+                error={fieldErrors.repeatedPassword}
+                hasError={Boolean(fieldErrors.repeatedPassword)}
+              />
+            </motion.div>
+          )}
+        </AnimatePresence>
+
 
         {/* Checkbox Options with Atomic Morphing */}
         <motion.div
@@ -176,11 +185,11 @@ export function AuthForm({
               <div
                 className={`w-[18px] h-[18px] rounded-[4px] border transition-colors flex items-center justify-center ${
                   staySignedIn
-                    ? 'bg-[#F59F0A] border-[#F59F0A] text-white'
+                    ? 'bg-primary border-primary text-primary-foreground'
                     : 'border-white/20 bg-white/5 hover:border-white/40'
                 }`}
               >
-                {staySignedIn && <Check className="w-3 h-3 stroke-[3]" />}
+                {staySignedIn && <Check className="w-4 h-4 stroke-[3] text-white" />}
               </div>
               <span>Stay signed in</span>
             </label>
@@ -195,7 +204,7 @@ export function AuthForm({
                   exit={{ opacity: 0, x: 6 }}
                   transition={{ duration: 0.2 }}
                   onClick={handleOpenForgotPassword}
-                  className="text-[#F59F0A] hover:underline transition-all cursor-pointer select-none text-xs"
+                  className="text-link hover:underline transition-all cursor-pointer select-none text-xs"
                 >
                   Forgot password?
                 </motion.button>
@@ -229,21 +238,21 @@ export function AuthForm({
                   <div
                     className={`w-[18px] h-[18px] rounded-[4px] border shrink-0 mt-0.5 transition-colors flex items-center justify-center ${
                       agreeTerms
-                        ? 'bg-[#F59F0A] border-[#F59F0A] text-white'
+                        ? 'bg-primary border-primary text-primary-foreground'
                         : fieldErrors.terms
                         ? 'border-red-500/80 bg-red-500/10 shadow-[0_0_6px_rgba(239,68,68,0.2)]'
                         : 'border-white/20 bg-white/5 hover:border-white/40'
                     }`}
                   >
-                    {agreeTerms && <Check className="w-3 h-3 stroke-[3]" />}
+                    {agreeTerms && <Check className="w-4 h-4 stroke-[3] text-white" />}
                   </div>
                   <span className="leading-snug text-white/70">
                     By signing up you are giving the thumbs up to our{' '}
-                    <a href="#terms" className="text-[#F59F0A] hover:underline">
+                    <a href="#terms" className="text-link hover:underline">
                       Terms of Service
                     </a>{' '}
                     and{' '}
-                    <a href="#privacy" className="text-[#F59F0A] hover:underline">
+                    <a href="#privacy" className="text-link hover:underline">
                       Privacy Policy
                     </a>
                     .
@@ -270,7 +279,7 @@ export function AuthForm({
             type="submit"
             variant="default"
             disabled={isLoading}
-            className="mt-2 w-full"
+            className="w-full"
           >
             {isLoading ? (
               <>
@@ -291,7 +300,7 @@ export function AuthForm({
         layout
         variants={authItemVariants}
         transition={{ layout: authLayoutTransition }}
-        className="mt-2 text-center text-xs sm:text-sm text-white/80"
+        className="mt-2 text-center text-xs/[1.35] text-white/80"
       >
         {isLogin ? (
           <p>
@@ -299,7 +308,7 @@ export function AuthForm({
             <button
               type="button"
               onClick={() => handleModeToggle('signup')}
-              className="ml-2 text-[#F59F0A] hover:underline font-medium cursor-pointer"
+              className="ml-2 text-link hover:underline font-medium cursor-pointer"
             >
               Sign up
             </button>
@@ -310,7 +319,7 @@ export function AuthForm({
             <button
               type="button"
               onClick={() => handleModeToggle('login')}
-              className="text-[#F59F0A] hover:underline font-medium cursor-pointer"
+              className="text-link hover:underline font-medium cursor-pointer"
             >
               Log in
             </button>
@@ -323,10 +332,10 @@ export function AuthForm({
         layout
         variants={authItemVariants}
         transition={{ layout: authLayoutTransition }}
-        className="flex items-center gap-3 mt-3 mb-4 sm:mt-5 sm:mb-11"
+        className="flex items-center gap-3 my-3 sm:mt-5 sm:mb-11"
       >
         <div className="flex-1 h-px bg-white/10" />
-        <span className="text-[#F5F6FA] text-[16px] font-medium leading-none -translate-y-[1.5px] select-none">
+        <span className="text-foreground text-[16px] font-medium leading-none -translate-y-[1.5px] select-none">
           or
         </span>
         <div className="flex-1 h-px bg-white/10" />

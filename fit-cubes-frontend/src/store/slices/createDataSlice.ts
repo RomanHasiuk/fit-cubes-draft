@@ -1,6 +1,6 @@
 import type { StateCreator } from 'zustand';
 import type { FoodItem, ActivityConstant } from '@/types';
-import type { StoreState } from '../useStore.ts';
+import type { StoreState } from '../useStore';
 
 export interface DataSlice {
   products: FoodItem[];

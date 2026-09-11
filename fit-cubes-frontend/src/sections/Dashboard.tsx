@@ -1,8 +1,8 @@
 import { useMemo, useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Flame, Footprints, TrendingDown, Beef, Wheat as WheatIcon, Droplets } from 'lucide-react';
-import { useStore } from '@/store/useStore.ts';
-import { calculateTDEE, calculateNetDeficit, getRelativeDateLabel, formatLargeNumber } from '@/utils/calculations.ts';
+import { useStore } from '@/store/useStore';
+import { calculateTDEE, calculateNetDeficit, getRelativeDateLabel, formatLargeNumber } from '@/utils/calculations';
 import { DashboardSkeleton } from '@/components/dashboard/DashboardSkeleton';
 
 export default function Dashboard() {

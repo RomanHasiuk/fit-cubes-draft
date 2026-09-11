@@ -1,7 +1,7 @@
 // OPTION 2:
 // import React, { useState, useEffect } from 'react';
-import InfoTooltip from '@/components/InfoTooltip.tsx';
-import { blockInvalidNumberInput, blockInvalidIntegerInput } from '@/utils/inputHandlers.ts';
+import InfoTooltip from '@/components/InfoTooltip';
+import { blockInvalidNumberInput, blockInvalidIntegerInput } from '@/utils/inputHandlers';
 
 interface MetricInputProps {
   label: string;

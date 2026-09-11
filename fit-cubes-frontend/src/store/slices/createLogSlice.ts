@@ -1,6 +1,6 @@
 import type { StateCreator } from 'zustand';
 import type { DayLog, FoodEntry, ExerciseEntry } from '@/types';
-import type { StoreState } from '../useStore.ts';
+import type { StoreState } from '../useStore';
 
 export interface LogSlice {
   dailyLogs: DayLog[];

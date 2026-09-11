@@ -1,9 +1,9 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { createProfileSlice, type ProfileSlice } from './slices/createProfileSlice.ts';
-import { createDataSlice, type DataSlice } from './slices/createDataSlice.ts';
-import { createLogSlice, type LogSlice } from './slices/createLogSlice.ts';
-import { createUISlice, type UISlice } from './slices/createUISlice.ts';
+import { createProfileSlice, type ProfileSlice } from './slices/createProfileSlice';
+import { createDataSlice, type DataSlice } from './slices/createDataSlice';
+import { createLogSlice, type LogSlice } from './slices/createLogSlice';
+import { createUISlice, type UISlice } from './slices/createUISlice';
 
 export type StoreState = ProfileSlice & DataSlice & LogSlice & UISlice;
 

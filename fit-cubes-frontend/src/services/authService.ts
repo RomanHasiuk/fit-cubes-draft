@@ -15,7 +15,7 @@ export interface LoginPayload {
 export interface RegisterPayload {
   email: string;
   password: string;
-  name: string;
+  repeatedPassword: string;
 }
 
 export interface AuthResponseData {

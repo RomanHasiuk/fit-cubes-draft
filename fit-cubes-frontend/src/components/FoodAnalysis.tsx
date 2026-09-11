@@ -4,8 +4,8 @@ import {
   calculateTDEE,
   calculatePortionOrCookedNutrition,
   formatLargeNumber
-} from "@/utils/calculations.ts";
-import { useStore } from "@/store/useStore.ts";
+} from "@/utils/calculations";
+import { useStore } from "@/store/useStore";
 import { motion } from "framer-motion";
 import { Flame, Beef, Wheat, Droplets, Info, Lightbulb } from "lucide-react";
 

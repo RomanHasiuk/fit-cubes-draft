@@ -41,8 +41,8 @@ export function formatLargeNumber(value: number): string {
 }
 
 // Clamp a numeric value between a minimum and maximum to prevent UI layout breakage and math errors (e.g. from 7.3e+55 values)
-export function clampValue(value: any, min: number, max: number, fallbackValue: number = 0): number {
-  const parsed = parseFloat(value);
+export function clampValue(value: string | number, min: number, max: number, fallbackValue: number = 0): number {
+  const parsed = typeof value === 'number' ? value : parseFloat(value);
   if (isNaN(parsed)) return fallbackValue;
   return Math.min(max, Math.max(min, parsed));
 }

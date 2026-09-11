@@ -12,14 +12,14 @@ import {
   FolderOpen,
   Check,
 } from "lucide-react";
-import { useStore } from "@/store/useStore.ts";
-import { useModalOpen } from "@/hooks/useModalOpen.ts";
+import { useStore } from "@/store/useStore";
+import { useModalOpen } from "@/hooks/useModalOpen";
 import type { FoodItem } from "@/types";
-import InfoTooltip from "@/components/InfoTooltip.tsx";
-import FoodSearch from "./FoodSearch.tsx";
-import FoodAnalysis from "@/components/FoodAnalysis.tsx";
-import { blockInvalidIntegerInput, sanitizePositiveInt, sanitizeNameInput } from "@/utils/inputHandlers.ts";
-import { generateSafeId } from "@/utils/calculations.ts";
+import InfoTooltip from "@/components/InfoTooltip";
+import FoodSearch from "./FoodSearch";
+import FoodAnalysis from "@/components/FoodAnalysis";
+import { blockInvalidIntegerInput, sanitizePositiveInt, sanitizeNameInput } from "@/utils/inputHandlers";
+import { generateSafeId } from "@/utils/calculations";
 
 interface Ingredient {
   id: string;
@@ -714,7 +714,7 @@ export default function RecipeBuilder() {
             exit={{ opacity: 0 }}
           >
             <motion.div
-              className="w-full max-w-[500px] h-[90vh] md:h-[800px] glass rounded-t-[2.5rem] md:rounded-[2.5rem] overflow-hidden"
+              className="w-full max-w-[500px] h-[90dvh] max-h-[90dvh] md:h-[800px] glass rounded-t-[2.5rem] md:rounded-[2.5rem] overflow-hidden"
               initial={{ y: "100%" }}
               animate={{ y: 0 }}
               exit={{ y: "100%" }}
@@ -739,7 +739,7 @@ export default function RecipeBuilder() {
             exit={{ opacity: 0 }}
           >
             <motion.div
-              className="w-full max-w-[500px] h-[90vh] md:h-[800px] glass rounded-t-[2.5rem] md:rounded-[2.5rem] overflow-hidden"
+              className="w-full max-w-[500px] h-[90dvh] max-h-[90dvh] md:h-[800px] glass rounded-t-[2.5rem] md:rounded-[2.5rem] overflow-hidden"
               initial={{ y: "100%" }}
               animate={{ y: 0 }}
               exit={{ y: "100%" }}

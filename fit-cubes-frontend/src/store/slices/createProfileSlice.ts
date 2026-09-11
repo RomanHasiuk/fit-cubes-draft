@@ -1,7 +1,7 @@
 import type { StateCreator } from 'zustand';
 import type { UserProfile } from '@/types';
-import type { StoreState } from '../useStore.ts';
-import { generateMacroTargets, calculateTargetCalories } from '@/utils/calculations.ts';
+import type { StoreState } from '../useStore';
+import { generateMacroTargets, calculateTargetCalories } from '@/utils/calculations';
 import { WEIGHT_GOAL, DIET_TYPE } from '@/constants';
 
 export interface ProfileSlice {

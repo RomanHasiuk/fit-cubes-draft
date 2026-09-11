@@ -2,16 +2,16 @@ import { useEffect, useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { LayoutDashboard, BookOpen, TrendingUp, User, UtensilsCrossed } from "lucide-react";
 import { Routes, Route, useNavigate, useLocation, Navigate } from "react-router";
-import { useStore } from "@/store/useStore.ts";
-import Dashboard from "@/sections/Dashboard.tsx";
-import Diary from "@/sections/Diary.tsx";
-import ProgressScreen from "@/sections/ProgressScreen.tsx";
-import ProfileScreen from "@/sections/ProfileScreen.tsx";
-import RecipeBuilder from "@/sections/RecipeBuilder.tsx";
-import Onboarding from "@/sections/Onboarding.tsx";
-import { useDataLoader } from "@/hooks/useDataLoader.ts";
-import { PageTransition } from "@/components/layout/PageTransition.tsx";
-import { PageLoader } from "@/components/ui/PageLoader.tsx";
+import { useStore } from "@/store/useStore";
+import Dashboard from "@/sections/Dashboard";
+import Diary from "@/sections/Diary";
+import ProgressScreen from "@/sections/ProgressScreen";
+import ProfileScreen from "@/sections/ProfileScreen";
+import RecipeBuilder from "@/sections/RecipeBuilder";
+import Onboarding from "@/sections/Onboarding";
+import { useDataLoader } from "@/hooks/useDataLoader";
+import { PageTransition } from "@/components/layout/PageTransition";
+import { PageLoader } from "@/components/ui/PageLoader";
 
 const TABS = [
   { path: "/", label: "Home", icon: LayoutDashboard },
@@ -95,7 +95,7 @@ function App() {
   useEffect(() => {
     const timer = setTimeout(() => {
       setMounted(true);
-    }, 5000);
+    }, 600);
     return () => clearTimeout(timer);
   }, []);
 

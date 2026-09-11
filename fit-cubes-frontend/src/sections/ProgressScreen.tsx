@@ -12,9 +12,9 @@ import {
   ComposedChart,
 } from 'recharts';
 import { TrendingDown, Scale, Flame, Target } from 'lucide-react';
-import { useStore } from '@/store/useStore.ts';
-import { calculateTDEE, calculateNetDeficit, calculateRollingAverage, getLast7Days, formatLargeNumber } from '@/utils/calculations.ts';
-import InfoTooltip from '@/components/InfoTooltip.tsx';
+import { useStore } from '@/store/useStore';
+import { calculateTDEE, calculateNetDeficit, calculateRollingAverage, getLast7Days, formatLargeNumber } from '@/utils/calculations';
+import InfoTooltip from '@/components/InfoTooltip';
 import { ProgressSkeleton } from '@/components/progress/ProgressSkeleton';
 
 const TIMEFRAMES = [
@@ -40,7 +40,7 @@ export default function ProgressScreen() {
 
   const days = TIMEFRAMES.find((t) => t.key === timeframe)?.days || 7;
 
-  const chartData = (() => {
+  const chartData = useMemo(() => {
     const lastDays = getLast7Days();
     let datesToProcess = lastDays;
 
@@ -118,7 +118,7 @@ export default function ProgressScreen() {
       rollingAvg: rolling[i],
       rollingAvgCalories: rollingCalories[i],
     }));
-  })();
+  }, [days, dailyLogs, profile]);
 
   const stats = useMemo(() => {
     const loggedDays = chartData.filter((d) => d.isLogged);

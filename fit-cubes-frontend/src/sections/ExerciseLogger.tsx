@@ -1,12 +1,12 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { ChevronLeft, Check, Dumbbell, Footprints, Timer, Flame } from 'lucide-react';
-import { useStore } from '@/store/useStore.ts';
-import { calculateExerciseCalories, generateSafeId } from '@/utils/calculations.ts';
+import { useStore } from '@/store/useStore';
+import { calculateExerciseCalories, generateSafeId } from '@/utils/calculations';
 import type { ExerciseEntry } from '@/types';
-import InfoTooltip from '@/components/InfoTooltip.tsx';
+import InfoTooltip from '@/components/InfoTooltip';
 import FoodItemCardSkeleton from '@/components/food/FoodItemCardSkeleton';
-import { blockInvalidIntegerInput, blockInvalidNumberInput } from '@/utils/inputHandlers.ts';
+import { blockInvalidIntegerInput, blockInvalidNumberInput } from '@/utils/inputHandlers';
 
 interface ExerciseLoggerProps {
   onClose: () => void;
@@ -143,14 +143,14 @@ export default function ExerciseLogger({ onClose, editEntry }: ExerciseLoggerPro
               {isLoading ? (
                 <FoodItemCardSkeleton variant='exercise' count={6} />
               ) : (
-                activities.map((act, idx) => {
+                activities.map((act) => {
                   const Icon = ICONS[act.name] || Dumbbell;
                   return (
                     <motion.button
                       key={act.name}
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: idx * 0.05 }}
+                      transition={{ duration: 0.15 }}
                       onClick={() => setSelectedActivity(act.name)}
                       className="w-full flex items-center gap-4 p-4 bg-card rounded-xl border border-border text-left active:bg-secondary/50 transition-colors"
                     >

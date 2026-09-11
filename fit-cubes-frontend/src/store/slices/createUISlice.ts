@@ -1,5 +1,5 @@
 import type { StateCreator } from 'zustand';
-import type { StoreState } from '../useStore.ts';
+import type { StoreState } from '../useStore';
 import type { FoodItem } from '@/types';
 
 export interface UISlice {

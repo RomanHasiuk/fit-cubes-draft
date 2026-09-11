@@ -1,11 +1,11 @@
 import { useState, useMemo } from 'react';
 import { ChevronLeft, Check, Edit3 } from 'lucide-react';
 import { useNavigate } from 'react-router';
-import { useStore } from '@/store/useStore.ts';
-import { calculatePortionOrCookedNutrition, generateSafeId } from '@/utils/calculations.ts';
+import { useStore } from '@/store/useStore';
+import { calculatePortionOrCookedNutrition, generateSafeId } from '@/utils/calculations';
 import type { FoodItem, FoodEntry } from '@/types';
-import FoodAnalysis from '@/components/FoodAnalysis.tsx';
-import { blockInvalidIntegerInput, sanitizePositiveInt } from '@/utils/inputHandlers.ts';
+import FoodAnalysis from '@/components/FoodAnalysis';
+import { blockInvalidIntegerInput, sanitizePositiveInt } from '@/utils/inputHandlers';
 
 interface FoodAddProps {
   food: FoodItem;

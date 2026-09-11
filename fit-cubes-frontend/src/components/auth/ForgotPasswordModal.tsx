@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, MailCheck, Loader2 } from 'lucide-react';
 import { useModalOpen } from '@/hooks/useModalOpen';
-import { AuthInput } from './AuthInput';
+import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 
 interface ForgotPasswordModalProps {
@@ -118,7 +118,7 @@ export const ForgotPasswordModal: React.FC<ForgotPasswordModalProps> = ({
                 </p>
 
                 <form noValidate onSubmit={handleSubmit} className="flex flex-col gap-4">
-                  <AuthInput
+                  <Input
                     type="email"
                     value={email}
                     onChange={handleEmailChange}
@@ -160,7 +160,7 @@ export const ForgotPasswordModal: React.FC<ForgotPasswordModalProps> = ({
               </div>
             ) : (
               <div className="flex flex-col items-center text-center py-2">
-                <div className="w-12 h-12 rounded-[5px] bg-[#F59F0A]/15 text-[#F59F0A] flex items-center justify-center mb-4">
+                <div className="w-12 h-12 rounded-[5px] bg-primary/15 text-primary flex items-center justify-center mb-4">
                   <MailCheck className="w-6 h-6 stroke-[2.2] pointer-events-none" />
                 </div>
                 <h3 className="text-xl font-serif font-semibold text-foreground mb-2">

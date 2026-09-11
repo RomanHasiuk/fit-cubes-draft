@@ -1,12 +1,31 @@
 import type { FoodItem, ActivityConstant } from '@/types';
 
+interface StaticProductDto {
+  id: string | number;
+  name: string;
+  category: string;
+  calories?: number;
+  protein?: number;
+  carbs?: number;
+  fats?: number;
+  rawWeight?: number;
+  cookedWeight?: number;
+}
+
+interface StaticActivityDto {
+  name: string;
+  unit?: string;
+  metValue?: number;
+  kcalPerUnit?: number;
+}
+
 // Database simulation (in the future, these will be requests to a real backend)
 class ApiClient {
   async getStaticProducts(): Promise<FoodItem[]> {
     const res = await fetch('/data/products.json');
     if (!res.ok) throw new Error('Failed to fetch products');
-    const data = await res.json();
-    return data.map((p: any) => ({
+    const data: StaticProductDto[] = await res.json();
+    return data.map((p) => ({
       id: String(p.id),
       name: p.name,
       category: p.category,
@@ -22,8 +41,8 @@ class ApiClient {
   async getActivities(): Promise<ActivityConstant[]> {
     const res = await fetch('/data/activities.json');
     if (!res.ok) throw new Error('Failed to fetch activities');
-    const data = await res.json();
-    return data.map((a: any) => ({
+    const data: StaticActivityDto[] = await res.json();
+    return data.map((a) => ({
       name: a.name,
       metricLabel: a.unit || 'units',
       met: a.metValue || 0,

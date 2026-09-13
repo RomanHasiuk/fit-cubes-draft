@@ -20,7 +20,10 @@ class ApiClient {
   private async request<T>(endpoint: string, options: RequestInit = {}): Promise<ApiResponse<T>> {
     const cleanEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
     const url = endpoint.startsWith('http') ? endpoint : `${API_BASE_URL}${cleanEndpoint}`;
-    const token = this.getAuthToken();
+    const isPublicAuthEndpoint =
+      cleanEndpoint.startsWith('/auth/login') ||
+      cleanEndpoint.startsWith('/auth/register');
+    const token = isPublicAuthEndpoint ? null : this.getAuthToken();
 
     const headers: HeadersInit = {
       'Content-Type': 'application/json',

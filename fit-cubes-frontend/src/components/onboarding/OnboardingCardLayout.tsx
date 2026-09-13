@@ -39,24 +39,24 @@ export function OnboardingCardLayout({
   }, []);
 
   return (
-    <div className="relative w-full min-h-[100dvh] bg-[#08090B] text-white flex flex-col items-center p-0 lg:p-10 overflow-y-auto select-none [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+    <div className="relative flex min-h-[100dvh] w-full select-none flex-col items-center overflow-y-auto bg-[#08090B] p-0 text-white [-ms-overflow-style:none] [scrollbar-width:none] lg:p-10 [&::-webkit-scrollbar]:hidden">
       {/* Main Split Frame */}
-      <div className="relative w-full m-auto min-h-[100dvh] lg:min-h-0 lg:h-[650px] max-w-[1192px] rounded-none lg:rounded-[5px] overflow-hidden flex shrink-0">
+      <div className="relative m-auto flex min-h-[100dvh] w-full max-w-[1192px] shrink-0 overflow-hidden rounded-none lg:h-[650px] lg:min-h-0 lg:rounded-[5px]">
         <motion.img
           src="/img/welcome-bg-gym-c-desktop02-bl_or.webp"
           alt="Athletic Lifestyle"
-          className="absolute inset-0 w-full h-full object-cover object-[75%_center] lg:object-center pointer-events-none"
+          className="pointer-events-none absolute inset-0 h-full w-full object-cover object-[75%_center] lg:object-center"
           initial={{ scale: 1.05 }}
           animate={{ scale: 1 }}
           transition={{ duration: 2.5, ease: 'easeOut' }}
         />
-        <div className="absolute inset-0 bg-black/50 backdrop-blur-[2px] pointer-events-none" />
+        <div className="pointer-events-none absolute inset-0 bg-black/50 backdrop-blur-[2px]" />
 
         {/* Content Column */}
         <div
           onScroll={handleScroll}
           data-scrolling={isScrolling ? 'true' : undefined}
-          className="relative z-10 w-full lg:w-1/2 h-full flex flex-col justify-between overflow-y-auto page-padding pt-safe pb-safe md:pt-[188px] lg:pt-6 lg:pb-6 lg:pr-3 custom-scrollbar"
+          className="page-padding pt-safe pb-safe custom-scrollbar relative z-10 flex h-full w-full flex-col justify-between overflow-y-auto md:pt-[188px] lg:w-1/2 lg:pb-6 lg:pr-3 lg:pt-6"
         >
           <AnimatePresence mode="wait">
             <motion.div
@@ -65,16 +65,20 @@ export function OnboardingCardLayout({
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -20 }}
               transition={{ duration: 0.25, ease: 'easeInOut' }}
-              className="w-full h-full flex flex-col justify-between"
+              className="flex h-full w-full flex-col justify-between"
             >
               {step === 'auth' && <AuthForm onSuccess={onNext} />}
-              {step === 'basics' && <BasicsForm onNext={onNext} onBack={onBack} />}
-              {step === 'targets' && <TargetsForm onNext={onNext} onBack={onBack} />}
+              {step === 'basics' && (
+                <BasicsForm onNext={onNext} onBack={onBack} />
+              )}
+              {step === 'targets' && (
+                <TargetsForm onNext={onNext} onBack={onBack} />
+              )}
             </motion.div>
           </AnimatePresence>
         </div>
 
-        <div className="hidden lg:block w-1/2 h-full pointer-events-none" />
+        <div className="pointer-events-none hidden h-full w-1/2 lg:block" />
       </div>
     </div>
   );

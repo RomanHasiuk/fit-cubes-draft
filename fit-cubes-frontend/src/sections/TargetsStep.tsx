@@ -6,5 +6,7 @@ interface TargetsStepProps {
 }
 
 export function TargetsStep({ onNext, onBack }: TargetsStepProps) {
-  return <OnboardingCardLayout step="targets" onNext={onNext} onBack={onBack} />;
+  return (
+    <OnboardingCardLayout step="targets" onNext={onNext} onBack={onBack} />
+  );
 }

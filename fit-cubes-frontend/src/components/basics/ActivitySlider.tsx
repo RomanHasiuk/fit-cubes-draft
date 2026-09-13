@@ -1,4 +1,9 @@
-import { useRef, useCallback, type PointerEvent, type ChangeEvent } from 'react';
+import {
+  useRef,
+  useCallback,
+  type PointerEvent,
+  type ChangeEvent,
+} from 'react';
 import InfoTooltip from '../InfoTooltip';
 
 interface ActivitySliderProps {
@@ -57,17 +62,17 @@ export function ActivitySlider({
 
   return (
     <div className="flex flex-col">
-      <div className="flex items-center justify-between w-full mb-2">
-          <span className="form-label">Activity factor</span>
-          <InfoTooltip
-            title="Activity Factor"
-            content="Multiplier from 1.2 (sedentary desk job) to 1.9 (hard physical labor & daily sports). Multiplies your BMR to calculate TDEE."
-            align="left"
-          />
-        </div>
-        
+      <div className="mb-2 flex w-full items-center justify-between">
+        <span className="form-label">Activity factor</span>
+        <InfoTooltip
+          title="Activity Factor"
+          content="Multiplier from 1.2 (sedentary desk job) to 1.9 (hard physical labor & daily sports). Multiplies your BMR to calculate TDEE."
+          align="left"
+        />
+      </div>
+
       {/* Centered Value above Track */}
-      <div className="text-center font-sans text-[16px] font-medium text-foreground leading-[1.5]">
+      <div className="text-center font-sans text-[16px] font-medium leading-[1.5] text-foreground">
         {value.toFixed(1)}
       </div>
 
@@ -76,11 +81,11 @@ export function ActivitySlider({
         ref={sliderTrackRef}
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
-        className="w-full h-[24px] bg-[#DFDFE2] rounded-[5px] relative flex items-center cursor-pointer select-none touch-none"
+        className="relative flex h-[24px] w-full cursor-pointer touch-none select-none items-center rounded-[5px] bg-[#DFDFE2]"
       >
         {/* Thumb */}
         <div
-          className="w-[18px] h-[18px] rounded-full bg-[#323236] shadow-md absolute top-1/2 -translate-y-1/2 pointer-events-none transition-transform active:scale-110"
+          className="pointer-events-none absolute top-1/2 h-[18px] w-[18px] -translate-y-1/2 rounded-full bg-[#323236] shadow-md transition-transform active:scale-110"
           style={{
             left: `calc(${sliderPercentage}% - ${sliderPercentage * 0.18}px)`,
           }}
@@ -100,7 +105,7 @@ export function ActivitySlider({
       </div>
 
       {/* Sublabels */}
-      <div className="flex justify-between text-sm text-foreground/60 font-sans mt-0.5 md:mt-[5px]">
+      <div className="mt-0.5 flex justify-between font-sans text-sm text-foreground/60 md:mt-[5px]">
         <span>Sedentary</span>
         <span>Very Active</span>
       </div>

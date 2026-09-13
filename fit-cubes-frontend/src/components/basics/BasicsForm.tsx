@@ -36,29 +36,31 @@ export function BasicsForm({ onNext, onBack }: BasicsFormProps) {
   } = useBasicsForm({ onNext });
 
   return (
-    <div className="w-full flex flex-col justify-between h-full">
+    <div className="flex h-full w-full flex-col justify-between">
       {/* Header */}
-      <div className="w-full h-[34px] flex items-center justify-between mb-3 sm:mb-12 md:mb-6">
+      <div className="mb-3 flex h-[34px] w-full items-center justify-between sm:mb-12 md:mb-6">
         <button
           type="button"
           onClick={onBack}
-          className="w-[34px] h-[34px] rounded-full bg-[#16191E] border border-white/10 hover:border-white/20 active:scale-95 flex items-center justify-center transition-all cursor-pointer touch-manipulation"
+          className="flex h-[34px] w-[34px] cursor-pointer touch-manipulation items-center justify-center rounded-full border border-white/10 bg-[#16191E] transition-all hover:border-white/20 active:scale-95"
           title="Back"
           aria-label="Back"
         >
-          <ArrowLeft className="w-6 h-6 text-foreground/80 pointer-events-none" />
+          <ArrowLeft className="pointer-events-none h-6 w-6 text-foreground/80" />
         </button>
 
-        <h2 className="heading-h2 text-center">
-          Tell Us About Yourself
-        </h2>
+        <h2 className="heading-h2 text-center">Tell Us About Yourself</h2>
 
-        <div className="w-[34px] h-[34px] opacity-0 pointer-events-none" />
+        <div className="pointer-events-none h-[34px] w-[34px] opacity-0" />
       </div>
 
       {/* Form */}
-      <form id="basics-form" noValidate onSubmit={handleSubmit}
-        className="w-full flex flex-col gap-8 mb-[18px]">
+      <form
+        id="basics-form"
+        noValidate
+        onSubmit={handleSubmit}
+        className="mb-[18px] flex w-full flex-col gap-8"
+      >
         {/* 1. Name Section */}
         <div className="flex flex-col gap-2">
           <label className="form-label">Name</label>
@@ -86,7 +88,7 @@ export function BasicsForm({ onNext, onBack }: BasicsFormProps) {
 
         {/* 2. Gender Section */}
         <div className="flex flex-col gap-2">
-          <div className="flex items-center justify-between w-full">
+          <div className="flex w-full items-center justify-between">
             <label className="form-label">Gender</label>
             <InfoTooltip
               title="Gender"
@@ -111,10 +113,10 @@ export function BasicsForm({ onNext, onBack }: BasicsFormProps) {
         </div>
 
         {/* 3. Metrics Section */}
-        <div className="grid grid-cols-3 gap-2 items-start">
+        <div className="grid grid-cols-3 items-start gap-2">
           {/* Age */}
           <div className="flex flex-col gap-1.5 lg:gap-2">
-            <div className="flex items-center justify-between w-full">
+            <div className="flex w-full items-center justify-between">
               <label className="form-label truncate">Age</label>
               <InfoTooltip
                 title="Age"
@@ -130,7 +132,7 @@ export function BasicsForm({ onNext, onBack }: BasicsFormProps) {
               onChange={handleAgeChange}
               placeholder="23"
               maxLength={3}
-              className="text-center px-1"
+              className="px-1 text-center"
               error={fieldErrors.age}
               hasError={Boolean(fieldErrors.age)}
             />
@@ -138,7 +140,7 @@ export function BasicsForm({ onNext, onBack }: BasicsFormProps) {
 
           {/* Weight */}
           <div className="flex flex-col gap-1.5 lg:gap-2">
-            <div className="flex items-center justify-between w-full">
+            <div className="flex w-full items-center justify-between">
               <label className="form-label truncate">Weight (KG)</label>
               <InfoTooltip
                 title="Weight"
@@ -154,7 +156,7 @@ export function BasicsForm({ onNext, onBack }: BasicsFormProps) {
               onChange={handleWeightChange}
               placeholder="70"
               maxLength={5}
-              className="text-center px-1"
+              className="px-1 text-center"
               error={fieldErrors.weight}
               hasError={Boolean(fieldErrors.weight)}
             />
@@ -162,7 +164,7 @@ export function BasicsForm({ onNext, onBack }: BasicsFormProps) {
 
           {/* Height */}
           <div className="flex flex-col gap-1.5 lg:gap-2">
-            <div className="flex items-center justify-between w-full">
+            <div className="flex w-full items-center justify-between">
               <label className="form-label truncate">Height (CM)</label>
               <InfoTooltip
                 title="Height"
@@ -178,7 +180,7 @@ export function BasicsForm({ onNext, onBack }: BasicsFormProps) {
               onChange={handleHeightChange}
               placeholder="175"
               maxLength={3}
-              className="text-center px-1"
+              className="px-1 text-center"
               error={fieldErrors.height}
               hasError={Boolean(fieldErrors.height)}
             />
@@ -190,13 +192,7 @@ export function BasicsForm({ onNext, onBack }: BasicsFormProps) {
         />
       </form>
       <div className="pt-1">
-        <Button
-          form="basics-form"
-          type="submit"
-          variant="default"
-          size="default"
-          className="w-full h-[44px] rounded-[5px] font-sans font-medium text-[16px]"
-        >
+        <Button form="basics-form" type="submit" className="w-full">
           Continue
         </Button>
       </div>

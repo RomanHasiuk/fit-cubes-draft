@@ -204,7 +204,7 @@ export function AuthForm({
                   exit={{ opacity: 0, x: 6 }}
                   transition={{ duration: 0.2 }}
                   onClick={handleOpenForgotPassword}
-                  className="text-link hover:underline transition-all cursor-pointer select-none text-xs"
+                  className="text-xs font-medium text-[#2F80ED] transition-all select-none hover:underline cursor-pointer"
                 >
                   Forgot password?
                 </motion.button>
@@ -248,11 +248,11 @@ export function AuthForm({
                   </div>
                   <span className="leading-snug text-white/70">
                     By signing up you are giving the thumbs up to our{' '}
-                    <a href="#terms" className="text-link hover:underline">
+                    <a href="#terms" className="text-[#2F80ED] hover:underline">
                       Terms of Service
                     </a>{' '}
                     and{' '}
-                    <a href="#privacy" className="text-link hover:underline">
+                    <a href="#privacy" className="text-[#2F80ED] hover:underline">
                       Privacy Policy
                     </a>
                     .
@@ -308,7 +308,7 @@ export function AuthForm({
             <button
               type="button"
               onClick={() => handleModeToggle('signup')}
-              className="ml-2 text-link hover:underline font-medium cursor-pointer"
+              className="ml-2 cursor-pointer font-medium text-[#2F80ED] hover:underline"
             >
               Sign up
             </button>
@@ -319,7 +319,7 @@ export function AuthForm({
             <button
               type="button"
               onClick={() => handleModeToggle('login')}
-              className="text-link hover:underline font-medium cursor-pointer"
+              className="cursor-pointer font-medium text-[#2F80ED] hover:underline"
             >
               Log in
             </button>

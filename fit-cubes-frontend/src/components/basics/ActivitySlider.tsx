@@ -67,7 +67,7 @@ export function ActivitySlider({
         <InfoTooltip
           title="Activity Factor"
           content="Multiplier from 1.2 (sedentary desk job) to 1.9 (hard physical labor & daily sports). Multiplies your BMR to calculate TDEE."
-          align="left"
+          align="right"
         />
       </div>
 

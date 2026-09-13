@@ -93,7 +93,7 @@ export function BasicsForm({ onNext, onBack }: BasicsFormProps) {
             <InfoTooltip
               title="Gender"
               content="Used to calculate your Basal Metabolic Rate (BMR) via the Mifflin-St Jeor formula."
-              align="left"
+              align="right"
             />
           </div>
           <div className="grid grid-cols-2 gap-3">

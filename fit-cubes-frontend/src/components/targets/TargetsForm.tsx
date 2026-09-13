@@ -136,7 +136,7 @@ export function TargetsForm({ onNext, onBack }: TargetsFormProps) {
   };
 
   return (
-    <div className="flex h-full w-full flex-col justify-between">
+    <div className="flex min-h-full w-full flex-col justify-between">
       {/* Header */}
       <div className="mb-3 flex h-[34px] w-full items-center justify-between sm:mb-12 md:mb-6">
         <button
@@ -194,7 +194,7 @@ export function TargetsForm({ onNext, onBack }: TargetsFormProps) {
             <InfoTooltip
               title="Goal"
               content="Defines caloric balance: Loss creates a 15% deficit, Gain creates a 15% surplus, and Maintain matches your TDEE."
-              align="left"
+              align="right"
             />
           </div>
           <div className="grid grid-cols-3 gap-3">
@@ -217,7 +217,7 @@ export function TargetsForm({ onNext, onBack }: TargetsFormProps) {
             <InfoTooltip
               title="Strategy"
               content="Macro distribution preset: Balanced (40% Carbs, 30% Protein, 30% Fats), Low-Carb (25% Carbs, 40% Protein, 35% Fats), or Keto (5% Carbs, 25% Protein, 70% Fats)."
-              align="left"
+              align="right"
             />
           </div>
           <div className="grid grid-cols-3 gap-3">

@@ -98,16 +98,13 @@ export default function InfoTooltip({
             }}
             className={`absolute w-[180px] sm:w-[195px] max-w-[calc(100vw-32px)] z-[100] pointer-events-none ${alignClasses[position][align]}`}
           >
-            <div className="py-[11px] px-2 rounded-[10px] bg-[#16191E]/95 border border-white/15 backdrop-blur-md shadow-2xl text-foreground relative">
-              {/* Serif Title */}
-              <h4 className="font-serif font-bold text-[16px] leading-tight mb-1 text-foreground">
+            <div className="py-[11px] md:py-4.5 px-2 rounded-[5px] bg-[#16191E]/95 border border-white/15 backdrop-blur-md shadow-2xl text-foreground font-medium relative">
+              <h4 className="font-serif font-bold text-[16px] leading-[1.15] mb-2 text-foreground">
                 {title}
               </h4>
-              {/* Sans-serif Body Content */}
-              <p className="font-sans text-[12px] leading-relaxed text-foreground/60 font-normal">
+              <p className="font-sans text-[12px] md:text-[14px] leading-[1.35] text-foreground/60 font-normal">
                 {content}
               </p>
-              {/* Arrow Indicator */}
               <div
                 className={`absolute border-4 border-transparent ${arrowClasses[position][align]}`}
               />

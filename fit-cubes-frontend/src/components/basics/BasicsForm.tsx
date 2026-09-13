@@ -36,7 +36,7 @@ export function BasicsForm({ onNext, onBack }: BasicsFormProps) {
   } = useBasicsForm({ onNext });
 
   return (
-    <div className="flex h-full w-full flex-col justify-between">
+    <div className="flex min-h-full w-full flex-col justify-between">
       {/* Header */}
       <div className="mb-3 flex h-[34px] w-full items-center justify-between sm:mb-12 md:mb-6">
         <button
@@ -145,7 +145,7 @@ export function BasicsForm({ onNext, onBack }: BasicsFormProps) {
               <InfoTooltip
                 title="Weight"
                 content="Key metric for calculating daily caloric burn and macro breakdown."
-                align="center"
+                align="right"
               />
             </div>
             <Input

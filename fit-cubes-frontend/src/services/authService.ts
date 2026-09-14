@@ -20,7 +20,7 @@ export interface RegisterPayload {
 
 export interface AuthResponseData {
   token: string;
-  user: AuthUser;
+  user?: AuthUser;
 }
 
 export type SocialProvider = 'apple' | 'google' | 'facebook';
@@ -30,6 +30,9 @@ export const authService = {
     const res = await apiClient.post<AuthResponseData>('/auth/login', payload);
     if (res.ok && res.data?.token) {
       localStorage.setItem('fitcubes_auth_token', res.data.token);
+      if (res.data.user) {
+        localStorage.setItem('fitcubes_auth_user', JSON.stringify(res.data.user));
+      }
     }
     return res;
   },
@@ -38,6 +41,9 @@ export const authService = {
     const res = await apiClient.post<AuthResponseData>('/auth/register', payload);
     if (res.ok && res.data?.token) {
       localStorage.setItem('fitcubes_auth_token', res.data.token);
+      if (res.data.user) {
+        localStorage.setItem('fitcubes_auth_user', JSON.stringify(res.data.user));
+      }
     }
     return res;
   },
@@ -48,6 +54,7 @@ export const authService = {
 
   logout(): void {
     localStorage.removeItem('fitcubes_auth_token');
+    localStorage.removeItem('fitcubes_auth_user');
     localStorage.removeItem('token');
   },
 
@@ -55,12 +62,7 @@ export const authService = {
     return Boolean(localStorage.getItem('fitcubes_auth_token') || localStorage.getItem('token'));
   },
 
-  /**
-   * OAuth 2.0 Social Login Initiation (Google, Apple, Facebook)
-   * Pre-wired for Stage 2 backend integration with Spring Boot OAuth2 endpoints.
-   */
   initiateSocialAuth(provider: SocialProvider): void {
-    // window.location.href = `/api/oauth2/authorization/${provider}`;
     console.log(`[OAuth2] Initiating social authorization for ${provider}`);
   },
 };

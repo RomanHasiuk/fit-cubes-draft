@@ -31,7 +31,7 @@ export interface FoodItem {
   fatsPer100g: number;
   rawWeight?: number;
   cookedWeight?: number;
-  recipeIngredients?: Ingredients[];
+  ingredients?: Ingredients[];
   isFavorite?: boolean;
 }
 

@@ -67,12 +67,12 @@ export default function RecipeBuilder() {
   }, [success]);
 
   const loadExistingRecipe = useCallback((recipeFood: FoodItem) => {
-    if (!recipeFood.recipeIngredients) {
+    if (!recipeFood.ingredients) {
       setError("This is not a custom recipe, it cannot be edited.");
       return;
     }
 
-    const loadIngredients: Ingredient[] = recipeFood.recipeIngredients.map(
+    const loadIngredients: Ingredient[] = recipeFood.ingredients.map(
       (ing) => {
         const originalProduct = products.find((p) => p.id === ing.foodItemId);
 
@@ -310,7 +310,7 @@ export default function RecipeBuilder() {
         typeof finalWeight === "number" && finalWeight > 0
           ? finalWeight
           : rawWeight,
-      recipeIngredients: ingredients.map((ing) => ({
+      ingredients: ingredients.map((ing) => ({
         foodItemId: ing.product.id,
         name: ing.product.name,
         weight: ing.weight as number,

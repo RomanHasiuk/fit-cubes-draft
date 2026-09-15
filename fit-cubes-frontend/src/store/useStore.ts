@@ -21,7 +21,6 @@ export const useStore = create<StoreState>()(
         profile: state.profile,
         dailyLogs: state.dailyLogs,
         isOnboarded: state.isOnboarded,
-        selectedDate: state.selectedDate,
         theme: state.theme,
         customCategories: state.customCategories,
         favoriteProductIds: state.favoriteProductIds,

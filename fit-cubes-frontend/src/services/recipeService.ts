@@ -10,7 +10,7 @@ export interface CreateRecipePayload {
   fatsPer100g: number;
   rawWeight: number;
   cookedWeight: number;
-  recipeIngredients: Ingredients[];
+  ingredients: Ingredients[];
 }
 
 export const recipeService = {

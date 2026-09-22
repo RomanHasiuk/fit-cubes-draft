@@ -12,6 +12,12 @@ import { ConfirmModal } from '@/components/ui/ConfirmModal';
 import FoodSearch from './FoodSearch';
 import FoodAdd from './FoodAdd';
 import ExerciseLogger from './ExerciseLogger';
+import { authService } from '@/services/authService';
+import { diaryService } from '@/services/diaryService';
+import {
+  mapDiaryFoodEntryDtoToFoodEntry,
+  mapDiaryExerciseEntryDtoToExerciseEntry,
+} from '@/utils/apiMappers';
 import type { FoodItem, FoodEntry, ExerciseEntry } from '@/types';
 
 export default function Diary() {
@@ -21,6 +27,7 @@ export default function Diary() {
   const products = useStore((state) => state.products);
   const removeFoodEntry = useStore((state) => state.removeFoodEntry);
   const removeExerciseEntry = useStore((state) => state.removeExerciseEntry);
+  const syncDayLog = useStore((state) => state.syncDayLog);
   const pendingFoodLog = useStore((state) => state.pendingFoodLog);
   const setPendingFoodLog = useStore((state) => state.setPendingFoodLog);
 
@@ -40,14 +47,42 @@ export default function Diary() {
   useModalOpen(showExercise);
   useModalOpen(!!directFoodAdd);
 
-  // Simulated Database API Fetch delay (1500ms) on date change
+  // Fetch diary entries from live Spring Boot backend on date change
   useEffect(() => {
-    setIsDiaryLoading(true);
-    const timer = setTimeout(() => {
+    let isCancelled = false;
+
+    if (!authService.isAuthenticated()) {
       setIsDiaryLoading(false);
-    }, 1500);
-    return () => clearTimeout(timer);
-  }, [selectedDate]);
+      return;
+    }
+
+    setIsDiaryLoading(true);
+
+    diaryService
+      .getDayLog(selectedDate)
+      .then((res) => {
+        if (isCancelled) return;
+        if (res.ok && res.data) {
+          const mappedFoods = (res.data.foodEntries || []).map(mapDiaryFoodEntryDtoToFoodEntry);
+          const mappedExercises = (res.data.exerciseEntries || []).map(
+            mapDiaryExerciseEntryDtoToExerciseEntry
+          );
+          syncDayLog(selectedDate, mappedFoods, mappedExercises);
+        }
+      })
+      .catch((err) => {
+        console.error('Failed to load day log from backend:', err);
+      })
+      .finally(() => {
+        if (!isCancelled) {
+          setIsDiaryLoading(false);
+        }
+      });
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [selectedDate, syncDayLog]);
 
   useEffect(() => {
     if (pendingFoodLog) {
@@ -119,6 +154,34 @@ export default function Diary() {
 
   const handleDeleteExercise = (id: string) => {
     removeExerciseEntry(selectedDate, id);
+    if (authService.isAuthenticated()) {
+      // Only sync with backend if entry has a numeric DB ID
+      if (!id.startsWith('ex_') && /^\d+$/.test(id)) {
+        diaryService.removeExerciseEntry(selectedDate, id).catch((err) => {
+          console.error('Failed to delete exercise entry from backend:', err);
+        });
+      }
+    }
+  };
+
+  const handleConfirmDeleteFood = () => {
+    if (!entryToDelete) return;
+    const entry = entryToDelete;
+    setEntryToDelete(null);
+    removeFoodEntry(selectedDate, entry.id);
+
+    if (authService.isAuthenticated()) {
+      // Only sync with backend if entry has a numeric DB ID
+      if (!entry.id.startsWith('fe_') && /^\d+$/.test(entry.id)) {
+        diaryService.removeFoodEntry(selectedDate, entry.id).catch((err) => {
+          console.error('Failed to delete food entry from backend:', err);
+        });
+      }
+    }
+  };
+
+  const handleCancelDeleteFood = () => {
+    setEntryToDelete(null);
   };
 
   return (
@@ -131,7 +194,7 @@ export default function Diary() {
         onNextDay={() => setSelectedDate(addDays(selectedDate, 1))}
       />
 
-      <div className="flex-1 px-5 py-4 space-y-4">
+      <div className="glass-card mx-10 flex-1 px-5 py-4 space-y-4">
         {isDiaryLoading ? (
           <>
             <MealSectionSkeleton itemCount={2} />
@@ -167,13 +230,13 @@ export default function Diary() {
       <AnimatePresence>
         {showFoodSearch && (
           <motion.div
-            className="fixed inset-0 z-[100] bg-black/60 dark:bg-black/80 backdrop-blur-sm flex justify-center items-end md:items-center p-0 md:p-4"
+            className="fixed inset-0 z-[100] bg-black/60 dark:bg-black/80 backdrop-blur-sm flex justify-center items-end md:items-center p-0 md:pt-16"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
           >
             <motion.div
-              className="w-full max-w-[500px] h-[90dvh] max-h-[90dvh] md:h-[800px] glass rounded-t-[2.5rem] md:rounded-[2.5rem] overflow-hidden bg-background"
+              className="w-full mx-10  h-[90dvh] max-h-[90dvh] md:h-[800px] glass rounded-t-[2.5rem] md:rounded-[2.5rem] overflow-hidden bg-background"
               initial={{ y: '100%' }}
               animate={{ y: 0 }}
               exit={{ y: '100%' }}
@@ -195,7 +258,7 @@ export default function Diary() {
             exit={{ opacity: 0 }}
           >
             <motion.div
-              className="w-full max-w-[500px] h-[90dvh] max-h-[90dvh] md:h-[800px] glass rounded-t-[2.5rem] md:rounded-[2.5rem] overflow-hidden bg-background"
+              className="w-full h-[90dvh] max-h-[90dvh] md:h-[800px] glass rounded-t-[2.5rem] md:rounded-[2.5rem] overflow-hidden bg-background mx-12"
               initial={{ y: '100%' }}
               animate={{ y: 0 }}
               exit={{ y: '100%' }}
@@ -251,13 +314,8 @@ export default function Diary() {
         }
         confirmText="Remove"
         variant="destructive"
-        onConfirm={() => {
-          if (entryToDelete) {
-            removeFoodEntry(selectedDate, entryToDelete.id);
-            setEntryToDelete(null);
-          }
-        }}
-        onCancel={() => setEntryToDelete(null)}
+        onConfirm={handleConfirmDeleteFood}
+        onCancel={handleCancelDeleteFood}
       />
     </div>
   );

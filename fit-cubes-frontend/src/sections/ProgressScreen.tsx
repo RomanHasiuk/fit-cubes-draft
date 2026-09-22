@@ -12,15 +12,15 @@ import {
   ComposedChart,
 } from 'recharts';
 import { TrendingDown, Scale, Flame, Target } from 'lucide-react';
-import { useStore } from '@/store/useStore';
-import { calculateTDEE, calculateNetDeficit, calculateRollingAverage, getLast7Days, formatLargeNumber } from '@/utils/calculations';
-import InfoTooltip from '@/components/InfoTooltip';
+import { useStore } from '@/store/useStore.ts';
+import { calculateTDEE, calculateNetDeficit, calculateRollingAverage, getLast7Days, formatLargeNumber } from '@/utils/calculations.ts';
+import InfoTooltip from '@/components/InfoTooltip.tsx';
 import { ProgressSkeleton } from '@/components/progress/ProgressSkeleton';
 
 const TIMEFRAMES = [
-  { key: '1W', label: '7 Days', days: 7 },
-  { key: '2W', label: '14 Days', days: 14 },
-  { key: '1M', label: '30 Days', days: 30 },
+  { key: '1 Week', label: '7 Days', days: 7 },
+  { key: '2 Weeks', label: '14 Days', days: 14 },
+  { key: '1 Month', label: '30 Days', days: 30 },
 ];
 
 export default function ProgressScreen() {
@@ -40,7 +40,7 @@ export default function ProgressScreen() {
 
   const days = TIMEFRAMES.find((t) => t.key === timeframe)?.days || 7;
 
-  const chartData = useMemo(() => {
+  const chartData = (() => {
     const lastDays = getLast7Days();
     let datesToProcess = lastDays;
 
@@ -118,7 +118,7 @@ export default function ProgressScreen() {
       rollingAvg: rolling[i],
       rollingAvgCalories: rollingCalories[i],
     }));
-  }, [days, dailyLogs, profile]);
+  })();
 
   const stats = useMemo(() => {
     const loggedDays = chartData.filter((d) => d.isLogged);
@@ -144,7 +144,7 @@ export default function ProgressScreen() {
   return (
     <div className="flex flex-col h-full">
       {/* Header */}
-      <div className="shrink-0 px-5 pt-6 pb-2">
+      <div className="shrink-0 px-5 pt-12 pb-2">
         <h1 className="text-2xl font-bold">Progress</h1>
         <p className="text-sm text-muted-foreground mt-0.5">
           Track your deficit and weight trajectory
@@ -152,7 +152,7 @@ export default function ProgressScreen() {
       </div>
 
       {/* Timeframe Toggle */}
-      <div className="shrink-0 px-5 pb-3">
+      <div className="shrink-0 px-5 pb-3 w-[288px] md:w-[522px] mx-auto">
         <div className="flex bg-secondary/50 backdrop-blur-lg rounded-xl p-1">
           {TIMEFRAMES.map((tf) => (
             <button
@@ -444,7 +444,7 @@ export default function ProgressScreen() {
 
         {/* Stats Grid */}
         <motion.div
-          className="grid grid-cols-2 gap-3 mt-4"
+          className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-4"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4, delay: 0.2 }}

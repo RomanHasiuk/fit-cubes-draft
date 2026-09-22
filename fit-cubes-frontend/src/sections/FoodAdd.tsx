@@ -6,6 +6,9 @@ import { calculatePortionOrCookedNutrition, generateSafeId } from '@/utils/calcu
 import type { FoodItem, FoodEntry } from '@/types';
 import FoodAnalysis from '@/components/FoodAnalysis';
 import { blockInvalidIntegerInput, sanitizePositiveInt } from '@/utils/inputHandlers';
+import { diaryService } from '@/services/diaryService';
+import { authService } from '@/services/authService';
+import { buildFoodEntryRequest } from '@/utils/apiMappers';
 
 interface FoodAddProps {
   food: FoodItem;
@@ -70,6 +73,21 @@ export default function FoodAdd({ food, mealType, existingEntry, onClose, onDone
     } else {
       addFoodEntry(selectedDate, entry);
     }
+
+    if (authService.isAuthenticated()) {
+      const payload = buildFoodEntryRequest(food, w, mealType, selectedDate);
+      diaryService.addFoodEntry(selectedDate, payload).then((res) => {
+        if (res.ok && res.data) {
+          updateFoodEntry(selectedDate, entry.id, {
+            ...entry,
+            id: String(res.data.id),
+          });
+        }
+      }).catch((err) => {
+        console.error('Failed to sync food entry to backend:', err);
+      });
+    }
+
     onDone();
   };
 

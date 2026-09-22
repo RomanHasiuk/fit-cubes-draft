@@ -22,6 +22,28 @@ export const productService = {
     return apiClient.get<ProductDto>(`/products/${id}`);
   },
 
+  async searchProducts(
+    query: string,
+    params?: PageQueryParams
+  ): Promise<ApiResponse<PageResponse<ProductDto>>> {
+    const cleanQuery = query.trim();
+    if (!cleanQuery) {
+      return {
+        status: 400,
+        ok: false,
+        error: 'Search query cannot be empty',
+      };
+    }
+
+    const searchParams = new URLSearchParams();
+    searchParams.append('query', cleanQuery);
+    if (params?.page !== undefined) searchParams.append('page', String(params.page));
+    if (params?.size !== undefined) searchParams.append('size', String(params.size));
+    if (params?.sort) searchParams.append('sort', params.sort);
+
+    return apiClient.get<PageResponse<ProductDto>>(`/products/search?${searchParams.toString()}`);
+  },
+
   async createProduct(payload: CreateProductDto): Promise<ApiResponse<ProductDto>> {
     const safePayload: CreateProductDto = {
       name: payload.name.trim(),

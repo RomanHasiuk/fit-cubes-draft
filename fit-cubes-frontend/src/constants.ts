@@ -74,6 +74,7 @@ export const CALORIE_ADJUSTMENT = {
 
 // ─── Activity Constants ──────────────────────────────────────
 export interface ActivityConstant {
+  id?: number;
   name: string;
   metricLabel: string;
   kcalPerUnit: number;
@@ -81,10 +82,10 @@ export interface ActivityConstant {
 }
 
 export const ACTIVITY_CONSTANTS: ActivityConstant[] = [
-  { name: 'Push-ups', metricLabel: 'reps', kcalPerUnit: 0.45, met: 12.0 },
-  { name: 'Squats', metricLabel: 'reps', kcalPerUnit: 0.40, met: 8.0 },
-  { name: 'Jumping Jacks', metricLabel: 'reps', kcalPerUnit: 0.22, met: 10.0 },
-  { name: 'Plank', metricLabel: 'minutes', kcalPerUnit: 10.00, met: 3.8 },
-  { name: 'Steps', metricLabel: 'steps', kcalPerUnit: 0.03, met: 3.5 },
-  { name: 'Housework', metricLabel: 'minutes', kcalPerUnit: 3.40, met: 3.0 },
+  { id: 2, name: 'Push-ups', metricLabel: 'reps', kcalPerUnit: 0.45, met: 12.0 },
+  { id: 3, name: 'Squats', metricLabel: 'reps', kcalPerUnit: 0.40, met: 8.0 },
+  { id: 4, name: 'Jumping Jacks', metricLabel: 'reps', kcalPerUnit: 0.22, met: 10.0 },
+  { id: 1, name: 'Plank', metricLabel: 'minutes', kcalPerUnit: 10.00, met: 3.8 },
+  { id: 1, name: 'Steps', metricLabel: 'steps', kcalPerUnit: 0.03, met: 3.5 },
+  { id: 6, name: 'Housework', metricLabel: 'minutes', kcalPerUnit: 3.40, met: 3.0 },
 ];

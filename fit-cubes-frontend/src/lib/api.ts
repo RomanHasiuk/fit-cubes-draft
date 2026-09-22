@@ -13,6 +13,7 @@ interface StaticProductDto {
 }
 
 interface StaticActivityDto {
+  id?: number;
   name: string;
   unit?: string;
   metValue?: number;
@@ -43,6 +44,7 @@ class ApiClient {
     if (!res.ok) throw new Error('Failed to fetch activities');
     const data: StaticActivityDto[] = await res.json();
     return data.map((a) => ({
+      id: a.id,
       name: a.name,
       metricLabel: a.unit || 'units',
       met: a.metValue || 0,

@@ -20,6 +20,9 @@ import FoodSearch from "./FoodSearch";
 import FoodAnalysis from "@/components/FoodAnalysis";
 import { blockInvalidIntegerInput, sanitizePositiveInt, sanitizeNameInput } from "@/utils/inputHandlers";
 import { generateSafeId } from "@/utils/calculations";
+import { recipeService } from "@/services/recipeService";
+import { authService } from "@/services/authService";
+import { mapFoodItemToCreateRecipeDto } from "@/utils/apiMappers";
 
 interface Ingredient {
   id: string;
@@ -327,6 +330,24 @@ export default function RecipeBuilder() {
       addProduct(newProduct);
     }
 
+    if (authService.isAuthenticated()) {
+      const payload = mapFoodItemToCreateRecipeDto(newProduct);
+      if (editingRecipeId && !asNew && editingRecipeId.startsWith('recipe_')) {
+        const numericId = editingRecipeId.replace('recipe_', '');
+        recipeService.updateRecipe(numericId, payload).catch((err) => {
+          console.error('Failed to sync recipe update with backend:', err);
+        });
+      } else {
+        recipeService.createRecipe(payload).then((res) => {
+          if (res.ok && res.data) {
+            updateProduct(targetId, { id: `recipe_${res.data.id}` });
+          }
+        }).catch((err) => {
+          console.error('Failed to sync new recipe with backend:', err);
+        });
+      }
+    }
+
     setIngredients([]);
     setRecipeName("");
     setFinalWeight("");
@@ -349,7 +370,7 @@ export default function RecipeBuilder() {
   return (
     <div className="flex flex-col h-full bg-background">
       {/* Header */}
-      <div className="shrink-0 px-5 pt-6 pb-4 flex items-center justify-between">
+      <div className="shrink-0 px-5 pt-12 pb-4 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-primary/20 flex items-center justify-center">
             <UtensilsCrossed className="w-6 h-6 text-primary" />
@@ -714,7 +735,7 @@ export default function RecipeBuilder() {
             exit={{ opacity: 0 }}
           >
             <motion.div
-              className="w-full max-w-[500px] h-[90dvh] max-h-[90dvh] md:h-[800px] glass rounded-t-[2.5rem] md:rounded-[2.5rem] overflow-hidden"
+              className="w-full h-[90dvh] max-h-[90dvh] md:h-[800px] glass rounded-t-[2.5rem] md:rounded-[2.5rem] overflow-hidden mx-12"
               initial={{ y: "100%" }}
               animate={{ y: 0 }}
               exit={{ y: "100%" }}

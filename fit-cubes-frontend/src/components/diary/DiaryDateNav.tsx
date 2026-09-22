@@ -18,7 +18,7 @@ export const DiaryDateNav: React.FC<DiaryDateNavProps> = ({
   onNextDay,
 }) => {
   return (
-    <div className="shrink-0 flex items-center justify-between px-5 pt-6 pb-4 border-b border-white/5">
+    <div className="shrink-0 flex items-center justify-between px-5 pt-12 pb-4 border-b border-white/5">
       <button
         type="button"
         onClick={onPrevDay}

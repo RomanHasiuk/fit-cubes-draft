@@ -164,7 +164,7 @@
   }
 
   .glass-card {
-    @apply bg-card/50 backdrop-blur-[2px] border border-white/10 dark:border-white/5 shadow-lg transition-all duration-500;
+    @apply bg-card/100 backdrop-blur-[2px] border border-white/10 dark:border-white/5 shadow-lg transition-all duration-500 relative z-10;
   }
 
   .text-gradient {

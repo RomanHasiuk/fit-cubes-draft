@@ -33,6 +33,16 @@ import React, { useState, useEffect } from 'react';
 import { MetricInput } from '@/components/profile/MetricInput';
 import { ProteinIndicator } from '@/components/profile/ProteinIndicator';
 import { ProfileSkeleton } from '@/components/profile/ProfileSkeleton';
+import { authService } from '@/services/authService';
+import { userService } from '@/services/userService';
+import { weightService } from '@/services/weightService';
+import { mapProfileDtoToUserProfile } from '@/utils/apiMappers';
+import type {
+  GenderApi,
+  GoalApi,
+  DietStrategyApi,
+  UpdateProfilePayload,
+} from '@/types/api';
 
 export default function ProfileScreen() {
   const profile = useStore((state) => state.profile);
@@ -46,13 +56,38 @@ export default function ProfileScreen() {
 
   useModalOpen(showResetConfirm);
 
-  // Simulated Database API Fetch delay (1500ms)
+  // Load profile from live Spring Boot backend on mount
   useEffect(() => {
-    setIsLoading(true);
-    const timer = setTimeout(() => {
+    let isCancelled = false;
+
+    if (!authService.isAuthenticated()) {
       setIsLoading(false);
-    }, 1500);
-    return () => clearTimeout(timer);
+      return;
+    }
+
+    setIsLoading(true);
+    userService
+      .getProfile()
+      .then((res) => {
+        if (isCancelled) return;
+        if (res.ok && res.data) {
+          const mapped = mapProfileDtoToUserProfile(res.data, profile);
+          updateProfile(mapped);
+          setDraft(mapped);
+        }
+      })
+      .catch((err) => {
+        console.error('Failed to load profile from backend:', err);
+      })
+      .finally(() => {
+        if (!isCancelled) {
+          setIsLoading(false);
+        }
+      });
+
+    return () => {
+      isCancelled = true;
+    };
   }, []);
 
   const [draft, setDraft] = useState(profile);
@@ -116,6 +151,60 @@ export default function ProfileScreen() {
 
   const hasChanges = JSON.stringify(profile) !== JSON.stringify(draft);
 
+  const handleSave = () => {
+    updateProfile(draft);
+
+    if (authService.isAuthenticated()) {
+      let genderApi: GenderApi | undefined;
+      if (draft.gender === 'male') genderApi = 'MALE';
+      else if (draft.gender === 'female') genderApi = 'FEMALE';
+
+      let goalApi: GoalApi | undefined;
+      if (draft.goal === 'lose') goalApi = 'WEIGHT_LOSS';
+      else if (draft.goal === 'maintain') goalApi = 'MAINTENANCE';
+      else if (draft.goal === 'gain') goalApi = 'MUSCLE_GAIN';
+
+      let dietStrategyApi: DietStrategyApi | undefined;
+      if (draft.diet === 'balanced') dietStrategyApi = 'BALANCED';
+      else if (draft.diet === 'low-carb') dietStrategyApi = 'LOW_CARB';
+      else if (draft.diet === 'keto') dietStrategyApi = 'KETO';
+
+      const payload: UpdateProfilePayload = {
+        firstName: draft.name.split(' ')[0] || draft.name,
+        lastName: draft.name.split(' ').slice(1).join(' ') || '',
+        gender: genderApi,
+        age: draft.age,
+        height: draft.heightCm,
+        currentWeight: draft.weightKg,
+        activityLevel: draft.activityFactor,
+        goal: goalApi,
+        dietStrategy: dietStrategyApi,
+        proteinTargetGrams: draft.macroTargets?.protein,
+        carbsTargetGrams: draft.macroTargets?.carbs,
+        fatsTargetGrams: draft.macroTargets?.fats,
+      };
+
+      userService.updateProfile(payload).catch((err) => {
+        console.error('Failed to sync profile update to backend:', err);
+      });
+
+      if (draft.weightKg && draft.weightKg !== profile.weightKg) {
+        weightService
+          .logWeight({
+            weight: draft.weightKg,
+            loggedAt: new Date(Date.now() - 60000).toISOString(),
+          })
+          .catch((err) => {
+            console.error('Failed to log weight to backend:', err);
+          });
+      }
+    }
+  };
+
+  const handleCancel = () => {
+    setDraft(profile);
+  };
+
   if (isLoading) {
     return <ProfileSkeleton />;
   }
@@ -123,7 +212,7 @@ export default function ProfileScreen() {
   return (
     <div className="flex flex-col h-full">
       {/* Header */}
-      <div className="shrink-0 px-5 pt-6 pb-2 flex items-start justify-between">
+      <div className="shrink-0 px-5 pt-12 pb-2 flex items-start justify-between">
         <div className="flex-1 mr-4">
           <input
             type="text"
@@ -416,13 +505,13 @@ export default function ProfileScreen() {
               </div>
               <div className="flex gap-2">
                 <button
-                  onClick={() => setDraft(profile)}
+                  onClick={handleCancel}
                   className="px-4 py-2 rounded-xl text-sm font-bold text-muted-foreground hover:bg-white/5 transition-colors"
                 >
                   Cancel
                 </button>
                 <button
-                  onClick={() => updateProfile(draft)}
+                  onClick={handleSave}
                   className="px-4 py-2 rounded-xl bg-primary text-primary-foreground text-sm font-bold shadow-lg shadow-primary/20 hover:scale-105 transition-transform"
                 >
                   Save

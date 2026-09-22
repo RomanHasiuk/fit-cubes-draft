@@ -1,12 +1,12 @@
 import { apiClient, type ApiResponse } from './apiClient';
-import type { UserProfile } from '@/types';
+import type { UserProfileDto, UpdateProfilePayload } from '@/types/api';
 
 export const userService = {
-  async getProfile(): Promise<ApiResponse<UserProfile>> {
-    return apiClient.get<UserProfile>('/users/profile');
+  async getProfile(): Promise<ApiResponse<UserProfileDto>> {
+    return apiClient.get<UserProfileDto>('/users/profile');
   },
 
-  async updateProfile(payload: Partial<UserProfile>): Promise<ApiResponse<UserProfile>> {
-    return apiClient.patch<UserProfile>('/users/profile', payload);
+  async updateProfile(payload: UpdateProfilePayload): Promise<ApiResponse<UserProfileDto>> {
+    return apiClient.patch<UserProfileDto>('/users/profile', payload);
   },
 };

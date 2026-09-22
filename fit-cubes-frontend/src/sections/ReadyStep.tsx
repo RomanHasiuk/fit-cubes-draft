@@ -1,8 +1,11 @@
+import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { useStore } from '@/store/useStore';
 import { Button } from '@/components/ui/button';
 import { Logo } from '@/components/ui/Logo';
 import { calculateTDEE, calculateTargetCalories } from '@/utils/calculations';
+import { userService } from '@/services/userService';
+import { mapProfileToUpdatePayload, mapProfileDtoToUserProfile } from '@/utils/apiMappers';
 
 interface ReadyStepProps {
   onComplete: () => void;
@@ -11,6 +14,8 @@ interface ReadyStepProps {
 
 export function ReadyStep({ onComplete }: ReadyStepProps) {
   const profile = useStore((state) => state.profile);
+  const updateProfile = useStore((state) => state.updateProfile);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const tdeeBase = calculateTDEE(profile);
   const targetCalories = calculateTargetCalories(tdeeBase, profile.goal);
@@ -24,6 +29,25 @@ export function ReadyStep({ onComplete }: ReadyStepProps) {
     { label: 'Carbs', value: `${macroTargets.carbs}g` },
     { label: 'Fats', value: `${macroTargets.fats}g` },
   ];
+
+  const handleStartJourney = async () => {
+    setIsSubmitting(true);
+    try {
+      const payload = mapProfileToUpdatePayload(profile);
+      const res = await userService.updateProfile(payload);
+      if (res.ok && res.data) {
+        const updated = mapProfileDtoToUserProfile(res.data, profile);
+        updateProfile(updated);
+      } else {
+        console.warn('[Onboarding] Profile sync returned an issue:', res.error || res.errors);
+      }
+    } catch (err) {
+      console.warn('[Onboarding] Profile sync to backend failed (offline or network error):', err);
+    } finally {
+      setIsSubmitting(false);
+      onComplete();
+    }
+  };
 
   return (
     <motion.div
@@ -91,8 +115,13 @@ export function ReadyStep({ onComplete }: ReadyStepProps) {
 
         {/* Action Button */}
         <div className="w-full">
-          <Button type="button" className="w-full" onClick={onComplete}>
-            Start My Journey!
+          <Button
+            type="button"
+            className="w-full"
+            onClick={handleStartJourney}
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? 'Syncing Your Profile...' : 'Start My Journey!'}
           </Button>
         </div>
       </div>

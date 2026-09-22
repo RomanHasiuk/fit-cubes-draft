@@ -1,36 +1,49 @@
 import { apiClient, type ApiResponse } from './apiClient';
-import type { FoodItem, Ingredients } from '@/types';
+import type {
+  RecipeSummaryDto,
+  RecipeDto,
+  CreateRecipeDto,
+  UpdateRecipeDto,
+  PageResponse,
+  PageQueryParams,
+} from '@/types/api';
 
-export interface CreateRecipePayload {
-  name: string;
+export interface RecipeQueryParams extends PageQueryParams {
   category?: string;
-  caloriesPer100g: number;
-  proteinPer100g: number;
-  carbsPer100g: number;
-  fatsPer100g: number;
-  rawWeight: number;
-  cookedWeight: number;
-  ingredients: Ingredients[];
 }
 
 export const recipeService = {
-  async getRecipes(): Promise<ApiResponse<FoodItem[]>> {
-    return apiClient.get<FoodItem[]>('/recipes');
+  async getRecipes(params?: RecipeQueryParams): Promise<ApiResponse<PageResponse<RecipeSummaryDto>>> {
+    const searchParams = new URLSearchParams();
+    if (params?.category) searchParams.append('category', params.category);
+    if (params?.page !== undefined) searchParams.append('page', String(params.page));
+    if (params?.size !== undefined) searchParams.append('size', String(params.size));
+    if (params?.sort) searchParams.append('sort', params.sort);
+
+    const queryString = searchParams.toString() ? `?${searchParams.toString()}` : '';
+    return apiClient.get<PageResponse<RecipeSummaryDto>>(`/recipes${queryString}`);
   },
 
-  async getRecipeById(id: string): Promise<ApiResponse<FoodItem>> {
-    return apiClient.get<FoodItem>(`/recipes/${id}`);
+  async getRecipeById(id: number | string): Promise<ApiResponse<RecipeDto>> {
+    return apiClient.get<RecipeDto>(`/recipes/${id}`);
   },
 
-  async createRecipe(payload: CreateRecipePayload): Promise<ApiResponse<FoodItem>> {
-    return apiClient.post<FoodItem>('/recipes', payload);
+  async createRecipe(payload: CreateRecipeDto): Promise<ApiResponse<RecipeDto>> {
+    return apiClient.post<RecipeDto>('/recipes', payload);
   },
 
-  async updateRecipe(id: string, payload: Partial<CreateRecipePayload>): Promise<ApiResponse<FoodItem>> {
-    return apiClient.patch<FoodItem>(`/recipes/${id}`, payload);
+  async updateRecipe(
+    id: number | string,
+    payload: UpdateRecipeDto
+  ): Promise<ApiResponse<RecipeDto>> {
+    return apiClient.patch<RecipeDto>(`/recipes/${id}`, payload);
   },
 
-  async deleteRecipe(id: string): Promise<ApiResponse<void>> {
+  async deleteRecipe(id: number | string): Promise<ApiResponse<void>> {
     return apiClient.delete<void>(`/recipes/${id}`);
+  },
+
+  async getCategoryPresets(): Promise<ApiResponse<string[]>> {
+    return apiClient.get<string[]>('/categories/presets');
   },
 };

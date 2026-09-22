@@ -11,9 +11,15 @@ export default defineConfig({
     allowedHosts: true,
     proxy: {
       '/api': {
-        target: 'http://localhost:8080',
+        target: 'https://api.fitcubes.uk',
         changeOrigin: true,
-        secure: false,
+        secure: true,
+        configure: (proxy) => {
+          proxy.on('proxyReq', (proxyReq) => {
+            proxyReq.setHeader('Origin', 'https://fitcubes.uk');
+            proxyReq.setHeader('Referer', 'https://fitcubes.uk/');
+          });
+        },
       },
     },
   },

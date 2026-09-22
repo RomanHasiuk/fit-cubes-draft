@@ -1,6 +1,7 @@
 export interface ApiResponse<T = unknown> {
   data?: T;
   error?: string;
+  errors?: string[];
   status: number;
   ok: boolean;
 }
@@ -44,11 +45,27 @@ class ApiClient {
         data = await response.json();
       }
 
+      let errorMessage: string | undefined;
+      let fieldErrors: string[] | undefined;
+
+      if (!response.ok) {
+        const errPayload = data as { message?: string; errors?: string[] } | undefined;
+        if (errPayload?.errors && Array.isArray(errPayload.errors) && errPayload.errors.length > 0) {
+          fieldErrors = errPayload.errors;
+          errorMessage = errPayload.errors.join('; ');
+        } else if (errPayload?.message) {
+          errorMessage = errPayload.message;
+        } else {
+          errorMessage = `HTTP error ${response.status}`;
+        }
+      }
+
       return {
         data,
         status: response.status,
         ok: response.ok,
-        error: !response.ok ? (data as { message?: string })?.message || `HTTP error ${response.status}` : undefined,
+        error: errorMessage,
+        errors: fieldErrors,
       };
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Network request failed';

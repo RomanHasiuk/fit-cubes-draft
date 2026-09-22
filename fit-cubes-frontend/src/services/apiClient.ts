@@ -6,8 +6,18 @@ export interface ApiResponse<T = unknown> {
   ok: boolean;
 }
 
-const RAW_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api/v1';
-const API_BASE_URL = RAW_BASE_URL.replace(/\/+$/, '');
+const getBaseUrl = (): string => {
+  if (import.meta.env.VITE_API_BASE_URL) {
+    return import.meta.env.VITE_API_BASE_URL.replace(/\/+$/, '');
+  }
+  // When running on the official production domain (AWS S3 + CloudFront),
+  // route directly to the Spring Boot backend API on AWS which has CORS enabled for fitcubes.uk.
+  if (typeof window !== 'undefined' && window.location.hostname.includes('fitcubes.uk')) {
+    return 'https://api.fitcubes.uk/api/v1';
+  }
+  // Localhost (Vite proxy) or Vercel (vercel.json rewrites)
+  return '/api/v1';
+};
 
 class ApiClient {
   private getAuthToken(): string | null {
@@ -20,7 +30,8 @@ class ApiClient {
 
   private async request<T>(endpoint: string, options: RequestInit = {}): Promise<ApiResponse<T>> {
     const cleanEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
-    const url = endpoint.startsWith('http') ? endpoint : `${API_BASE_URL}${cleanEndpoint}`;
+    const baseUrl = getBaseUrl();
+    const url = endpoint.startsWith('http') ? endpoint : `${baseUrl}${cleanEndpoint}`;
     const isPublicAuthEndpoint =
       cleanEndpoint.startsWith('/auth/login') ||
       cleanEndpoint.startsWith('/auth/register');

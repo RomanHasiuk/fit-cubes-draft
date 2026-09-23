@@ -7,7 +7,7 @@ export const Greeting: React.FC = () => {
   const selectedDate = useStore((state) => state.selectedDate);
 
   return (
-    <div className="shrink-0 px-5 pb-2 pt-[72px]">
+    <div className="shrink-0 px-5 pb-2 pt-[102px] md:pt-[126px]">
       <p className="text-sm text-muted-foreground">
         {getRelativeDateLabel(selectedDate)}
       </p>

@@ -461,9 +461,9 @@ export default function RecipeBuilder() {
   };
 
   return (
-    <div className="flex flex-col h-full bg-background">
+    <div className="mx-auto flex h-full w-full max-w-[1016px] flex-col bg-transparent pb-12">
       {/* Header */}
-      <div className="shrink-0 px-5 pt-12 pb-4 flex items-center justify-between">
+      <div className="shrink-0 px-5 pt-[102px] md:pt-[126px] pb-4 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-primary/20 flex items-center justify-center">
             <UtensilsCrossed className="w-6 h-6 text-primary" />

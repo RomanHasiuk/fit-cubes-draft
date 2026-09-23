@@ -198,7 +198,7 @@ export default function Diary() {
   };
 
   return (
-    <div className="flex flex-col h-full relative">
+    <div className="mx-auto flex h-full w-full max-w-[1016px] flex-col relative px-4 md:px-8 pt-[102px] md:pt-[126px] pb-12">
       {/* Network Sync Feedback */}
       <AnimatePresence>
         {syncError && (
@@ -213,51 +213,53 @@ export default function Diary() {
         )}
       </AnimatePresence>
 
-      <DiaryDateNav
-        selectedDate={selectedDate}
-        caloriesIn={totals.calories}
-        caloriesOut={totals.exercise}
-        onPrevDay={() => setSelectedDate(addDays(selectedDate, -1))}
-        onNextDay={() => setSelectedDate(addDays(selectedDate, 1))}
-      />
+      <div className="rounded-[5px] border border-[#32363E] bg-[#0F1114]/80 backdrop-blur-md px-2.5 pt-2 pb-2.5 min-h-[500px] shadow-2xl space-y-2.5">
+        <DiaryDateNav
+          selectedDate={selectedDate}
+          caloriesIn={totals.calories}
+          caloriesOut={totals.exercise}
+          onPrevDay={() => setSelectedDate(addDays(selectedDate, -1))}
+          onNextDay={() => setSelectedDate(addDays(selectedDate, 1))}
+        />
 
-      <div className="glass-card mx-10 flex-1 px-5 py-4 space-y-4">
-        {isDiaryLoading ? (
-          <>
-            <MealSectionSkeleton itemCount={2} />
-            <MealSectionSkeleton itemCount={1} />
-            <MealSectionSkeleton itemCount={2} />
-            <MealSectionSkeleton itemCount={1} />
-          </>
-        ) : (
-          <>
-            {MEAL_TYPE_OPTIONS.map((meal) => (
-              <MealSection
-                key={meal.key}
-                mealKey={meal.key}
-                mealLabel={meal.label}
-                entries={getMealEntries(meal.key)}
-                onAddFood={handleAddFood}
-                onEditEntry={handleEditEntry}
-                onDeleteEntry={setEntryToDelete}
+        <div className="space-y-3">
+          {isDiaryLoading ? (
+            <>
+              <MealSectionSkeleton itemCount={2} />
+              <MealSectionSkeleton itemCount={1} />
+              <MealSectionSkeleton itemCount={2} />
+              <MealSectionSkeleton itemCount={1} />
+            </>
+          ) : (
+            <>
+              {MEAL_TYPE_OPTIONS.map((meal) => (
+                <MealSection
+                  key={meal.key}
+                  mealKey={meal.key}
+                  mealLabel={meal.label}
+                  entries={getMealEntries(meal.key)}
+                  onAddFood={handleAddFood}
+                  onEditEntry={handleEditEntry}
+                  onDeleteEntry={setEntryToDelete}
+                />
+              ))}
+
+              <ExerciseSection
+                entries={dayLog?.exerciseEntries || []}
+                onAddExercise={handleAddExercise}
+                onEditExercise={handleEditExercise}
+                onDeleteExercise={setExerciseToDelete}
               />
-            ))}
-
-            <ExerciseSection
-              entries={dayLog?.exerciseEntries || []}
-              onAddExercise={handleAddExercise}
-              onEditExercise={handleEditExercise}
-              onDeleteExercise={setExerciseToDelete}
-            />
-          </>
-        )}
+            </>
+          )}
+        </div>
       </div>
 
       {/* Modals via reusable ModalDrawer */}
       <ModalDrawer
         isOpen={showFoodSearch}
         onClose={() => setShowFoodSearch(false)}
-        maxWidth="w-full mx-10 md:max-w-3xl"
+        maxWidth="w-full mx-4 md:max-w-[1016px]"
       >
         <FoodSearch
           mealType={selectedMeal}

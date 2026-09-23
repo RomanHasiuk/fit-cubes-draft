@@ -3,9 +3,9 @@ import { Skeleton } from '@/components/ui/skeleton';
 
 export const ProfileSkeleton: React.FC = () => {
   return (
-    <div className="flex flex-col h-full space-y-6">
+    <div className="mx-auto flex h-full w-full max-w-[1016px] flex-col space-y-6 pb-12">
       {/* Header Skeleton */}
-      <div className="shrink-0 px-5 pt-6 pb-2 flex items-start justify-between">
+      <div className="shrink-0 px-5 pt-[102px] md:pt-[126px] pb-2 flex items-start justify-between">
         <div className="space-y-2 flex-1 mr-4">
           <Skeleton className="h-7 w-40 rounded-md" />
           <Skeleton className="h-4 w-52 rounded-md" />

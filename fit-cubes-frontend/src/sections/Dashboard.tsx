@@ -6,7 +6,7 @@ import ProgressScreen from '@/sections/ProgressScreen';
 
 export default function Dashboard() {
   return (
-    <div className="mx-auto flex min-h-full w-full max-w-5xl flex-col pb-12">
+    <div className="mx-auto flex min-h-full w-full max-w-[1016px] flex-col pb-12">
       <Greeting />
       <div className="space-y-4 lg:grid lg:grid-cols-2 lg:items-center lg:gap-8 lg:space-y-0 lg:px-4">
         <div className="flex justify-center">

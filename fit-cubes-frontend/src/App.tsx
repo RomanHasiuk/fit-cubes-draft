@@ -178,7 +178,7 @@ function App() {
             onTouchEnd={onTouchEnd}
             className="no-scrollbar pt-safe relative h-full overflow-y-auto"
           >
-            <div className="pointer-events-none absolute top-0 z-0 h-[120dvh] w-full bg-[url('public/img/welcome-bg5-c.webp')] bg-cover bg-top bg-no-repeat opacity-20" />
+            <div className="pointer-events-none fixed inset-0 z-0 bg-[url('/img/welcome-bg5-c.webp')] bg-cover bg-top bg-no-repeat opacity-20" />
             <AnimatePresence mode="wait">
               <Routes location={location} key={location.pathname}>
                 <Route

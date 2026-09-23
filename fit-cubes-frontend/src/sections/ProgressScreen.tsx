@@ -128,6 +128,8 @@ export default function ProgressScreen() {
     };
   }, [chartData, dailyLogs]);
 
+  const hasProgressData = chartData.some((d) => d.isLogged);
+
   if (isLoadingData && dailyLogs.length === 0) {
     return <ProgressSkeleton />;
   }
@@ -161,7 +163,23 @@ export default function ProgressScreen() {
         </div>
       </div>
 
-      <div className="w-full px-4 md:px-5 space-y-4">
+      {!hasProgressData ? (
+        <motion.div
+          className="glass-card mx-auto my-6 flex w-full max-w-[460px] flex-col items-center justify-center rounded-2xl p-8 text-center"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4 }}
+        >
+          <TrendingDown className="mb-4 h-12 w-12 text-muted-foreground/30" />
+          <h3 className="heading-h2 mb-2 text-2xl font-normal text-foreground">
+            No progress data yet
+          </h3>
+          <p className="max-w-[280px] text-sm text-muted-foreground">
+            Log your food and exercises to see your progress charts and statistics here.
+          </p>
+        </motion.div>
+      ) : (
+        <div className="w-full px-4 md:px-5 space-y-4">
         {/* Deficit Chart */}
         <motion.div
           className="glass-card rounded-2xl p-4"
@@ -472,6 +490,7 @@ export default function ProgressScreen() {
           </div>
         </motion.div>
       </div>
+      )}
     </div>
   );
 }

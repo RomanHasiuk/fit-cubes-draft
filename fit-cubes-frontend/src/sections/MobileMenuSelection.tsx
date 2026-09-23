@@ -1,6 +1,6 @@
 import type React from 'react';
 import { motion } from 'framer-motion';
-import { Link } from 'react-router';
+import { Link, useLocation } from 'react-router';
 import { useEffect, useRef } from 'react';
 import { authService } from '@/services/authService';
 import { useStore } from '@/store/useStore';
@@ -13,6 +13,7 @@ interface MobileMenuSelectionProps {
 export const MobileMenuSelection: React.FC<MobileMenuSelectionProps> = ({
   setMobileMenuOpen,
 }) => {
+  const { pathname } = useLocation();
   const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -43,7 +44,7 @@ export const MobileMenuSelection: React.FC<MobileMenuSelectionProps> = ({
         className="fixed inset-0 z-50 bg-black"
         onClick={() => setMobileMenuOpen(false)}
       />
-      <div className="pointer-events-none fixed inset-0 z-50 flex justify-center">
+      <div className="pointer-events-none fixed inset-0 z-50 flex items-start justify-center">
         <motion.div
           ref={menuRef}
           initial={{ opacity: 0, y: -20, scaleY: 0.96 }}
@@ -52,14 +53,18 @@ export const MobileMenuSelection: React.FC<MobileMenuSelectionProps> = ({
           transition={{ duration: 0.2, ease: 'easeOut' }}
           tabIndex={-1}
           onBlur={handleBlur}
-          className="pointer-events-auto mt-[70px] flex w-[288px] flex-col gap-2 rounded-xl border border-[#32363E] bg-[#16181D] p-2 shadow-2xl outline-none"
+          className="pointer-events-auto mt-[70px] flex w-[288px] flex-col gap-2 rounded-[5px] border border-[#32363E] bg-[#16181D]/80 backdrop-blur-md p-2.5 shadow-2xl outline-none"
         >
           <ul className="flex flex-col gap-1.5 border-b border-[#32363E] pb-2">
             <li>
               <Link
                 to="/"
                 onClick={() => setMobileMenuOpen(false)}
-                className="flex h-[40px] w-full items-center justify-center rounded-lg border border-[#32363E] text-sm font-medium text-white transition-all hover:border-primary/50 hover:bg-white/5"
+                className={`flex h-[40px] w-full items-center justify-center rounded-lg border text-sm font-medium transition-all ${
+                  pathname === '/'
+                    ? 'border-primary bg-primary/10 font-semibold text-primary'
+                    : 'border-[#32363E] text-white hover:border-primary/50 hover:bg-white/5'
+                }`}
               >
                 Home
               </Link>
@@ -68,7 +73,11 @@ export const MobileMenuSelection: React.FC<MobileMenuSelectionProps> = ({
               <Link
                 to="/diary"
                 onClick={() => setMobileMenuOpen(false)}
-                className="flex h-[40px] w-full items-center justify-center rounded-lg border border-[#32363E] text-sm font-medium text-white transition-all hover:border-primary/50 hover:bg-white/5"
+                className={`flex h-[40px] w-full items-center justify-center rounded-lg border text-sm font-medium transition-all ${
+                  pathname === '/diary'
+                    ? 'border-primary bg-primary/10 font-semibold text-primary'
+                    : 'border-[#32363E] text-white hover:border-primary/50 hover:bg-white/5'
+                }`}
               >
                 Diary
               </Link>
@@ -77,7 +86,11 @@ export const MobileMenuSelection: React.FC<MobileMenuSelectionProps> = ({
               <Link
                 to="/kitchen"
                 onClick={() => setMobileMenuOpen(false)}
-                className="flex h-[40px] w-full items-center justify-center rounded-lg border border-[#32363E] text-sm font-medium text-white transition-all hover:border-primary/50 hover:bg-white/5"
+                className={`flex h-[40px] w-full items-center justify-center rounded-lg border text-sm font-medium transition-all ${
+                  pathname === '/kitchen'
+                    ? 'border-primary bg-primary/10 font-semibold text-primary'
+                    : 'border-[#32363E] text-white hover:border-primary/50 hover:bg-white/5'
+                }`}
               >
                 Kitchen
               </Link>

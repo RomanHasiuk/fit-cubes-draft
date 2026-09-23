@@ -3,9 +3,9 @@ import { Skeleton } from '@/components/ui/skeleton';
 
 export const DashboardSkeleton: React.FC = () => {
   return (
-    <div className="flex h-full flex-col">
+    <div className="mx-auto flex min-h-full w-full max-w-[1016px] flex-col pb-12">
       {/* Header Skeleton */}
-      <div className="shrink-0 space-y-2 px-5 pb-2 pt-6">
+      <div className="shrink-0 space-y-2 px-5 pb-2 pt-[102px] md:pt-[126px]">
         <Skeleton className="h-4 w-28 rounded-md" />
         <Skeleton className="mt-1 h-8 w-56 rounded-md" />
       </div>

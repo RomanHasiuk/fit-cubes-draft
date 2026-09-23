@@ -102,29 +102,30 @@ export default function FoodSearch({
   }
 
   return (
-    <div className="flex flex-col h-full bg-background relative">
+    <div className="flex flex-col h-full bg-transparent relative">
       {/* Header */}
-      <div className="shrink-0 px-4 pt-safe pb-2 flex items-center justify-between">
+      <div className="shrink-0 px-2.5 pt-safe pb-3 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <button
             type="button"
             onClick={onClose}
-            className="p-2.5 rounded-xl active:bg-secondary transition-colors cursor-pointer"
+            className="p-1.5 rounded-full hover:bg-white/10 text-white transition-colors cursor-pointer"
+            aria-label="Go back"
           >
-            <ChevronLeft className="w-5 h-5" />
+            <ChevronLeft className="w-6 h-6 stroke-[2]" />
           </button>
-          <h2 className="text-lg font-semibold">
-            {recipesOnly ? 'Select Recipe' : 'Search foods'}
+          <h2 className="heading-h2 font-serif text-[22px] md:text-[26px] font-semibold text-[#F5F6FA] leading-tight">
+            {recipesOnly ? 'Select Recipe' : 'Search food'}
           </h2>
         </div>
         {!recipesOnly && (
           <button
             type="button"
             onClick={() => setIsCreatingFood(true)}
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-primary/20 text-primary rounded-lg text-[10px] font-bold hover:scale-105 active:scale-95 transition-all cursor-pointer"
+            className="flex items-center gap-1.5 px-3.5 py-1.5 bg-[#F59F0A] text-black font-semibold rounded-[5px] text-xs md:text-sm hover:bg-[#F59F0A]/90 active:scale-95 transition-all cursor-pointer shadow-sm"
           >
-            <Plus className="w-3 h-3" />
-            ADD
+            <Plus className="w-4 h-4 stroke-[2.5]" />
+            <span>Add</span>
           </button>
         )}
       </div>
@@ -145,42 +146,44 @@ export default function FoodSearch({
         }
       />
 
-      {/* Food List */}
-      <div className="flex-1 overflow-y-auto no-scrollbar px-4 pt-2">
-        <div className="pb-6">
-          {isLoadingData && products.length === 0 ? (
-            <FoodItemCardSkeleton count={5} />
-          ) : filteredFoods.length === 0 ? (
-            <div className="text-center py-12">
-              <Search className="w-8 h-8 mx-auto text-muted-foreground mb-2" />
-              <p className="text-sm text-muted-foreground">
-                {recipesOnly
-                  ? 'No saved recipes found. Build a recipe and save it first!'
-                  : 'No foods found'}
-              </p>
-            </div>
-          ) : (
-            filteredFoods.map((food) => {
-              const isCustom =
-                food.category === 'My Meals' ||
-                food.category === 'My Recipes' ||
-                customCategories.includes(food.category);
+      {/* Food List with Custom Blue Scrollbar and 10px insets */}
+      <div className="flex-1 overflow-hidden px-2.5 pt-2">
+        <div className="h-full overflow-y-auto custom-scrollbar pr-2.5" data-scrolling="true">
+          <div className="pb-6">
+            {isLoadingData && products.length === 0 ? (
+              <FoodItemCardSkeleton count={5} />
+            ) : filteredFoods.length === 0 ? (
+              <div className="text-center py-12">
+                <Search className="w-8 h-8 mx-auto text-muted-foreground mb-2" />
+                <p className="text-sm text-muted-foreground">
+                  {recipesOnly
+                    ? 'No saved recipes found. Build a recipe and save it first!'
+                    : 'No foods found'}
+                </p>
+              </div>
+            ) : (
+              filteredFoods.map((food) => {
+                const isCustom =
+                  food.category === 'My Meals' ||
+                  food.category === 'My Recipes' ||
+                  customCategories.includes(food.category);
 
-              return (
-                <FoodItemCard
-                  key={food.id}
-                  food={food}
-                  usageCount={usageCounts[food.id] || 0}
-                  isFavorite={favoriteProductIds.includes(food.id)}
-                  isCustom={isCustom}
-                  onSelect={handleSelect}
-                  onToggleFavorite={toggleFavorite}
-                  onEdit={setEditingFood}
-                  onDelete={setFoodToDelete}
-                />
-              );
-            })
-          )}
+                return (
+                  <FoodItemCard
+                    key={food.id}
+                    food={food}
+                    usageCount={usageCounts[food.id] || 0}
+                    isFavorite={favoriteProductIds.includes(food.id)}
+                    isCustom={isCustom}
+                    onSelect={handleSelect}
+                    onToggleFavorite={toggleFavorite}
+                    onEdit={setEditingFood}
+                    onDelete={setFoodToDelete}
+                  />
+                );
+              })
+            )}
+          </div>
         </div>
       </div>
 

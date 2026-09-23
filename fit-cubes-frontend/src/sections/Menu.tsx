@@ -1,5 +1,4 @@
-import type React from 'react';
-import { Link } from 'react-router';
+import { Link, useLocation } from 'react-router';
 import { Globe } from 'lucide-react';
 import fitCubeLogo from '@/components/images/FitCubeLogo.svg';
 import burgerIcon from '@/components/images/Burger.svg';
@@ -9,9 +8,17 @@ interface MenuProps {
   setMenuOpen: (open: boolean) => void;
 }
 
+const NAV_ITEMS = [
+  { to: '/', label: 'Home' },
+  { to: '/diary', label: 'Diary' },
+  { to: '/kitchen', label: 'Kitchen' },
+] as const;
+
 export const Menu: React.FC<MenuProps> = ({ setMenuOpen, menuOpen }) => {
+  const { pathname } = useLocation();
+
   return (
-    <nav className="fixed inset-x-0 top-0 z-50 h-[62px] border-b border-white/5 bg-black">
+    <nav className="fixed inset-x-0 top-0 z-50 h-[62px] border-b border-[#32363E] bg-[#0F1114]/75 backdrop-blur-md">
       <div className="mx-auto flex h-full w-[95%] max-w-6xl items-center justify-between">
         <Link to="/" className="flex items-center">
           <img
@@ -22,30 +29,23 @@ export const Menu: React.FC<MenuProps> = ({ setMenuOpen, menuOpen }) => {
         </Link>
 
         <ul className="flex h-[46px] items-center gap-7">
-          <li>
-            <Link
-              to="/"
-              className="block h-[62px] text-sm font-medium leading-[62px] text-white transition-colors hover:text-primary"
-            >
-              Home
-            </Link>
-          </li>
-          <li>
-            <Link
-              to="/diary"
-              className="block h-[62px] text-sm font-medium leading-[62px] text-white transition-colors hover:text-primary"
-            >
-              Diary
-            </Link>
-          </li>
-          <li>
-            <Link
-              to="/kitchen"
-              className="block h-[62px] text-sm font-medium leading-[62px] text-white transition-colors hover:text-primary"
-            >
-              Kitchen
-            </Link>
-          </li>
+          {NAV_ITEMS.map((item) => {
+            const isActive = pathname === item.to;
+            return (
+              <li key={item.to}>
+                <Link
+                  to={item.to}
+                  className={`relative block text-[16px] font-medium leading-[1.35] transition-colors ${
+                    isActive
+                      ? 'text-[#F5F6FA] after:absolute after:-bottom-1 after:left-0 after:h-[2px] after:w-full after:bg-[#F5F6FA]'
+                      : 'text-[#F5F6FA]/70 hover:text-[#F5F6FA]'
+                  }`}
+                >
+                  {item.label}
+                </Link>
+              </li>
+            );
+          })}
         </ul>
 
         <div className="flex h-[46px] items-center gap-5">

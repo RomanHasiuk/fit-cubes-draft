@@ -18,26 +18,32 @@ export const DiaryDateNav: React.FC<DiaryDateNavProps> = ({
   onNextDay,
 }) => {
   return (
-    <div className="shrink-0 flex items-center justify-between px-5 pt-12 pb-4 border-b border-white/5">
+    <div className="shrink-0 flex items-center justify-between pb-4 border-b border-[#32363E]/40 mb-2">
       <button
         type="button"
         onClick={onPrevDay}
-        className="p-2 rounded-xl hover:bg-secondary/50 transition-colors"
+        className="p-1.5 rounded-[5px] text-[#8E8F96] hover:text-[#F5F6FA] hover:bg-white/5 transition-colors cursor-pointer"
+        aria-label="Previous day"
       >
-        <ChevronLeft className="w-5 h-5" />
+        <ChevronLeft className="w-6 h-6 stroke-[2]" />
       </button>
       <div className="text-center">
-        <p className="text-lg font-bold">{getRelativeDateLabel(selectedDate)}</p>
-        <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider">
-          {formatLargeNumber(caloriesIn)} kcal in · {formatLargeNumber(caloriesOut)} kcal out
-        </p>
+        <h2 className="heading-h2 font-serif text-[24px] md:text-[26px] font-semibold text-[#F5F6FA] leading-tight">
+          {getRelativeDateLabel(selectedDate)}
+        </h2>
+        <div className="flex items-center justify-center gap-2.5 text-sm md:text-[16px] font-medium text-[#B6B6BC] mt-1 font-sans">
+          <span>{formatLargeNumber(caloriesIn)} kcal in</span>
+          <span className="text-xs text-[#8E8F96] leading-none">•</span>
+          <span>{formatLargeNumber(caloriesOut)} kcal out</span>
+        </div>
       </div>
       <button
         type="button"
         onClick={onNextDay}
-        className="p-2 rounded-xl hover:bg-secondary/50 transition-colors"
+        className="p-1.5 rounded-[5px] text-[#8E8F96] hover:text-[#F5F6FA] hover:bg-white/5 transition-colors cursor-pointer"
+        aria-label="Next day"
       >
-        <ChevronRight className="w-5 h-5" />
+        <ChevronRight className="w-6 h-6 stroke-[2]" />
       </button>
     </div>
   );

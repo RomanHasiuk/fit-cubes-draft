@@ -119,7 +119,7 @@
       background-color: transparent;
       border: 1px solid transparent;
       border-radius: 8px;
-      margin: 4px 0;
+      margin: 10px 0;
       box-sizing: border-box;
       transition: border-color 0.25s ease-in-out;
     }
@@ -204,17 +204,13 @@
     @apply pb-8 sm:pb-10 lg:pb-6;
   }
 
-  /* Project(Web)/H1 Figma Token: Merriweather, 26px mobile (120%) / 48px desktop (110%) */
   .heading-h1 {
     @apply font-serif font-medium text-[26px] leading-[1.2] md:text-[48px] md:leading-[1.1] text-foreground;
   }
-
-  /* Project(Web)/H2 Figma Token: Merriweather, 18px mobile / 26px desktop, 120% line-height */
   .heading-h2 {
     @apply font-serif font-medium text-[18px] leading-[1.15] md:text-[26px] md:leading-[1.2] text-foreground;
   }
 
-  /* Form Label Figma Token: Merriweather, 16px mobile (115%) / 18px tablet & desktop (115%) */
   .form-label {
     @apply font-serif font-medium text-[16px] md:text-[18px] leading-[1.15] text-foreground;
   }

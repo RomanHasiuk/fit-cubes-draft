@@ -13,7 +13,7 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({
   mobileMenuOpen,
 }) => {
   return (
-    <nav className="fixed inset-x-0 top-0 z-50 flex h-[62px] items-center justify-between border-b border-white/5 bg-black px-4">
+    <nav className="fixed inset-x-0 top-0 z-50 flex h-[62px] items-center justify-between border-b border-[#32363E] bg-[#0F1114]/75 backdrop-blur-md px-4">
       <img
         className="h-[46px] w-[46px] object-contain"
         src={logoIcon}

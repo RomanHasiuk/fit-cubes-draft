@@ -10,7 +10,6 @@ import {
 import { useStore } from '@/store/useStore.ts';
 import Dashboard from '@/sections/Dashboard.tsx';
 import Diary from '@/sections/Diary.tsx';
-import ProgressScreen from '@/sections/ProgressScreen.tsx';
 import ProfileScreen from '@/sections/ProfileScreen.tsx';
 import RecipeBuilder from '@/sections/RecipeBuilder.tsx';
 import Onboarding from '@/sections/Onboarding.tsx';
@@ -26,8 +25,6 @@ const SWIPE_ROUTES = [
   '/',
   '/diary',
   '/kitchen',
-  '/progress',
-  '/profile',
 ] as const;
 
 const MIN_SWIPE_DISTANCE = 75;
@@ -210,11 +207,7 @@ function App() {
                 />
                 <Route
                   path="/progress"
-                  element={
-                    <PageTransition>
-                      <ProgressScreen />
-                    </PageTransition>
-                  }
+                  element={<Navigate to="/" replace />}
                 />
                 <Route
                   path="/profile"

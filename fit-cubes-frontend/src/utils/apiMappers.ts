@@ -16,7 +16,14 @@ import type {
   SourceTypeApi,
   MealTypeApi,
 } from '@/types/api';
-import { WEIGHT_GOAL, DIET_TYPE, type WeightGoal, type DietType } from '@/constants';
+import {
+  WEIGHT_GOAL,
+  DIET_TYPE,
+  MEAL_TYPE,
+  type WeightGoal,
+  type DietType,
+  type MealType,
+} from '@/constants';
 
 export function mapProfileToUpdatePayload(profile: UserProfile): UpdateProfilePayload {
   const cleanName = (profile.name || '').trim();
@@ -114,6 +121,48 @@ export function formatRecipeCategory(category?: string | null): string {
     .join(' ');
 }
 
+export function mapCategoryToApiCategory(category?: string | null): ProductCategoryApi {
+  if (!category) return 'OTHER';
+  const clean = category.trim();
+  const normalized = clean.toUpperCase().replace(/[\s&]+/g, '_');
+
+  const validCategories: ProductCategoryApi[] = [
+    'DAIRY_AND_CHEESE',
+    'MEAT_AND_POULTRY',
+    'FISH_AND_SEAFOOD',
+    'VEGETABLES',
+    'FRUITS',
+    'GRAINS_AND_CEREALS',
+    'NUTS_AND_SEEDS',
+    'SWEETS_AND_SPREADS',
+    'PREPARED_MEALS',
+    'OTHER',
+  ];
+
+  if (validCategories.includes(normalized as ProductCategoryApi)) {
+    return normalized as ProductCategoryApi;
+  }
+
+  for (const [key, label] of Object.entries(PRODUCT_CATEGORY_LABELS)) {
+    if (label.toLowerCase() === clean.toLowerCase()) {
+      return key as ProductCategoryApi;
+    }
+  }
+
+  const lower = clean.toLowerCase();
+  if (lower.includes('dairy') || lower.includes('cheese') || lower.includes('milk')) return 'DAIRY_AND_CHEESE';
+  if (lower.includes('meat') || lower.includes('poultry') || lower.includes('chicken') || lower.includes('beef')) return 'MEAT_AND_POULTRY';
+  if (lower.includes('fish') || lower.includes('seafood')) return 'FISH_AND_SEAFOOD';
+  if (lower.includes('veg') || lower.includes('salad')) return 'VEGETABLES';
+  if (lower.includes('fruit') || lower.includes('berry')) return 'FRUITS';
+  if (lower.includes('grain') || lower.includes('cereal') || lower.includes('bread') || lower.includes('rice') || lower.includes('porridge')) return 'GRAINS_AND_CEREALS';
+  if (lower.includes('nut') || lower.includes('seed')) return 'NUTS_AND_SEEDS';
+  if (lower.includes('sweet') || lower.includes('dessert') || lower.includes('snack')) return 'SWEETS_AND_SPREADS';
+  if (lower.includes('meal') || lower.includes('dish') || lower.includes('recipe')) return 'PREPARED_MEALS';
+
+  return 'OTHER';
+}
+
 export function mapProductDtoToFoodItem(dto: ProductDto): FoodItem {
   return {
     id: String(dto.id),
@@ -155,10 +204,10 @@ export function mapRecipeDtoToFoodItem(dto: RecipeDto): FoodItem {
       foodItemId: String(ing.foodItemId),
       name: ing.name,
       weight: ing.weight,
-      calories: Math.round((ing.caloriesPer100g * ing.weight) / 100),
-      protein: Number(((ing.proteinPer100g * ing.weight) / 100).toFixed(1)),
-      carbs: Number(((ing.carbsPer100g * ing.weight) / 100).toFixed(1)),
-      fats: Number(((ing.fatsPer100g * ing.weight) / 100).toFixed(1)),
+      calories: Number(ing.caloriesPer100g) || 0,
+      protein: Number(ing.proteinPer100g) || 0,
+      carbs: Number(ing.carbsPer100g) || 0,
+      fats: Number(ing.fatsPer100g) || 0,
     })),
   };
 }
@@ -196,12 +245,44 @@ export function mapFoodItemToCreateRecipeDto(
   };
 }
 
+export const FRONTEND_TO_API_MEAL_MAP: Record<MealType, MealTypeApi> = {
+  [MEAL_TYPE.BREAKFAST]: 'BREAKFAST',
+  [MEAL_TYPE.LUNCH]: 'LUNCH',
+  [MEAL_TYPE.DINNER]: 'DINNER',
+  [MEAL_TYPE.SNACKS]: 'SNACK',
+};
+
+export const API_TO_FRONTEND_MEAL_MAP: Record<MealTypeApi, MealType> = {
+  BREAKFAST: MEAL_TYPE.BREAKFAST,
+  LUNCH: MEAL_TYPE.LUNCH,
+  DINNER: MEAL_TYPE.DINNER,
+  SNACK: MEAL_TYPE.SNACKS,
+  DESSERT: MEAL_TYPE.SNACKS,
+};
+
+export function mapMealTypeToApiMealType(mealType: string): MealTypeApi {
+  const normalized = mealType.trim().toLowerCase() as MealType;
+  if (normalized in FRONTEND_TO_API_MEAL_MAP) {
+    return FRONTEND_TO_API_MEAL_MAP[normalized];
+  }
+  return 'SNACK';
+}
+
+export function mapApiMealTypeToFrontend(apiMealType?: string | null): MealType {
+  if (!apiMealType) return MEAL_TYPE.SNACKS;
+  const upper = apiMealType.trim().toUpperCase() as MealTypeApi;
+  if (upper in API_TO_FRONTEND_MEAL_MAP) {
+    return API_TO_FRONTEND_MEAL_MAP[upper];
+  }
+  return MEAL_TYPE.SNACKS;
+}
+
 export function mapDiaryFoodEntryDtoToFoodEntry(dto: DiaryFoodEntryDto): FoodEntry {
   return {
     id: String(dto.id),
     foodItemId: String(dto.id),
     name: dto.name,
-    mealType: dto.mealType.toLowerCase() as FoodEntry['mealType'],
+    mealType: mapApiMealTypeToFrontend(dto.mealType),
     timestamp: Date.now(),
     weightGrams: dto.weightGrams,
     calories: dto.calories,
@@ -227,7 +308,7 @@ export function mapDiaryExerciseEntryDtoToExerciseEntry(dto: DiaryExerciseEntryD
 export function buildFoodEntryRequest(
   food: FoodItem,
   weightGrams: number,
-  mealType: string,
+  mealType: MealType,
   selectedDate: string
 ): FoodEntryRequestDto {
   const isRecipe = food.id.startsWith('recipe_');
@@ -242,19 +323,35 @@ export function buildFoodEntryRequest(
   let customCarbs: number | undefined;
   let customFat: number | undefined;
 
-  if (isRecipe) {
-    sourceType = 'RECIPE';
-    recipeId = Number(food.id.replace('recipe_', '')) || undefined;
-  } else if (isCustom) {
-    sourceType = 'CUSTOM';
+  const calculateCustomMacros = () => {
     customName = food.name;
     customCalories = Math.round((food.caloriesPer100g * weightGrams) / 100);
     customProtein = Number(((food.proteinPer100g * weightGrams) / 100).toFixed(1));
     customCarbs = Number(((food.carbsPer100g * weightGrams) / 100).toFixed(1));
     customFat = Number(((food.fatsPer100g * weightGrams) / 100).toFixed(1));
+  };
+
+  if (isRecipe) {
+    const rawRecipeId = Number(food.id.replace('recipe_', ''));
+    if (!isNaN(rawRecipeId) && rawRecipeId > 0) {
+      sourceType = 'RECIPE';
+      recipeId = rawRecipeId;
+    } else {
+      sourceType = 'CUSTOM';
+      calculateCustomMacros();
+    }
+  } else if (isCustom) {
+    sourceType = 'CUSTOM';
+    calculateCustomMacros();
   } else {
-    sourceType = 'PRODUCT';
-    productId = Number(food.id) || undefined;
+    const rawProductId = Number(food.id);
+    if (!isNaN(rawProductId) && rawProductId > 0) {
+      sourceType = 'PRODUCT';
+      productId = rawProductId;
+    } else {
+      sourceType = 'CUSTOM';
+      calculateCustomMacros();
+    }
   }
 
   const now = new Date();
@@ -273,7 +370,7 @@ export function buildFoodEntryRequest(
     customCarbs,
     customFat,
     quantity: weightGrams,
-    mealType: mealType.toUpperCase() as MealTypeApi,
+    mealType: FRONTEND_TO_API_MEAL_MAP[mealType] || 'SNACK',
     loggedAt,
   };
 }

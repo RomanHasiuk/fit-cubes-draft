@@ -3,16 +3,16 @@ import { Skeleton } from '@/components/ui/skeleton';
 
 export const ProgressSkeleton: React.FC = () => {
   return (
-    <div className="flex flex-col h-full space-y-4">
+    <div className="flex flex-col w-full space-y-4 mt-4">
       {/* Header Skeleton */}
-      <div className="shrink-0 px-5 pt-6 pb-2 space-y-2">
+      <div className="shrink-0 px-5 pt-8 pb-3 space-y-2 flex flex-col items-center">
         <Skeleton className="h-7 w-32 rounded-md" />
         <Skeleton className="h-4 w-60 rounded-md" />
       </div>
 
       {/* Timeframe Toggle Skeleton */}
-      <div className="shrink-0 px-5 pb-3">
-        <div className="flex bg-secondary/50 rounded-xl p-1 gap-1">
+      <div className="shrink-0 px-5 pb-3 w-[288px] md:w-[522px] mx-auto">
+        <div className="flex bg-[#16181D] border border-[#32363E] rounded-xl p-1 gap-1">
           <Skeleton className="h-9 flex-1 rounded-lg" />
           <Skeleton className="h-9 flex-1 rounded-lg" />
           <Skeleton className="h-9 flex-1 rounded-lg" />
@@ -20,7 +20,7 @@ export const ProgressSkeleton: React.FC = () => {
       </div>
 
       {/* Content Skeleton */}
-      <div className="flex-1 px-5 space-y-4 pb-10 overflow-y-auto no-scrollbar">
+      <div className="w-full px-4 md:px-5 space-y-4">
         {/* Daily Deficit Chart Skeleton */}
         <div className="glass-card rounded-2xl p-4 border border-white/10 space-y-4">
           <div className="flex items-center justify-between">
@@ -65,8 +65,8 @@ export const ProgressSkeleton: React.FC = () => {
           <Skeleton className="h-40 w-full rounded-xl" />
         </div>
 
-        {/* Stats Grid Skeleton (2x2) */}
-        <div className="grid grid-cols-2 gap-3 pt-2">
+        {/* Stats Grid Skeleton (1 col on mobile, 2 cols on md) */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-4">
           {Array.from({ length: 4 }).map((_, i) => (
             <div key={i} className="glass-card rounded-2xl p-4 border border-white/10 space-y-2">
               <div className="flex items-center gap-2">

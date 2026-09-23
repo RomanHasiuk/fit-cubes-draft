@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { ChevronLeft, Check, Dumbbell, Footprints, Timer, Flame } from 'lucide-react';
+import { ChevronLeft, Check, Dumbbell, Footprints, Timer, Flame, Loader2 } from 'lucide-react';
 import { useStore } from '@/store/useStore';
 import { calculateExerciseCalories, generateSafeId } from '@/utils/calculations';
 import type { ExerciseEntry } from '@/types';
@@ -29,21 +29,11 @@ export default function ExerciseLogger({ onClose, editEntry }: ExerciseLoggerPro
   const addExerciseEntry = useStore((state) => state.addExerciseEntry);
   const updateExerciseEntry = useStore((state) => state.updateExerciseEntry);
   const activities = useStore((state) => state.activities);
+  const isLoadingData = useStore((state) => state.isLoadingData);
   const [selectedActivity, setSelectedActivity] = useState<string | null>(editEntry?.activityType || null);
   const [metric, setMetric] = useState(editEntry ? String(editEntry.metric) : '');
   const [rpe, setRpe] = useState<number>(editEntry?.rpe || 5);
-  const [isLoading, setIsLoading] = useState(activities.length === 0);
-
-  useEffect(() => {
-    if (activities.length > 0) {
-      setIsLoading(false);
-      return;
-    }
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-    }, 500);
-    return () => clearTimeout(timer);
-  }, [activities.length]);
+  const [isSaving, setIsSaving] = useState(false);
 
   const profile = useStore((state) => state.profile);
   const activity = activities.find((a) => a.name === selectedActivity);
@@ -79,8 +69,10 @@ export default function ExerciseLogger({ onClose, editEntry }: ExerciseLoggerPro
     }
   };
 
-  const handleSave = () => {
-    if (!activity || !metric || parseFloat(metric) <= 0) return;
+  const handleSave = async () => {
+    if (!activity || !metric || parseFloat(metric) <= 0 || isSaving) return;
+
+    setIsSaving(true);
 
     const metricValue = parseFloat(metric);
 
@@ -125,25 +117,32 @@ export default function ExerciseLogger({ onClose, editEntry }: ExerciseLoggerPro
         ? new Date(Date.now() - 60000).toISOString()
         : `${selectedDate}T12:00:00.000Z`;
 
-      diaryService
-        .addExerciseEntry(selectedDate, {
+      const isExistingBackendEntry =
+        editEntry && !editEntry.id.startsWith('ex_') && /^\d+$/.test(editEntry.id);
+
+      try {
+        if (isExistingBackendEntry) {
+          await diaryService.removeExerciseEntry(selectedDate, editEntry.id);
+        }
+
+        const res = await diaryService.addExerciseEntry(selectedDate, {
           exerciseId,
           durationMinutes,
           loggedAt,
-        })
-        .then((res) => {
-          if (res.ok && res.data) {
-            updateExerciseEntry(selectedDate, entry.id, {
-              ...entry,
-              id: String(res.data.id),
-            });
-          }
-        })
-        .catch((err) => {
-          console.error('Failed to sync exercise entry to backend:', err);
         });
+
+        if (res.ok && res.data) {
+          updateExerciseEntry(selectedDate, entry.id, {
+            ...entry,
+            id: String(res.data.id),
+          });
+        }
+      } catch (err) {
+        console.error('Failed to sync exercise entry to backend:', err);
+      }
     }
 
+    setIsSaving(false);
     onClose();
   };
 
@@ -171,9 +170,10 @@ export default function ExerciseLogger({ onClose, editEntry }: ExerciseLoggerPro
         {selectedActivity && (
           <button
             onClick={handleSave}
-            className="flex items-center gap-1.5 px-4 py-2 bg-primary rounded-xl text-primary-foreground text-sm font-medium active:scale-95 transition-transform"
+            disabled={isSaving}
+            className="flex items-center gap-1.5 px-4 py-2 bg-primary rounded-xl text-primary-foreground text-sm font-medium active:scale-95 transition-transform disabled:opacity-50 cursor-pointer"
           >
-            <Check className="w-4 h-4" />
+            {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
             Save
           </button>
         )}
@@ -185,7 +185,7 @@ export default function ExerciseLogger({ onClose, editEntry }: ExerciseLoggerPro
           <>
             <h2 className="text-xl font-bold mb-4">Log Exercise</h2>
             <div className="space-y-2">
-              {isLoading ? (
+              {isLoadingData && activities.length === 0 ? (
                 <FoodItemCardSkeleton variant='exercise' count={6} />
               ) : (
                 activities.map((act) => {

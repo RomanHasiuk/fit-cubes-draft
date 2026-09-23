@@ -31,12 +31,12 @@ export const EnergyBalanceCard: React.FC = () => {
 
   return (
     <motion.div
-      className="z-10 mx-4 mt-6 grid grid-cols-1 gap-3 md:grid-cols-2"
+      className="z-10 mx-4 mt-6 grid grid-cols-1 gap-3 md:grid-cols-2 lg:mx-0 lg:mt-0"
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, delay: 0.4 }}
     >
-      <div className="glass-card col-span-1 rounded-2xl p-4 md:col-span-2">
+      <div className="glass-card col-span-1 rounded-2xl p-4 order-1 md:order-2 md:col-span-2">
         <div className="flex items-center gap-2">
           <TrendingDown className="h-4 w-4 text-primary" />
           <span className="text-xs font-medium text-muted-foreground">
@@ -51,7 +51,7 @@ export const EnergyBalanceCard: React.FC = () => {
         </span>
       </div>
 
-      <div className="glass-card rounded-2xl p-4">
+      <div className="glass-card rounded-2xl p-4 order-2 md:order-1">
         <div className="flex items-center gap-2">
           <Flame className="h-4 w-4 text-orange-500" />
           <span className="text-xs font-medium text-muted-foreground">
@@ -64,7 +64,7 @@ export const EnergyBalanceCard: React.FC = () => {
         <span className="text-xs text-muted-foreground">kcal</span>
       </div>
 
-      <div className="glass-card rounded-2xl p-4">
+      <div className="glass-card rounded-2xl p-4 order-3 md:order-1">
         <div className="flex items-center gap-2">
           <Footprints className="h-4 w-4 text-primary" />
           <span className="text-xs font-medium text-muted-foreground">

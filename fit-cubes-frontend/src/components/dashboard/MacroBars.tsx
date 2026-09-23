@@ -59,7 +59,7 @@ export const MacroBars: React.FC = () => {
 
   return (
     <motion.div
-      className="mx-4 mt-6 space-y-3.5"
+      className="mx-4 mt-6 space-y-3.5 lg:mx-0 lg:mt-0"
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, delay: 0.2 }}

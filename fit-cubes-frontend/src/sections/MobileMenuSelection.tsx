@@ -82,15 +82,6 @@ export const MobileMenuSelection: React.FC<MobileMenuSelectionProps> = ({
                 Kitchen
               </Link>
             </li>
-            <li>
-              <Link
-                to="/progress"
-                onClick={() => setMobileMenuOpen(false)}
-                className="flex h-[40px] w-full items-center justify-center rounded-lg border border-[#32363E] text-sm font-medium text-white transition-all hover:border-primary/50 hover:bg-white/5"
-              >
-                Progress
-              </Link>
-            </li>
           </ul>
 
           <ul className="flex flex-col gap-1.5 border-b border-[#32363E] pb-2">

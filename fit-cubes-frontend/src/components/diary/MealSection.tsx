@@ -2,13 +2,13 @@ import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { UtensilsCrossed, Plus, Trash2 } from 'lucide-react';
 import { formatLargeNumber } from '@/utils/calculations';
-import type { FoodEntry } from '@/types';
+import type { FoodEntry, MealType } from '@/types';
 
 interface MealSectionProps {
-  mealKey: string;
+  mealKey: MealType;
   mealLabel: string;
   entries: FoodEntry[];
-  onAddFood: (mealKey: string) => void;
+  onAddFood: (mealKey: MealType) => void;
   onEditEntry: (entry: FoodEntry) => void;
   onDeleteEntry: (entry: FoodEntry) => void;
 }

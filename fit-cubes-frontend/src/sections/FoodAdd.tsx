@@ -1,9 +1,9 @@
 import { useState, useMemo } from 'react';
-import { ChevronLeft, Check, Edit3 } from 'lucide-react';
+import { ChevronLeft, Check, Edit3, Loader2 } from 'lucide-react';
 import { useNavigate } from 'react-router';
 import { useStore } from '@/store/useStore';
 import { calculatePortionOrCookedNutrition, generateSafeId } from '@/utils/calculations';
-import type { FoodItem, FoodEntry } from '@/types';
+import type { FoodItem, FoodEntry, MealType } from '@/types';
 import FoodAnalysis from '@/components/FoodAnalysis';
 import { blockInvalidIntegerInput, sanitizePositiveInt } from '@/utils/inputHandlers';
 import { diaryService } from '@/services/diaryService';
@@ -12,7 +12,7 @@ import { buildFoodEntryRequest } from '@/utils/apiMappers';
 
 interface FoodAddProps {
   food: FoodItem;
-  mealType: string;
+  mealType: MealType;
   existingEntry?: FoodEntry;
   onClose: () => void;
   onDone: () => void;
@@ -26,6 +26,7 @@ export default function FoodAdd({ food, mealType, existingEntry, onClose, onDone
   const navigate = useNavigate();
   const [weight, setWeight] = useState(existingEntry ? existingEntry.weightGrams.toString() : '100');
   const [isCooked, setIsCooked] = useState(existingEntry ? !!existingEntry.isCooked : false);
+  const [isSaving, setIsSaving] = useState(false);
 
   const handleWeightChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = sanitizePositiveInt(e.target.value, 99999);
@@ -50,9 +51,11 @@ export default function FoodAdd({ food, mealType, existingEntry, onClose, onDone
     [food, weight, isCooked, hasConversion]
   );
 
-  const handleSave = () => {
+  const handleSave = async () => {
     const w = parseFloat(weight);
-    if (!w || w <= 0) return;
+    if (!w || w <= 0 || isSaving) return;
+
+    setIsSaving(true);
 
     const entry: FoodEntry = {
       id: existingEntry ? existingEntry.id : generateSafeId('fe'),
@@ -64,7 +67,7 @@ export default function FoodAdd({ food, mealType, existingEntry, onClose, onDone
       protein: Math.round(nutrition.protein * 10) / 10,
       carbs: Math.round(nutrition.carbs * 10) / 10,
       fats: Math.round(nutrition.fats * 10) / 10,
-      mealType: mealType as FoodEntry['mealType'],
+      mealType,
       timestamp: existingEntry ? existingEntry.timestamp : Date.now(),
     };
 
@@ -75,19 +78,30 @@ export default function FoodAdd({ food, mealType, existingEntry, onClose, onDone
     }
 
     if (authService.isAuthenticated()) {
-      const payload = buildFoodEntryRequest(food, w, mealType, selectedDate);
-      diaryService.addFoodEntry(selectedDate, payload).then((res) => {
+      const isExistingBackendEntry =
+        existingEntry &&
+        !existingEntry.id.startsWith('fe_') &&
+        /^\d+$/.test(existingEntry.id);
+
+      try {
+        if (isExistingBackendEntry) {
+          await diaryService.removeFoodEntry(selectedDate, existingEntry.id);
+        }
+
+        const payload = buildFoodEntryRequest(food, w, mealType, selectedDate);
+        const res = await diaryService.addFoodEntry(selectedDate, payload);
         if (res.ok && res.data) {
           updateFoodEntry(selectedDate, entry.id, {
             ...entry,
             id: String(res.data.id),
           });
         }
-      }).catch((err) => {
+      } catch (err) {
         console.error('Failed to sync food entry to backend:', err);
-      });
+      }
     }
 
+    setIsSaving(false);
     onDone();
   };
 
@@ -105,9 +119,10 @@ export default function FoodAdd({ food, mealType, existingEntry, onClose, onDone
         <h3 className="font-semibold text-base">Add to Diary</h3>
         <button
           onClick={handleSave}
-          className="flex items-center gap-1.5 px-4 py-2 bg-primary rounded-xl text-primary-foreground text-sm font-medium active:scale-95 hover:bg-primary/90 transition-all shadow-md shadow-primary/20"
+          disabled={isSaving}
+          className="flex items-center gap-1.5 px-4 py-2 bg-primary rounded-xl text-primary-foreground text-sm font-medium active:scale-95 hover:bg-primary/90 transition-all shadow-md shadow-primary/20 disabled:opacity-50 cursor-pointer"
         >
-          <Check className="w-4 h-4" />
+          {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
           {existingEntry ? 'Update' : 'Add'}
         </button>
       </div>

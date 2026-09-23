@@ -2,9 +2,17 @@ import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useStore } from "@/store/useStore";
 import { useModalOpen } from "@/hooks/useModalOpen";
-import { ChevronLeft, Plus, X, Check } from "lucide-react";
+import { ChevronLeft, Plus, X, Check, Loader2 } from "lucide-react";
 import type { FoodItem } from "@/types";
+import type { CreateProductDto } from "@/types/api";
 import { blockInvalidNumberInput, sanitizeNameInput, sanitizeMacroInput } from "@/utils/inputHandlers";
+import { productService } from "@/services/productService";
+import { authService } from "@/services/authService";
+import {
+  mapCategoryToApiCategory,
+  mapProductDtoToFoodItem,
+  PRODUCT_CATEGORY_LABELS,
+} from "@/utils/apiMappers";
 
 interface FoodCreatorProps {
   onClose: () => void;
@@ -24,6 +32,7 @@ export default function FoodCreator({ onClose, editingFood }: FoodCreatorProps) 
   const [carbs, setCarbs] = useState<number | "">(editingFood?.carbsPer100g ?? "");
   
   const [showDuplicateWarning, setShowDuplicateWarning] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
   useModalOpen(showDuplicateWarning);
 
@@ -33,8 +42,9 @@ export default function FoodCreator({ onClose, editingFood }: FoodCreatorProps) 
   const hasAnyMacro = p > 0 || c > 0 || f > 0;
   const calories: number | "" = hasAnyMacro ? Math.round(p * 4 + c * 4 + f * 9) : "";
   
-  const defaultCategories = ["My Meals"];
-  const allCategories = [...defaultCategories, ...customCategories];
+  const standardCategories = Object.values(PRODUCT_CATEGORY_LABELS);
+  const defaultCategories = ["My Meals", ...standardCategories];
+  const allCategories = Array.from(new Set([...defaultCategories, ...customCategories]));
   
   const [selectedCategory, setSelectedCategory] = useState(editingFood?.category || defaultCategories[0]);
   const [newCategoryName, setNewCategoryName] = useState("");
@@ -87,7 +97,7 @@ export default function FoodCreator({ onClose, editingFood }: FoodCreatorProps) 
     }
   };
 
-  const executeSave = () => {
+  const executeSave = async () => {
     if (!name.trim()) return;
     
     let finalCategory = selectedCategory;
@@ -96,8 +106,9 @@ export default function FoodCreator({ onClose, editingFood }: FoodCreatorProps) 
       addCustomCategory(finalCategory);
     }
 
+    const tempId = editingFood ? editingFood.id : "custom_" + Date.now().toString();
     const newFood: FoodItem = {
-      id: editingFood ? editingFood.id : "custom_" + Date.now().toString(),
+      id: tempId,
       name: name.trim(),
       caloriesPer100g: Number(calories) || 0,
       proteinPer100g: Number(protein) || 0,
@@ -107,12 +118,45 @@ export default function FoodCreator({ onClose, editingFood }: FoodCreatorProps) 
       isFavorite: editingFood?.isFavorite,
     };
 
-    if (editingFood) {
-      updateProduct(editingFood.id, newFood);
-    } else {
-      addProduct(newFood);
+    setIsSaving(true);
+
+    try {
+      if (editingFood) {
+        updateProduct(editingFood.id, newFood);
+      } else {
+        addProduct(newFood);
+      }
+
+      if (authService.isAuthenticated()) {
+        const payload: CreateProductDto = {
+          name: newFood.name,
+          category: mapCategoryToApiCategory(finalCategory),
+          caloriesPer100g: newFood.caloriesPer100g,
+          proteinPer100g: newFood.proteinPer100g,
+          carbsPer100g: newFood.carbsPer100g,
+          fatsPer100g: newFood.fatsPer100g,
+        };
+
+        if (editingFood && !editingFood.id.startsWith("custom_") && !editingFood.id.startsWith("recipe_")) {
+          const res = await productService.updateProduct(editingFood.id, payload);
+          if (res.ok && res.data) {
+            updateProduct(editingFood.id, mapProductDtoToFoodItem(res.data));
+          }
+        } else {
+          const res = await productService.createProduct(payload);
+          if (res.ok && res.data) {
+            updateProduct(tempId, mapProductDtoToFoodItem(res.data));
+          }
+        }
+      }
+
+      onClose();
+    } catch (err) {
+      console.error("Failed to sync product with backend:", err);
+      onClose();
+    } finally {
+      setIsSaving(false);
     }
-    onClose();
   };
 
   const totalMacros = (Number(protein) || 0) + (Number(carbs) || 0) + (Number(fats) || 0);
@@ -136,9 +180,10 @@ export default function FoodCreator({ onClose, editingFood }: FoodCreatorProps) 
         </div>
         <button
           onClick={handleSaveClick}
-          disabled={!isValid}
-          className="px-4 py-2 bg-primary text-primary-foreground font-bold rounded-xl disabled:opacity-50 transition-opacity"
+          disabled={!isValid || isSaving}
+          className="px-4 py-2 bg-primary text-primary-foreground font-bold rounded-xl disabled:opacity-50 transition-opacity flex items-center gap-1.5"
         >
+          {isSaving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : null}
           {editingFood ? "Update" : "Save"}
         </button>
       </div>

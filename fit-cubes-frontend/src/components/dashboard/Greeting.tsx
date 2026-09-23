@@ -11,7 +11,7 @@ export const Greeting: React.FC = () => {
       <p className="text-sm text-muted-foreground">
         {getRelativeDateLabel(selectedDate)}
       </p>
-      <h1 className="text-[18px] font-medium leading-[115%] tracking-normal text-foreground">
+      <h1 className="heading-h2">
         {getTimeOfDay()}, {profile.name || 'Friend'}
       </h1>
     </div>

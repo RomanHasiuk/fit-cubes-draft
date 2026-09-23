@@ -1,12 +1,12 @@
 import type { StateCreator } from 'zustand';
 import type { StoreState } from '../useStore';
-import type { FoodItem } from '@/types';
+import type { FoodItem, MealType } from '@/types';
 
 export interface UISlice {
   theme: 'light' | 'dark' | 'system';
   setTheme: (theme: 'light' | 'dark' | 'system') => void;
-  pendingFoodLog: { food: FoodItem; mealType: string } | null;
-  setPendingFoodLog: (log: { food: FoodItem; mealType: string } | null) => void;
+  pendingFoodLog: { food: FoodItem; mealType: MealType } | null;
+  setPendingFoodLog: (log: { food: FoodItem; mealType: MealType } | null) => void;
   openModalCount: number;
   incrementOpenModals: () => void;
   decrementOpenModals: () => void;

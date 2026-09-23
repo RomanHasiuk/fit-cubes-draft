@@ -3,12 +3,13 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useStore } from '@/store/useStore';
 import { useModalOpen } from '@/hooks/useModalOpen';
 import { addDays } from '@/utils/calculations';
-import { MEAL_TYPE_OPTIONS } from '@/constants';
+import { MEAL_TYPE, MEAL_TYPE_OPTIONS, type MealType } from '@/constants';
 import { DiaryDateNav } from '@/components/diary/DiaryDateNav';
 import { MealSection } from '@/components/diary/MealSection';
 import { MealSectionSkeleton } from '@/components/diary/MealSectionSkeleton';
 import { ExerciseSection } from '@/components/diary/ExerciseSection';
 import { ConfirmModal } from '@/components/ui/ConfirmModal';
+import { ModalDrawer } from '@/components/ui/ModalDrawer';
 import FoodSearch from './FoodSearch';
 import FoodAdd from './FoodAdd';
 import ExerciseLogger from './ExerciseLogger';
@@ -32,16 +33,18 @@ export default function Diary() {
   const setPendingFoodLog = useStore((state) => state.setPendingFoodLog);
 
   const [showFoodSearch, setShowFoodSearch] = useState(false);
-  const [selectedMeal, setSelectedMeal] = useState<string>('');
+  const [selectedMeal, setSelectedMeal] = useState<MealType>(MEAL_TYPE.BREAKFAST);
   const [showExercise, setShowExercise] = useState(false);
   const [directFoodAdd, setDirectFoodAdd] = useState<{
     food: FoodItem;
-    mealType: string;
+    mealType: MealType;
     existingEntry?: FoodEntry;
   } | null>(null);
   const [entryToDelete, setEntryToDelete] = useState<FoodEntry | null>(null);
+  const [exerciseToDelete, setExerciseToDelete] = useState<ExerciseEntry | null>(null);
   const [editExercise, setEditExercise] = useState<ExerciseEntry | null>(null);
   const [isDiaryLoading, setIsDiaryLoading] = useState(true);
+  const [syncError, setSyncError] = useState<string | null>(null);
 
   useModalOpen(showFoodSearch);
   useModalOpen(showExercise);
@@ -106,12 +109,12 @@ export default function Diary() {
     return { calories: Math.round(cal), exercise: Math.round(ex) };
   }, [dayLog]);
 
-  const handleAddFood = (meal: string) => {
+  const handleAddFood = (meal: MealType) => {
     setSelectedMeal(meal);
     setShowFoodSearch(true);
   };
 
-  const getMealEntries = (meal: string): FoodEntry[] => {
+  const getMealEntries = (meal: MealType): FoodEntry[] => {
     if (!dayLog) return [];
     return dayLog.foodEntries.filter((e) => e.mealType === meal);
   };
@@ -120,18 +123,20 @@ export default function Diary() {
     let originalProduct = products.find((p) => p.id === entry.foodItemId);
 
     if (!originalProduct) {
-      originalProduct = products.find((p) => p.name === entry.name);
+      originalProduct = products.find(
+        (p) => p.name.trim().toLowerCase() === entry.name.trim().toLowerCase()
+      );
 
       if (!originalProduct) {
         const factor = entry.weightGrams > 0 ? 100 / entry.weightGrams : 1;
         originalProduct = {
-          id: entry.foodItemId || `temp_${entry.name}_${entry.weightGrams}`,
+          id: `custom_recovered_${entry.id}`,
           name: entry.name,
           category: 'Recovered product',
-          caloriesPer100g: entry.calories * factor,
-          proteinPer100g: entry.protein * factor,
-          carbsPer100g: entry.carbs * factor,
-          fatsPer100g: entry.fats * factor,
+          caloriesPer100g: Number((entry.calories * factor).toFixed(1)),
+          proteinPer100g: Number((entry.protein * factor).toFixed(1)),
+          carbsPer100g: Number((entry.carbs * factor).toFixed(1)),
+          fatsPer100g: Number((entry.fats * factor).toFixed(1)),
         };
       }
     }
@@ -152,13 +157,19 @@ export default function Diary() {
     setShowExercise(true);
   };
 
-  const handleDeleteExercise = (id: string) => {
-    removeExerciseEntry(selectedDate, id);
+  const handleConfirmDeleteExercise = () => {
+    if (!exerciseToDelete) return;
+    const entry = exerciseToDelete;
+    setExerciseToDelete(null);
+    removeExerciseEntry(selectedDate, entry.id);
+
     if (authService.isAuthenticated()) {
       // Only sync with backend if entry has a numeric DB ID
-      if (!id.startsWith('ex_') && /^\d+$/.test(id)) {
-        diaryService.removeExerciseEntry(selectedDate, id).catch((err) => {
+      if (!entry.id.startsWith('ex_') && /^\d+$/.test(entry.id)) {
+        diaryService.removeExerciseEntry(selectedDate, entry.id).catch((err) => {
           console.error('Failed to delete exercise entry from backend:', err);
+          setSyncError('Could not sync exercise removal with server.');
+          setTimeout(() => setSyncError(null), 3000);
         });
       }
     }
@@ -175,6 +186,8 @@ export default function Diary() {
       if (!entry.id.startsWith('fe_') && /^\d+$/.test(entry.id)) {
         diaryService.removeFoodEntry(selectedDate, entry.id).catch((err) => {
           console.error('Failed to delete food entry from backend:', err);
+          setSyncError('Could not sync food removal with server.');
+          setTimeout(() => setSyncError(null), 3000);
         });
       }
     }
@@ -185,7 +198,21 @@ export default function Diary() {
   };
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full relative">
+      {/* Network Sync Feedback */}
+      <AnimatePresence>
+        {syncError && (
+          <motion.div
+            initial={{ opacity: 0, y: -12 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -12 }}
+            className="fixed top-4 left-1/2 -translate-x-1/2 z-[110] bg-destructive/90 text-destructive-foreground px-4 py-2 rounded-xl text-xs font-semibold shadow-lg backdrop-blur"
+          >
+            {syncError}
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       <DiaryDateNav
         selectedDate={selectedDate}
         caloriesIn={totals.calories}
@@ -220,86 +247,56 @@ export default function Diary() {
               entries={dayLog?.exerciseEntries || []}
               onAddExercise={handleAddExercise}
               onEditExercise={handleEditExercise}
-              onDeleteExercise={handleDeleteExercise}
+              onDeleteExercise={setExerciseToDelete}
             />
           </>
         )}
       </div>
 
-      {/* Modals */}
-      <AnimatePresence>
-        {showFoodSearch && (
-          <motion.div
-            className="fixed inset-0 z-[100] bg-black/60 dark:bg-black/80 backdrop-blur-sm flex justify-center items-end md:items-center p-0 md:pt-16"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-          >
-            <motion.div
-              className="w-full mx-10  h-[90dvh] max-h-[90dvh] md:h-[800px] glass rounded-t-[2.5rem] md:rounded-[2.5rem] overflow-hidden bg-background"
-              initial={{ y: '100%' }}
-              animate={{ y: 0 }}
-              exit={{ y: '100%' }}
-              transition={{ type: 'spring', damping: 30, stiffness: 300 }}
-            >
-              <FoodSearch
-                mealType={selectedMeal}
-                onClose={() => setShowFoodSearch(false)}
-              />
-            </motion.div>
-          </motion.div>
-        )}
+      {/* Modals via reusable ModalDrawer */}
+      <ModalDrawer
+        isOpen={showFoodSearch}
+        onClose={() => setShowFoodSearch(false)}
+        maxWidth="w-full mx-10 md:max-w-3xl"
+      >
+        <FoodSearch
+          mealType={selectedMeal}
+          onClose={() => setShowFoodSearch(false)}
+        />
+      </ModalDrawer>
 
-        {showExercise && (
-          <motion.div
-            className="fixed inset-0 z-[100] bg-black/60 dark:bg-black/80 backdrop-blur-sm flex justify-center items-end md:items-center p-0 md:p-4"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-          >
-            <motion.div
-              className="w-full h-[90dvh] max-h-[90dvh] md:h-[800px] glass rounded-t-[2.5rem] md:rounded-[2.5rem] overflow-hidden bg-background mx-12"
-              initial={{ y: '100%' }}
-              animate={{ y: 0 }}
-              exit={{ y: '100%' }}
-              transition={{ type: 'spring', damping: 30, stiffness: 300 }}
-            >
-              <ExerciseLogger
-                onClose={() => {
-                  setShowExercise(false);
-                  setEditExercise(null);
-                }}
-                editEntry={editExercise || undefined}
-              />
-            </motion.div>
-          </motion.div>
-        )}
+      <ModalDrawer
+        isOpen={showExercise}
+        onClose={() => {
+          setShowExercise(false);
+          setEditExercise(null);
+        }}
+        maxWidth="w-full mx-12 md:max-w-2xl"
+      >
+        <ExerciseLogger
+          onClose={() => {
+            setShowExercise(false);
+            setEditExercise(null);
+          }}
+          editEntry={editExercise || undefined}
+        />
+      </ModalDrawer>
 
+      <ModalDrawer
+        isOpen={!!directFoodAdd}
+        onClose={() => setDirectFoodAdd(null)}
+        maxWidth="w-full max-w-[500px]"
+      >
         {directFoodAdd && (
-          <motion.div
-            className="fixed inset-0 z-[100] bg-black/60 dark:bg-black/80 backdrop-blur-sm flex justify-center items-end md:items-center p-0 md:p-4"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-          >
-            <motion.div
-              className="w-full max-w-[500px] h-[90dvh] max-h-[90dvh] md:h-[800px] glass rounded-t-[2.5rem] md:rounded-[2.5rem] overflow-hidden bg-background"
-              initial={{ y: '100%' }}
-              animate={{ y: 0 }}
-              exit={{ y: '100%' }}
-              transition={{ type: 'spring', damping: 30, stiffness: 300 }}
-            >
-              <FoodAdd
-                food={directFoodAdd.food}
-                mealType={directFoodAdd.mealType}
-                existingEntry={directFoodAdd.existingEntry}
-                onClose={() => setDirectFoodAdd(null)}
-                onDone={() => setDirectFoodAdd(null)}
-              />
-            </motion.div>
-          </motion.div>
+          <FoodAdd
+            food={directFoodAdd.food}
+            mealType={directFoodAdd.mealType}
+            existingEntry={directFoodAdd.existingEntry}
+            onClose={() => setDirectFoodAdd(null)}
+            onDone={() => setDirectFoodAdd(null)}
+          />
         )}
-      </AnimatePresence>
+      </ModalDrawer>
 
       {/* Universal Deletion Confirmation Modal */}
       <ConfirmModal
@@ -316,6 +313,23 @@ export default function Diary() {
         variant="destructive"
         onConfirm={handleConfirmDeleteFood}
         onCancel={handleCancelDeleteFood}
+      />
+
+      {/* Universal Exercise Deletion Confirmation Modal */}
+      <ConfirmModal
+        isOpen={!!exerciseToDelete}
+        title="Remove exercise?"
+        description={
+          exerciseToDelete && (
+            <>
+              Are you sure you want to remove <strong>"{exerciseToDelete.activityType}"</strong> from the diary?
+            </>
+          )
+        }
+        confirmText="Remove"
+        variant="destructive"
+        onConfirm={handleConfirmDeleteExercise}
+        onCancel={() => setExerciseToDelete(null)}
       />
     </div>
   );

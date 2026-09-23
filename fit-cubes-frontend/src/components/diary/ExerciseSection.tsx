@@ -8,7 +8,7 @@ interface ExerciseSectionProps {
   entries: ExerciseEntry[];
   onAddExercise: () => void;
   onEditExercise: (entry: ExerciseEntry) => void;
-  onDeleteExercise: (entryId: string) => void;
+  onDeleteExercise: (entry: ExerciseEntry) => void;
 }
 
 export const ExerciseSection: React.FC<ExerciseSectionProps> = ({
@@ -63,9 +63,9 @@ export const ExerciseSection: React.FC<ExerciseSectionProps> = ({
                   type="button"
                   onClick={(e) => {
                     e.stopPropagation();
-                    onDeleteExercise(entry.id);
+                    onDeleteExercise(entry);
                   }}
-                  className="p-1.5 text-muted-foreground hover:text-destructive transition-colors"
+                  className="p-1.5 text-muted-foreground hover:text-destructive transition-colors cursor-pointer"
                 >
                   <Trash2 className="w-3.5 h-3.5" />
                 </button>

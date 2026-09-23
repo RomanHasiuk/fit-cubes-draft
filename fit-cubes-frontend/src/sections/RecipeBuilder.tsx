@@ -11,6 +11,7 @@ import {
   Search,
   FolderOpen,
   Check,
+  Loader2,
 } from "lucide-react";
 import { useStore } from "@/store/useStore";
 import { useModalOpen } from "@/hooks/useModalOpen";
@@ -18,11 +19,12 @@ import type { FoodItem } from "@/types";
 import InfoTooltip from "@/components/InfoTooltip";
 import FoodSearch from "./FoodSearch";
 import FoodAnalysis from "@/components/FoodAnalysis";
+import { ConfirmModal } from "@/components/ui/ConfirmModal";
 import { blockInvalidIntegerInput, sanitizePositiveInt, sanitizeNameInput } from "@/utils/inputHandlers";
 import { generateSafeId } from "@/utils/calculations";
 import { recipeService } from "@/services/recipeService";
 import { authService } from "@/services/authService";
-import { mapFoodItemToCreateRecipeDto } from "@/utils/apiMappers";
+import { mapFoodItemToCreateRecipeDto, mapRecipeDtoToFoodItem } from "@/utils/apiMappers";
 
 interface Ingredient {
   id: string;
@@ -34,6 +36,7 @@ export default function RecipeBuilder() {
   const products = useStore((state) => state.products);
   const addProduct = useStore((state) => state.addProduct);
   const updateProduct = useStore((state) => state.updateProduct);
+  const deleteProduct = useStore((state) => state.deleteProduct);
   const editingRecipe = useStore((state) => state.editingRecipe);
   const setEditingRecipe = useStore((state) => state.setEditingRecipe);
   const setPendingFoodLog = useStore((state) => state.setPendingFoodLog);
@@ -48,11 +51,15 @@ export default function RecipeBuilder() {
   const [error, setError] = useState<string | null>(null);
   const [showLoadRecipe, setShowLoadRecipe] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [isLoadingRecipe, setIsLoadingRecipe] = useState(false);
   const [ingredientToDelete, setIngredientToDelete] = useState<Ingredient | null>(null);
 
   useModalOpen(showSearch);
   useModalOpen(showLoadRecipe);
   useModalOpen(showConfirm);
+  useModalOpen(showDeleteConfirm);
   useModalOpen(!!ingredientToDelete);
 
   useEffect(() => {
@@ -69,40 +76,72 @@ export default function RecipeBuilder() {
     }
   }, [success]);
 
-  const loadExistingRecipe = useCallback((recipeFood: FoodItem) => {
-    if (!recipeFood.ingredients) {
-      setError("This is not a custom recipe, it cannot be edited.");
-      return;
-    }
+  const loadExistingRecipe = useCallback(
+    async (recipeFood: FoodItem) => {
+      let targetRecipe = recipeFood;
 
-    const loadIngredients: Ingredient[] = recipeFood.ingredients.map(
-      (ing) => {
-        const originalProduct = products.find((p) => p.id === ing.foodItemId);
+      // If backend recipe without detailed ingredients (from summary list), fetch complete details
+      if (
+        (!targetRecipe.ingredients || targetRecipe.ingredients.length === 0) &&
+        targetRecipe.id.startsWith("recipe_")
+      ) {
+        setIsLoadingRecipe(true);
+        const numericId = targetRecipe.id.replace("recipe_", "");
+        try {
+          const res = await recipeService.getRecipeById(numericId);
+          if (res.ok && res.data) {
+            targetRecipe = mapRecipeDtoToFoodItem(res.data);
+            updateProduct(recipeFood.id, targetRecipe);
+          } else {
+            setError(res.error || "Failed to load recipe details from server.");
+            setIsLoadingRecipe(false);
+            return;
+          }
+        } catch (err) {
+          console.error("Failed to load recipe from backend:", err);
+          setError("Network error while loading recipe details.");
+          setIsLoadingRecipe(false);
+          return;
+        } finally {
+          setIsLoadingRecipe(false);
+        }
+      }
 
-        return {
-          id: generateSafeId('ing'),
-          product: originalProduct || {
-            id: ing.foodItemId,
-            name: ing.name,
-            category: "My Recipes",
-            caloriesPer100g: ing.calories,
-            proteinPer100g: ing.protein,
-            carbsPer100g: ing.carbs,
-            fatsPer100g: ing.fats,
-          },
-          weight: ing.weight,
-        };
-      },
-    );
+      if (!targetRecipe.ingredients || targetRecipe.ingredients.length === 0) {
+        setError("This is not a custom recipe or it has no ingredients, it cannot be edited.");
+        return;
+      }
 
-    setIngredients(loadIngredients);
-    setRecipeName(recipeFood.name);
-    setFinalWeight(recipeFood.cookedWeight || "");
-    setEditingRecipeId(recipeFood.id);
-    setShowLoadRecipe(false);
+      const loadIngredients: Ingredient[] = targetRecipe.ingredients.map(
+        (ing) => {
+          const originalProduct = products.find((p) => p.id === ing.foodItemId);
 
-    setSuccess(`Recipe "${recipeFood.name}" loaded for editing.`);
-  }, [products]);
+          return {
+            id: generateSafeId("ing"),
+            product: originalProduct || {
+              id: ing.foodItemId,
+              name: ing.name,
+              category: "My Recipes",
+              caloriesPer100g: ing.calories,
+              proteinPer100g: ing.protein,
+              carbsPer100g: ing.carbs,
+              fatsPer100g: ing.fats,
+            },
+            weight: ing.weight,
+          };
+        }
+      );
+
+      setIngredients(loadIngredients);
+      setRecipeName(targetRecipe.name);
+      setFinalWeight(targetRecipe.cookedWeight || "");
+      setEditingRecipeId(targetRecipe.id);
+      setShowLoadRecipe(false);
+
+      setSuccess(`Recipe "${targetRecipe.name}" loaded for editing.`);
+    },
+    [products, updateProduct]
+  );
 
   useEffect(() => {
     if (editingRecipe) {
@@ -270,12 +309,12 @@ export default function RecipeBuilder() {
     setShowConfirm(true);
   };
 
-  const confirmSaveRecipe = (asNew: boolean = false) => {
+  const confirmSaveRecipe = async (asNew: boolean = false) => {
     setShowConfirm(false);
     let finalName = recipeName.trim();
     if (asNew) {
       const isDuplicate = products.some(
-        (p) => p.name.toLowerCase() === finalName.toLowerCase(),
+        (p) => p.name.toLowerCase() === finalName.toLowerCase()
       );
       if (isDuplicate) {
         const escapeRegExp = (str: string) =>
@@ -324,47 +363,101 @@ export default function RecipeBuilder() {
       })),
     };
 
-    if (editingRecipeId && !asNew) {
-      updateProduct(editingRecipeId, newProduct);
-    } else {
-      addProduct(newProduct);
-    }
+    setIsSaving(true);
+    let savedItem = newProduct;
 
-    if (authService.isAuthenticated()) {
-      const payload = mapFoodItemToCreateRecipeDto(newProduct);
-      if (editingRecipeId && !asNew && editingRecipeId.startsWith('recipe_')) {
-        const numericId = editingRecipeId.replace('recipe_', '');
-        recipeService.updateRecipe(numericId, payload).catch((err) => {
-          console.error('Failed to sync recipe update with backend:', err);
-        });
-      } else {
-        recipeService.createRecipe(payload).then((res) => {
+    try {
+      if (authService.isAuthenticated()) {
+        const payload = mapFoodItemToCreateRecipeDto(newProduct);
+        if (editingRecipeId && !asNew && editingRecipeId.startsWith("recipe_")) {
+          const numericId = editingRecipeId.replace("recipe_", "");
+          const res = await recipeService.updateRecipe(numericId, payload);
           if (res.ok && res.data) {
-            updateProduct(targetId, { id: `recipe_${res.data.id}` });
+            savedItem = mapRecipeDtoToFoodItem(res.data);
+            updateProduct(editingRecipeId, savedItem);
+            setSuccess(`Recipe "${finalName}" updated in cloud!`);
+          } else {
+            updateProduct(editingRecipeId, newProduct);
+            setError(res.error || "Updated locally, but failed to sync with cloud.");
           }
-        }).catch((err) => {
-          console.error('Failed to sync new recipe with backend:', err);
-        });
+        } else {
+          const res = await recipeService.createRecipe(payload);
+          if (res.ok && res.data) {
+            savedItem = mapRecipeDtoToFoodItem(res.data);
+            addProduct(savedItem);
+            setSuccess(`Recipe "${finalName}" saved to cloud!`);
+          } else {
+            addProduct(newProduct);
+            setError(res.error || "Saved locally, but failed to sync with cloud.");
+          }
+        }
+      } else {
+        if (editingRecipeId && !asNew) {
+          updateProduct(editingRecipeId, newProduct);
+          setSuccess(`Recipe "${finalName}" updated locally.`);
+        } else {
+          addProduct(newProduct);
+          setSuccess(`Recipe "${finalName}" saved locally.`);
+        }
       }
+
+      if (location.state?.returnToDiary) {
+        setPendingFoodLog({
+          food: savedItem,
+          mealType: location.state.mealType,
+        });
+        navigate("/diary");
+        return;
+      }
+
+      setIngredients([]);
+      setRecipeName("");
+      setFinalWeight("");
+      setEditingRecipeId(null);
+    } catch (err) {
+      console.error("Failed to save recipe:", err);
+      if (editingRecipeId && !asNew) {
+        updateProduct(editingRecipeId, newProduct);
+      } else {
+        addProduct(newProduct);
+      }
+      setError("Saved locally, network error occurred.");
+    } finally {
+      setIsSaving(false);
     }
+  };
 
-    setIngredients([]);
-    setRecipeName("");
-    setFinalWeight("");
-    setEditingRecipeId(null);
+  const handleDeleteRecipe = async () => {
+    if (!editingRecipeId) return;
+    setShowDeleteConfirm(false);
+    setIsSaving(true);
 
-    if (location.state?.returnToDiary) {
-      setPendingFoodLog({
-        food: newProduct,
-        mealType: location.state.mealType,
-      });
-      navigate("/diary");
-      return;
+    const targetId = editingRecipeId;
+    try {
+      if (authService.isAuthenticated() && targetId.startsWith("recipe_")) {
+        const numericId = targetId.replace("recipe_", "");
+        const res = await recipeService.deleteRecipe(numericId);
+        if (!res.ok) {
+          console.warn("Backend recipe deletion error:", res.error);
+        }
+      }
+      deleteProduct(targetId);
+      setSuccess("Recipe deleted successfully.");
+      handleClear();
+    } catch (err) {
+      console.error("Failed to delete recipe:", err);
+      deleteProduct(targetId);
+      setSuccess("Recipe deleted locally.");
+      handleClear();
+    } finally {
+      setIsSaving(false);
     }
+  };
 
-    setSuccess(
-      `Recipe "${newProduct.name}" successfully ${editingRecipeId && !asNew ? "updated" : "saved"}!`,
-    );
+  const handleConfirmDeleteIngredient = () => {
+    if (!ingredientToDelete) return;
+    setIngredients((prev) => prev.filter((i) => i.id !== ingredientToDelete.id));
+    setIngredientToDelete(null);
   };
 
   return (
@@ -383,19 +476,39 @@ export default function RecipeBuilder() {
           </div>
         </div>
         <div className="flex gap-2">
+          {editingRecipeId && (
+            <button
+              type="button"
+              onClick={() => setShowDeleteConfirm(true)}
+              disabled={isSaving || isLoadingRecipe}
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-destructive/10 text-destructive rounded-xl text-[10px] font-bold uppercase hover:scale-105 active:scale-95 disabled:opacity-50 transition-all"
+              title="Delete this recipe"
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+              Delete
+            </button>
+          )}
           {ingredients.length > 0 && (
             <button
+              type="button"
               onClick={handleClear}
-              className="flex items-center gap-1.5 px-3 py-1.5 bg-destructive/10 text-destructive rounded-xl text-[10px] font-bold uppercase hover:scale-105 active:scale-95 transition-all"
+              disabled={isSaving || isLoadingRecipe}
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-secondary text-muted-foreground hover:text-foreground rounded-xl text-[10px] font-bold uppercase hover:scale-105 active:scale-95 disabled:opacity-50 transition-all"
             >
               Cancel
             </button>
           )}
           <button
+            type="button"
             onClick={() => setShowLoadRecipe(true)}
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-primary/10 text-primary rounded-xl text-[10px] font-bold uppercase hover:scale-105 active:scale-95 transition-all"
+            disabled={isSaving || isLoadingRecipe}
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-primary/10 text-primary rounded-xl text-[10px] font-bold uppercase hover:scale-105 active:scale-95 disabled:opacity-50 transition-all"
           >
-            <FolderOpen className="w-4 h-4" />
+            {isLoadingRecipe ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <FolderOpen className="w-4 h-4" />
+            )}
             Open
           </button>
         </div>
@@ -618,14 +731,16 @@ export default function RecipeBuilder() {
                 {editingRecipeId ? (
                   <div className="flex gap-2">
                     <button
-                      className="flex-1 bg-secondary text-foreground h-12 rounded-xl font-bold text-sm flex items-center justify-center gap-2 active:scale-95 transition-all"
+                      disabled={isSaving || isLoadingRecipe}
+                      className="flex-1 bg-secondary text-foreground h-12 rounded-xl font-bold text-sm flex items-center justify-center gap-2 active:scale-95 disabled:opacity-50 transition-all"
                       onClick={() => handleSaveClick(true)}
                     >
                       <Save className="w-4 h-4" />
                       AS NEW
                     </button>
                     <button
-                      className="flex-1 bg-primary text-primary-foreground h-12 rounded-xl font-bold text-sm flex items-center justify-center gap-2 shadow-lg shadow-primary/20 active:scale-95 transition-all"
+                      disabled={isSaving || isLoadingRecipe}
+                      className="flex-1 bg-primary text-primary-foreground h-12 rounded-xl font-bold text-sm flex items-center justify-center gap-2 shadow-lg shadow-primary/20 active:scale-95 disabled:opacity-50 transition-all"
                       onClick={() => handleSaveClick(false)}
                     >
                       <Check className="w-4 h-4" />
@@ -634,7 +749,8 @@ export default function RecipeBuilder() {
                   </div>
                 ) : (
                   <button
-                    className="w-full bg-primary text-primary-foreground h-12 rounded-xl font-bold text-sm flex items-center justify-center gap-2 shadow-lg shadow-primary/20 active:scale-95 transition-all"
+                    disabled={isSaving || isLoadingRecipe}
+                    className="w-full bg-primary text-primary-foreground h-12 rounded-xl font-bold text-sm flex items-center justify-center gap-2 shadow-lg shadow-primary/20 active:scale-95 disabled:opacity-50 transition-all"
                     onClick={() => handleSaveClick(false)}
                   >
                     <Save className="w-4 h-4" />
@@ -690,31 +806,38 @@ export default function RecipeBuilder() {
                 </p>
                 <div className="flex gap-2">
                   <button
+                    disabled={isSaving}
                     onClick={() => setShowConfirm(false)}
-                    className="flex-1 py-3 rounded-xl font-bold text-sm bg-secondary text-foreground hover:bg-secondary/80 transition-colors"
+                    className="flex-1 py-3 rounded-xl font-bold text-sm bg-secondary text-foreground hover:bg-secondary/80 disabled:opacity-50 transition-colors"
                   >
                     Cancel
                   </button>
                   {editingRecipeId ? (
                     <>
                       <button
+                        disabled={isSaving}
                         onClick={() => confirmSaveRecipe(true)}
-                        className="flex-1 py-3 rounded-xl font-bold text-xs bg-primary/20 text-primary hover:bg-primary/30 transition-colors"
+                        className="flex-1 py-3 rounded-xl font-bold text-xs bg-primary/20 text-primary hover:bg-primary/30 disabled:opacity-50 transition-colors flex items-center justify-center gap-1.5"
                       >
+                        {isSaving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : null}
                         As new
                       </button>
                       <button
+                        disabled={isSaving}
                         onClick={() => confirmSaveRecipe(false)}
-                        className="flex-1 py-3 rounded-xl font-bold text-sm bg-primary text-primary-foreground shadow-lg shadow-primary/20 active:scale-95 transition-all"
+                        className="flex-1 py-3 rounded-xl font-bold text-sm bg-primary text-primary-foreground shadow-lg shadow-primary/20 active:scale-95 disabled:opacity-50 transition-all flex items-center justify-center gap-1.5"
                       >
+                        {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
                         Update
                       </button>
                     </>
                   ) : (
                     <button
+                      disabled={isSaving}
                       onClick={() => confirmSaveRecipe(false)}
-                      className="flex-1 py-3 rounded-xl font-bold text-sm bg-primary text-primary-foreground shadow-lg shadow-primary/20 active:scale-95 transition-all"
+                      className="flex-1 py-3 rounded-xl font-bold text-sm bg-primary text-primary-foreground shadow-lg shadow-primary/20 active:scale-95 disabled:opacity-50 transition-all flex items-center justify-center gap-1.5"
                     >
+                      {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
                       Save
                     </button>
                   )}
@@ -767,6 +890,7 @@ export default function RecipeBuilder() {
               transition={{ type: "spring", damping: 30, stiffness: 300 }}
             >
               <FoodSearch
+                recipesOnly={true}
                 onClose={() => setShowLoadRecipe(false)}
                 onSelect={(product) => loadExistingRecipe(product)}
               />
@@ -775,50 +899,39 @@ export default function RecipeBuilder() {
         )}
       </AnimatePresence>
 
+      {/* Recipe Deletion Confirmation Modal */}
+      <ConfirmModal
+        isOpen={showDeleteConfirm}
+        title="Delete recipe?"
+        description={
+          <>
+            Are you sure you want to permanently delete{" "}
+            <strong>"{recipeName || "this recipe"}"</strong>? This action cannot be undone.
+          </>
+        }
+        confirmText="Delete"
+        variant="destructive"
+        onConfirm={handleDeleteRecipe}
+        onCancel={() => setShowDeleteConfirm(false)}
+      />
+
       {/* Ingredient Deletion Confirmation Modal */}
-      <AnimatePresence>
-        {ingredientToDelete && (
-          <motion.div
-            className="fixed inset-0 z-[110] bg-background/80 backdrop-blur-sm flex items-center justify-center p-4"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-          >
-            <motion.div
-              className="glass border border-white/10 rounded-3xl p-6 w-full max-w-sm text-center shadow-2xl"
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.9, opacity: 0 }}
-            >
-              <div className="w-16 h-16 bg-destructive/20 text-destructive rounded-2xl flex items-center justify-center mx-auto mb-4">
-                <Trash2 className="w-8 h-8" />
-              </div>
-              <h3 className="text-xl font-bold mb-2">Remove ingredient?</h3>
-              <p className="text-sm text-muted-foreground mb-6">
-                Are you sure you want to remove the ingredient{" "}
-                <strong>"{ingredientToDelete.product.name}"</strong> from the recipe?
-              </p>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => setIngredientToDelete(null)}
-                  className="flex-1 py-3 rounded-xl font-bold text-sm bg-secondary text-foreground hover:bg-secondary/80 transition-colors"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={() => {
-                    setIngredients(ingredients.filter((i) => i.id !== ingredientToDelete.id));
-                    setIngredientToDelete(null);
-                  }}
-                  className="flex-1 py-3 rounded-xl font-bold text-sm bg-destructive text-destructive-foreground hover:bg-destructive/90 transition-colors"
-                >
-                  Remove
-                </button>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      <ConfirmModal
+        isOpen={!!ingredientToDelete}
+        title="Remove ingredient?"
+        description={
+          ingredientToDelete && (
+            <>
+              Are you sure you want to remove the ingredient{" "}
+              <strong>"{ingredientToDelete.product.name}"</strong> from the recipe?
+            </>
+          )
+        }
+        confirmText="Remove"
+        variant="destructive"
+        onConfirm={handleConfirmDeleteIngredient}
+        onCancel={() => setIngredientToDelete(null)}
+      />
     </div>
   );
 }

@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import {
   LineChart,
@@ -26,17 +26,8 @@ const TIMEFRAMES = [
 export default function ProgressScreen() {
   const profile = useStore((state) => state.profile);
   const dailyLogs = useStore((state) => state.dailyLogs);
-  const [timeframe, setTimeframe] = useState('1W');
-  const [isLoading, setIsLoading] = useState(true);
-
-  // Simulated Database API Fetch delay (1500ms)
-  useEffect(() => {
-    setIsLoading(true);
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-    }, 1500);
-    return () => clearTimeout(timer);
-  }, [timeframe]);
+  const isLoadingData = useStore((state) => state.isLoadingData);
+  const [timeframe, setTimeframe] = useState('1 Week');
 
   const days = TIMEFRAMES.find((t) => t.key === timeframe)?.days || 7;
 
@@ -137,30 +128,30 @@ export default function ProgressScreen() {
     };
   }, [chartData, dailyLogs]);
 
-  if (isLoading) {
+  if (isLoadingData && dailyLogs.length === 0) {
     return <ProgressSkeleton />;
   }
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col w-full mt-4">
       {/* Header */}
-      <div className="shrink-0 px-5 pt-12 pb-2">
-        <h1 className="text-2xl font-bold">Progress</h1>
-        <p className="text-sm text-muted-foreground mt-0.5">
+      <div className="shrink-0 px-5 pt-8 pb-3 text-center">
+        <h2 className="heading-h2 text-foreground">Progress</h2>
+        <p className="text-xs md:text-sm text-muted-foreground mt-1">
           Track your deficit and weight trajectory
         </p>
       </div>
 
       {/* Timeframe Toggle */}
       <div className="shrink-0 px-5 pb-3 w-[288px] md:w-[522px] mx-auto">
-        <div className="flex bg-secondary/50 backdrop-blur-lg rounded-xl p-1">
+        <div className="flex bg-[#16181D] border border-[#32363E] rounded-xl p-1">
           {TIMEFRAMES.map((tf) => (
             <button
               key={tf.key}
               onClick={() => setTimeframe(tf.key)}
               className={`flex-1 py-2 rounded-lg text-sm font-medium transition-all ${
                 timeframe === tf.key
-                  ? 'bg-primary text-primary-foreground shadow-lg'
+                  ? 'bg-primary text-black font-semibold shadow-md'
                   : 'text-muted-foreground hover:bg-white/5'
               }`}
             >
@@ -170,19 +161,10 @@ export default function ProgressScreen() {
         </div>
       </div>
 
-      {chartData.every(d => d.calories === 0 && d.deficit === 0) ? (
-        <div className="flex-1 flex flex-col items-center justify-center p-6 text-center">
-          <TrendingDown className="w-16 h-16 text-muted-foreground/20 mb-4" />
-          <h2 className="text-lg font-bold mb-2">No progress data yet</h2>
-          <p className="text-sm text-muted-foreground max-w-[250px]">
-            Log your food and exercises to see your progress charts and statistics here.
-          </p>
-        </div>
-      ) : (
-        <div className="flex-1 overflow-y-auto no-scrollbar px-5 pb-10">
+      <div className="w-full px-4 md:px-5 space-y-4">
         {/* Deficit Chart */}
         <motion.div
-          className="glass-card rounded-2xl p-4 mt-2"
+          className="glass-card rounded-2xl p-4"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4 }}
@@ -449,7 +431,8 @@ export default function ProgressScreen() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4, delay: 0.2 }}
         >
-          <div className="glass-card rounded-2xl p-4">
+          {/* Total Deficit: order 1 */}
+          <div className="glass-card rounded-2xl p-4 order-1 md:order-1">
             <div className="flex items-center gap-2">
               <Target className="w-4 h-4 text-primary" />
               <span className="text-xs text-muted-foreground font-medium">Total Deficit</span>
@@ -457,7 +440,9 @@ export default function ProgressScreen() {
             <p className="text-xl font-bold mt-2">{formatLargeNumber(stats.totalDeficit)}</p>
             <span className="text-[10px] text-muted-foreground uppercase">kcal burned</span>
           </div>
-          <div className="glass-card rounded-2xl p-4">
+
+          {/* Daily Avg: order 3 on mobile, order 2 on md */}
+          <div className="glass-card rounded-2xl p-4 order-3 md:order-2">
             <div className="flex items-center gap-2">
               <TrendingDown className="w-4 h-4 text-primary" />
               <span className="text-xs text-muted-foreground font-medium">Daily Avg</span>
@@ -465,7 +450,9 @@ export default function ProgressScreen() {
             <p className="text-xl font-bold mt-2">{formatLargeNumber(stats.avgDailyDeficit)}</p>
             <span className="text-[10px] text-muted-foreground uppercase">kcal/day</span>
           </div>
-          <div className="glass-card rounded-2xl p-4">
+
+          {/* Weekly Loss: order 2 on mobile, order 3 on md */}
+          <div className="glass-card rounded-2xl p-4 order-2 md:order-3">
             <div className="flex items-center gap-2">
               <Scale className="w-4 h-4 text-primary" />
               <span className="text-xs text-muted-foreground font-medium">Weekly Loss</span>
@@ -473,7 +460,9 @@ export default function ProgressScreen() {
             <p className="text-xl font-bold mt-2">{stats.projectedLoss > 999 ? '999+' : stats.projectedLoss} kg</p>
             <span className="text-[10px] text-muted-foreground uppercase">projected</span>
           </div>
-          <div className="glass-card rounded-2xl p-4">
+
+          {/* Exercise Burn: order 4 */}
+          <div className="glass-card rounded-2xl p-4 order-4 md:order-4">
             <div className="flex items-center gap-2">
               <Flame className="w-4 h-4 text-orange-500" />
               <span className="text-xs text-muted-foreground font-medium">Exercise Burn</span>
@@ -483,7 +472,6 @@ export default function ProgressScreen() {
           </div>
         </motion.div>
       </div>
-      )}
     </div>
   );
 }

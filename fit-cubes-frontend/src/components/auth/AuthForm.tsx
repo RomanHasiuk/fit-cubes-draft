@@ -16,7 +16,7 @@ export type { AuthMode };
 
 interface AuthFormProps {
   initialMode?: AuthMode;
-  onSuccess: () => void;
+  onSuccess: (isLogin?: boolean) => void;
 }
 
 export function AuthForm({

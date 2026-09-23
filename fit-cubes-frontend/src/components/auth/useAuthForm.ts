@@ -1,5 +1,6 @@
 import { useState, type ChangeEvent, type FormEvent } from 'react';
 import { authService, type SocialProvider } from '@/services/authService';
+import { useStore } from '@/store/useStore';
 
 export type AuthMode = 'login' | 'signup';
 
@@ -12,7 +13,7 @@ export interface FieldErrors {
 
 interface UseAuthFormOptions {
   initialMode?: AuthMode;
-  onSuccess: () => void;
+  onSuccess: (isLogin?: boolean) => void;
 }
 
 const CYRILLIC_REGEX = /[\u0400-\u04FF]/;
@@ -190,7 +191,10 @@ export function useAuthForm({ initialMode = 'login', onSuccess }: UseAuthFormOpt
           password,
         });
         if (res.ok) {
-          onSuccess();
+          if (res.data?.user?.name) {
+            useStore.getState().updateProfile({ name: res.data.user.name });
+          }
+          onSuccess(true);
         } else {
           setGeneralError(res.error || 'Invalid email or password');
         }
@@ -201,14 +205,17 @@ export function useAuthForm({ initialMode = 'login', onSuccess }: UseAuthFormOpt
           repeatedPassword,
         });
         if (res.ok) {
-          onSuccess();
+          if (res.data?.user?.name) {
+            useStore.getState().updateProfile({ name: res.data.user.name });
+          }
+          onSuccess(false);
         } else {
           setGeneralError(res.error || 'Registration failed. Please try again.');
         }
       }
     } catch {
       // Prototype offline fallback
-      onSuccess();
+      onSuccess(isLogin);
     } finally {
       setIsLoading(false);
     }

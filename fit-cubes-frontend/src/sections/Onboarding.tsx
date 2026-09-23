@@ -21,7 +21,13 @@ export default function Onboarding({ onComplete }: OnboardingProps) {
   const [step, setStep] = useState(0);
   const currentStep = STEPS[step];
 
-  const handleNext = () => {
+  const handleNext = (isLogin?: boolean) => {
+    if (isLogin) {
+      completeOnboarding();
+      onComplete();
+      return;
+    }
+
     if (step < STEPS.length - 1) {
       setStep(step + 1);
     } else {
@@ -37,7 +43,7 @@ export default function Onboarding({ onComplete }: OnboardingProps) {
   };
 
   return (
-    <div className="dark w-full min-h-[100dvh]">
+    <div className="dark min-h-[100dvh] w-full">
       {/* 1. Hero Splash Screen */}
       {currentStep === 'welcome' && <WelcomeStep onNext={handleNext} />}
 

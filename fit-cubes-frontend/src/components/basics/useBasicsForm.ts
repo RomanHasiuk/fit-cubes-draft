@@ -29,12 +29,28 @@ export function useBasicsForm({ onNext }: UseBasicsFormProps) {
   const profile = useStore((state) => state.profile);
   const updateProfile = useStore((state) => state.updateProfile);
 
+  const getInitialName = () => {
+    let nameStr = (profile.name || '').trim();
+    if (!nameStr) {
+      try {
+        const stored = localStorage.getItem('fitcubes_auth_user');
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          if (parsed?.name) nameStr = String(parsed.name).trim();
+        }
+      } catch {
+        // ignore parse error
+      }
+    }
+    return nameStr;
+  };
+
   const [firstName, setFirstName] = useState(() => {
-    const parts = (profile.name || '').trim().split(' ');
+    const parts = getInitialName().split(' ');
     return parts[0] || '';
   });
   const [lastName, setLastName] = useState(() => {
-    const parts = (profile.name || '').trim().split(' ');
+    const parts = getInitialName().split(' ');
     return parts.slice(1).join(' ') || '';
   });
 

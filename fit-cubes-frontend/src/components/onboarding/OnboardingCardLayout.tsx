@@ -8,7 +8,7 @@ export type WizardStepKey = 'auth' | 'basics' | 'targets';
 
 interface OnboardingCardLayoutProps {
   step: WizardStepKey;
-  onNext: () => void;
+  onNext: (isLogin?: boolean) => void;
   onBack: () => void;
 }
 

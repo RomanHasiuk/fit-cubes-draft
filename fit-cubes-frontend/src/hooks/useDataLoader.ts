@@ -1,6 +1,5 @@
 import { useEffect, useCallback } from 'react';
 import { useStore } from '@/store/useStore';
-import { api } from '@/lib/api';
 import { productService } from '@/services/productService';
 import { recipeService } from '@/services/recipeService';
 import { exerciseService } from '@/services/exerciseService';
@@ -14,7 +13,14 @@ import type { FoodItem, ActivityConstant } from '@/types';
 import type { ProductDto, RecipeSummaryDto, ActivityDto } from '@/types/api';
 
 export function useDataLoader() {
-  const { setProducts, setActivities, setActivitiesError, setIsLoadingData, isOnboarded } = useStore();
+  const {
+    setProducts,
+    setProductsError,
+    setActivities,
+    setActivitiesError,
+    setIsLoadingData,
+    isOnboarded,
+  } = useStore();
 
   const loadData = useCallback(async () => {
     setIsLoadingData(true);
@@ -33,10 +39,16 @@ export function useDataLoader() {
         const items = extractApiItems<ProductDto>(productsRes.value.data);
         if (items.length > 0) {
           loadedProducts = items.map(mapProductDtoToFoodItem);
+          setProductsError(null);
           console.log(`[DataLoader] Loaded ${loadedProducts.length} products from backend API`);
+        } else {
+          setProductsError('EMPTY_DATABASE');
         }
-      } else if (productsRes.status === 'fulfilled' && !productsRes.value.ok) {
-        console.warn(`[DataLoader] Backend products request returned status ${productsRes.value.status}:`, productsRes.value.error);
+      } else {
+        const isOffline = typeof navigator !== 'undefined' && !navigator.onLine;
+        const errType = isOffline ? 'NO_INTERNET' : 'SERVER_ERROR';
+        setProductsError(errType);
+        console.warn(`[DataLoader] Backend products unavailable (${errType})`);
       }
 
       if (recipesRes.status === 'fulfilled' && recipesRes.value.ok && recipesRes.value.data) {
@@ -63,16 +75,6 @@ export function useDataLoader() {
         console.warn(`[DataLoader] Backend activities unavailable (${errType})`);
       }
 
-      // Fallback to static products if backend API returned 0 items
-      if (loadedProducts.length === 0) {
-        console.warn('[DataLoader] Backend products unavailable, using fallback static products (/data/products.json)');
-        try {
-          loadedProducts = await api.getStaticProducts();
-        } catch {
-          loadedProducts = [];
-        }
-      }
-
       // Merge user custom/recipe items from local storage
       const currentProducts = useStore.getState().products;
       const customProducts = currentProducts.filter(
@@ -96,7 +98,7 @@ export function useDataLoader() {
     } finally {
       setIsLoadingData(false);
     }
-  }, [setProducts, setActivities, setIsLoadingData]);
+  }, [setProducts, setProductsError, setActivities, setActivitiesError, setIsLoadingData]);
 
   useEffect(() => {
     if (!isOnboarded) {

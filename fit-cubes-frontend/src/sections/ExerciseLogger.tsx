@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import {
   ArrowLeft,
@@ -12,13 +12,17 @@ import {
   AlertTriangle,
   WifiOff,
   RefreshCw,
+  Search,
+  X,
 } from 'lucide-react';
 import { useStore } from '@/store/useStore';
 import { calculateExerciseCalories, generateSafeId } from '@/utils/calculations';
 import type { ExerciseEntry } from '@/types';
+import type { ActivityDto } from '@/types/api';
 import InfoTooltip from '@/components/InfoTooltip';
 import FoodItemCardSkeleton from '@/components/food/FoodItemCardSkeleton';
 import { blockInvalidIntegerInput, blockInvalidNumberInput } from '@/utils/inputHandlers';
+import { extractApiItems, mapActivityDtoToActivityConstant } from '@/utils/apiMappers';
 import { authService } from '@/services/authService';
 import { diaryService } from '@/services/diaryService';
 import { exerciseService } from '@/services/exerciseService';
@@ -52,27 +56,35 @@ export default function ExerciseLogger({ onClose, editEntry }: ExerciseLoggerPro
   const [rpe, setRpe] = useState<number>(editEntry?.rpe || 5);
   const [isSaving, setIsSaving] = useState(false);
   const [isRetrying, setIsRetrying] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchQuery(e.target.value);
+  };
+
+  const handleClearSearch = () => {
+    setSearchQuery('');
+  };
+
+  const filteredActivities = useMemo(() => {
+    if (!searchQuery.trim()) return activities;
+    const q = searchQuery.toLowerCase().trim();
+    return activities.filter((act) => {
+      const nameMatch = act.name.toLowerCase().includes(q);
+      const musclesMatch = act.primaryMuscles?.toLowerCase().includes(q);
+      const categoryMatch = act.category?.toLowerCase().includes(q);
+      return Boolean(nameMatch || musclesMatch || categoryMatch);
+    });
+  }, [activities, searchQuery]);
 
   const handleRetryActivities = async () => {
     setIsRetrying(true);
     try {
       const res = await exerciseService.getActivities({ size: 100 });
       if (res.ok && res.data) {
-        const rawData = res.data as unknown;
-        const items = Array.isArray(rawData)
-          ? rawData
-          : typeof rawData === 'object' && rawData !== null && 'content' in rawData && Array.isArray((rawData as { content: unknown }).content)
-          ? ((rawData as { content: any[] }).content)
-          : [];
-
+        const items = extractApiItems<ActivityDto>(res.data);
         if (items.length > 0) {
-          const loaded = items.map((act) => ({
-            id: act.id,
-            name: act.name,
-            metricLabel: 'minutes',
-            met: act.met,
-            kcalPerUnit: Math.round(((act.met * 3.5 * 70) / 200) * 10) / 10,
-          }));
+          const loaded = items.map(mapActivityDtoToActivityConstant);
           setActivities(loaded);
           setActivitiesError(null);
         } else {
@@ -131,7 +143,6 @@ export default function ExerciseLogger({ onClose, editEntry }: ExerciseLoggerPro
 
     const metricValue = parseFloat(metric);
 
-    // Determine intensity based on MET value
     const intensityValue: 'low' | 'medium' | 'high' =
       activity.met < 4 ? 'low' : activity.met < 8 ? 'medium' : 'high';
 
@@ -248,6 +259,32 @@ export default function ExerciseLogger({ onClose, editEntry }: ExerciseLoggerPro
       <div className="flex-1 overflow-y-auto custom-scrollbar px-3 sm:px-5 py-3 sm:py-4" data-scrolling="true">
         {!selectedActivity ? (
           <div className="space-y-2">
+            {activities.length > 0 && !activitiesError && (
+              <div className="sticky top-0 z-10 bg-[#0F1114] pb-2 pt-0.5">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#8E8F96]" />
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={handleSearchChange}
+                    placeholder="Search exercise, muscle, category..."
+                    className="w-full h-10 sm:h-11 pl-10 pr-10 bg-[#16181D]/90 border border-[#32363E] rounded-[5px] text-sm text-[#F5F6FA] placeholder:text-[#8E8F96] outline-none focus:border-[#F59F0A] transition-colors backdrop-blur-sm"
+                  />
+                  {searchQuery && (
+                    <button
+                      type="button"
+                      onClick={handleClearSearch}
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1 text-[#8E8F96] hover:text-[#F5F6FA] transition-colors cursor-pointer"
+                      title="Clear search"
+                      aria-label="Clear search"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  )}
+                </div>
+              </div>
+            )}
+
             {isLoadingData && activities.length === 0 ? (
               <FoodItemCardSkeleton variant="exercise" count={6} />
             ) : activities.length === 0 || activitiesError ? (
@@ -287,14 +324,36 @@ export default function ExerciseLogger({ onClose, editEntry }: ExerciseLoggerPro
                   Retry Connection
                 </Button>
               </div>
+            ) : filteredActivities.length === 0 && searchQuery ? (
+              <div className="flex flex-col items-center justify-center py-12 px-4 text-center">
+                <div className="flex h-12 w-12 items-center justify-center rounded-full border border-[#32363E] bg-[#16181D] text-[#8E8F96] mb-3">
+                  <Search className="h-5 w-5" />
+                </div>
+                <h3 className="font-sans text-[15px] sm:text-[16px] font-semibold text-foreground mb-1">
+                  No exercises found
+                </h3>
+                <p className="font-sans text-[13px] text-[#8E8F96] max-w-xs mb-4">
+                  No matches for &ldquo;{searchQuery}&rdquo;. Try searching by name, muscle group, or category.
+                </p>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleClearSearch}
+                  className="border-[#32363E] text-foreground hover:bg-white/5 cursor-pointer h-8 px-3 text-[12px]"
+                >
+                  Clear Search
+                </Button>
+              </div>
             ) : (
-              activities.map((act) => {
+              filteredActivities.map((act) => {
                 const Icon = ICONS[act.name] || Dumbbell;
                 const estimatedKcal =
                   Math.round(
-                    (act.kcalPerUnit > 0
-                      ? act.kcalPerUnit
-                      : (act.met * 3.5 * (profile.weightKg || 70)) / 200) * 10
+                    (act.metricLabel?.toLowerCase().includes('min') && act.met > 0
+                      ? (act.met * 3.5 * (profile.weightKg || 70)) / 200
+                      : act.kcalPerUnit > 0
+                        ? act.kcalPerUnit
+                        : (act.met * 3.5 * (profile.weightKg || 70)) / 200) * 10
                   ) / 10;
 
                 return (
@@ -315,6 +374,7 @@ export default function ExerciseLogger({ onClose, editEntry }: ExerciseLoggerPro
                           {act.name}
                         </p>
                         <p className="font-sans text-[12px] sm:text-[13px] text-[#8E8F96] mt-0.5">
+                          {act.primaryMuscles ? `${act.primaryMuscles} • ` : act.category ? `${act.category} • ` : ''}
                           {estimatedKcal} kcal/{act.metricLabel} • MET {act.met}
                         </p>
                       </div>

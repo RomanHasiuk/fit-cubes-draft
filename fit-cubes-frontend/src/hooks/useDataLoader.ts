@@ -7,6 +7,8 @@ import { exerciseService } from '@/services/exerciseService';
 import {
   mapProductDtoToFoodItem,
   mapRecipeSummaryDtoToFoodItem,
+  mapActivityDtoToActivityConstant,
+  extractApiItems,
 } from '@/utils/apiMappers';
 import type { FoodItem, ActivityConstant } from '@/types';
 import type { ProductDto, RecipeSummaryDto, ActivityDto } from '@/types/api';
@@ -21,22 +23,14 @@ export function useDataLoader() {
       let loadedRecipes: FoodItem[] = [];
       let loadedActivities: ActivityConstant[] = [];
 
-      // 1. Always attempt to fetch from live backend REST API first (Authorization header attached automatically if token present)
       const [productsRes, recipesRes, activitiesRes] = await Promise.allSettled([
         productService.getProducts({ size: 250 }),
         recipeService.getRecipes({ size: 100 }),
         exerciseService.getActivities({ size: 100 }),
       ]);
 
-      // Parse Products from backend (supports both PageResponse { content: [...] } and direct array [...])
       if (productsRes.status === 'fulfilled' && productsRes.value.ok && productsRes.value.data) {
-        const rawData = productsRes.value.data as unknown;
-        const items: ProductDto[] = Array.isArray(rawData)
-          ? rawData
-          : typeof rawData === 'object' && rawData !== null && 'content' in rawData && Array.isArray((rawData as { content: unknown }).content)
-          ? ((rawData as { content: ProductDto[] }).content)
-          : [];
-
+        const items = extractApiItems<ProductDto>(productsRes.value.data);
         if (items.length > 0) {
           loadedProducts = items.map(mapProductDtoToFoodItem);
           console.log(`[DataLoader] Loaded ${loadedProducts.length} products from backend API`);
@@ -45,38 +39,18 @@ export function useDataLoader() {
         console.warn(`[DataLoader] Backend products request returned status ${productsRes.value.status}:`, productsRes.value.error);
       }
 
-      // Parse Recipes from backend
       if (recipesRes.status === 'fulfilled' && recipesRes.value.ok && recipesRes.value.data) {
-        const rawData = recipesRes.value.data as unknown;
-        const items: RecipeSummaryDto[] = Array.isArray(rawData)
-          ? rawData
-          : typeof rawData === 'object' && rawData !== null && 'content' in rawData && Array.isArray((rawData as { content: unknown }).content)
-          ? ((rawData as { content: RecipeSummaryDto[] }).content)
-          : [];
-
+        const items = extractApiItems<RecipeSummaryDto>(recipesRes.value.data);
         if (items.length > 0) {
           loadedRecipes = items.map(mapRecipeSummaryDtoToFoodItem);
           console.log(`[DataLoader] Loaded ${loadedRecipes.length} recipes from backend API`);
         }
       }
 
-      // Parse Activities from backend
       if (activitiesRes.status === 'fulfilled' && activitiesRes.value.ok && activitiesRes.value.data) {
-        const rawData = activitiesRes.value.data as unknown;
-        const items: ActivityDto[] = Array.isArray(rawData)
-          ? rawData
-          : typeof rawData === 'object' && rawData !== null && 'content' in rawData && Array.isArray((rawData as { content: unknown }).content)
-          ? ((rawData as { content: ActivityDto[] }).content)
-          : [];
-
+        const items = extractApiItems<ActivityDto>(activitiesRes.value.data);
         if (items.length > 0) {
-          loadedActivities = items.map((act) => ({
-            id: act.id,
-            name: act.name,
-            metricLabel: 'minutes',
-            met: act.met,
-            kcalPerUnit: Math.round(((act.met * 3.5 * 70) / 200) * 10) / 10,
-          }));
+          loadedActivities = items.map(mapActivityDtoToActivityConstant);
           setActivitiesError(null);
           console.log(`[DataLoader] Loaded ${loadedActivities.length} activities from backend API`);
         } else {
@@ -89,7 +63,7 @@ export function useDataLoader() {
         console.warn(`[DataLoader] Backend activities unavailable (${errType})`);
       }
 
-      // 2. Emergency fallback ONLY for products if backend returned 0 items
+      // Fallback to static products if backend API returned 0 items
       if (loadedProducts.length === 0) {
         console.warn('[DataLoader] Backend products unavailable, using fallback static products (/data/products.json)');
         try {
@@ -99,7 +73,7 @@ export function useDataLoader() {
         }
       }
 
-      // Keep user's custom products and recipes from local store
+      // Merge user custom/recipe items from local storage
       const currentProducts = useStore.getState().products;
       const customProducts = currentProducts.filter(
         (p) => p.id.startsWith('custom_') || p.id.startsWith('recipe_')
@@ -125,7 +99,6 @@ export function useDataLoader() {
   }, [setProducts, setActivities, setIsLoadingData]);
 
   useEffect(() => {
-    // Only load if onboarding is finished
     if (!isOnboarded) {
       return;
     }

@@ -55,11 +55,13 @@ export function calculateExerciseCalories(
   rpe?: number
 ): number {
   let baseKcal = 0;
-  if (activity.kcalPerUnit > 0) {
+  if (activity.metricLabel?.toLowerCase().includes('min') && activity.met > 0) {
+    // (MET * 3.5 * weightKg) / 200 = kcal/min
+    const kcalPerMin = (activity.met * 3.5 * userWeightKg) / 200;
+    baseKcal = kcalPerMin * metric;
+  } else if (activity.kcalPerUnit > 0) {
     baseKcal = activity.kcalPerUnit * metric;
   } else {
-    // Dynamic calculation for time-based activities (min)
-    // Formula: (MET * 3.5 * weightKg) / 200 = kcal per minute
     const kcalPerMin = (activity.met * 3.5 * userWeightKg) / 200;
     baseKcal = kcalPerMin * metric;
   }

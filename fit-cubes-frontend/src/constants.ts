@@ -6,10 +6,8 @@ export const MEAL_TYPE = {
   SNACKS: 'snacks',
 } as const;
 
-/** Union type derived from MEAL_TYPE values — single source of truth */
 export type MealType = typeof MEAL_TYPE[keyof typeof MEAL_TYPE];
 
-/** Ordered list of meal types with display labels, used in Diary UI */
 export const MEAL_TYPE_OPTIONS: ReadonlyArray<{ key: MealType; label: string }> = [
   { key: MEAL_TYPE.BREAKFAST, label: 'Breakfast' },
   { key: MEAL_TYPE.LUNCH, label: 'Lunch' },
@@ -23,7 +21,6 @@ export const GENDER = {
   FEMALE: 'female',
 } as const;
 
-/** Union type derived from GENDER values */
 export type Gender = typeof GENDER[keyof typeof GENDER];
 
 export const GENDER_OPTIONS: ReadonlyArray<{ id: Gender; label: string; tip: string }> = [
@@ -38,7 +35,6 @@ export const WEIGHT_GOAL = {
   GAIN: 'gain',
 } as const;
 
-/** Union type derived from WEIGHT_GOAL values */
 export type WeightGoal = typeof WEIGHT_GOAL[keyof typeof WEIGHT_GOAL];
 
 export const WEIGHT_GOAL_OPTIONS: ReadonlyArray<{ id: WeightGoal; label: string; tip: string }> = [
@@ -55,7 +51,6 @@ export const DIET_TYPE = {
   HIGH_PROTEIN: 'high-protein',
 } as const;
 
-/** Union type derived from DIET_TYPE values */
 export type DietType = typeof DIET_TYPE[keyof typeof DIET_TYPE];
 
 export const DIET_TYPE_OPTIONS: ReadonlyArray<{ id: DietType; label: string; tip: string }> = [
@@ -72,20 +67,13 @@ export const CALORIE_ADJUSTMENT = {
   SURPLUS_FACTOR: 1.15,
 } as const;
 
-// ─── Activity Constants ──────────────────────────────────────
+// ─── Activity Types ──────────────────────────────────────────
 export interface ActivityConstant {
   id?: number;
   name: string;
   metricLabel: string;
   kcalPerUnit: number;
   met: number;
+  primaryMuscles?: string;
+  category?: string;
 }
-
-export const ACTIVITY_CONSTANTS: ActivityConstant[] = [
-  { id: 2, name: 'Push-ups', metricLabel: 'reps', kcalPerUnit: 0.45, met: 12.0 },
-  { id: 3, name: 'Squats', metricLabel: 'reps', kcalPerUnit: 0.40, met: 8.0 },
-  { id: 4, name: 'Jumping Jacks', metricLabel: 'reps', kcalPerUnit: 0.22, met: 10.0 },
-  { id: 1, name: 'Plank', metricLabel: 'minutes', kcalPerUnit: 10.00, met: 3.8 },
-  { id: 1, name: 'Steps', metricLabel: 'steps', kcalPerUnit: 0.03, met: 3.5 },
-  { id: 6, name: 'Housework', metricLabel: 'minutes', kcalPerUnit: 3.40, met: 3.0 },
-];

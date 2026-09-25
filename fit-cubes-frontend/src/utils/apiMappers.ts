@@ -1,4 +1,4 @@
-import type { FoodItem, UserProfile, FoodEntry, ExerciseEntry } from '@/types';
+import type { FoodItem, UserProfile, FoodEntry, ExerciseEntry, ActivityConstant } from '@/types';
 import type {
   UpdateProfilePayload,
   UserProfileDto,
@@ -15,6 +15,7 @@ import type {
   FoodEntryRequestDto,
   SourceTypeApi,
   MealTypeApi,
+  ActivityDto,
 } from '@/types/api';
 import {
   WEIGHT_GOAL,
@@ -372,5 +373,32 @@ export function buildFoodEntryRequest(
     quantity: weightGrams,
     mealType: FRONTEND_TO_API_MEAL_MAP[mealType] || 'SNACK',
     loggedAt,
+  };
+}
+
+// Extracts items from PageResponse or raw array
+export function extractApiItems<T>(rawData: unknown): T[] {
+  if (Array.isArray(rawData)) return rawData as T[];
+  if (
+    typeof rawData === 'object' &&
+    rawData !== null &&
+    'content' in rawData &&
+    Array.isArray((rawData as { content: unknown }).content)
+  ) {
+    return (rawData as { content: T[] }).content;
+  }
+  return [];
+}
+
+// Maps ActivityDto to ActivityConstant
+export function mapActivityDtoToActivityConstant(dto: ActivityDto): ActivityConstant {
+  return {
+    id: dto.id,
+    name: dto.name,
+    category: dto.category,
+    primaryMuscles: dto.primaryMuscles,
+    metricLabel: 'minutes',
+    met: dto.met,
+    kcalPerUnit: Math.round(((dto.met * 3.5 * 70) / 200) * 10) / 10,
   };
 }

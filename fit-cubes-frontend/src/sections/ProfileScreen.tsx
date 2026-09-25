@@ -24,7 +24,6 @@ import { ProfileSkeleton } from '@/components/profile/ProfileSkeleton';
 import { EnergyTargetsCard } from '@/components/profile/EnergyTargetsCard';
 import { BodyMetricsCard } from '@/components/profile/BodyMetricsCard';
 import { MacroAdjustmentCard } from '@/components/profile/MacroAdjustmentCard';
-import { ExerciseCatalogCard } from '@/components/profile/ExerciseCatalogCard';
 import { authService } from '@/services/authService';
 import { userService } from '@/services/userService';
 import { weightService } from '@/services/weightService';
@@ -37,7 +36,6 @@ export default function ProfileScreen() {
   const profile = useStore((state) => state.profile);
   const theme = useStore((state) => state.theme);
   const setTheme = useStore((state) => state.setTheme);
-  const activities = useStore((state) => state.activities);
   const updateProfile = useStore((state) => state.updateProfile);
 
   const [isLoading, setIsLoading] = useState(true);
@@ -279,12 +277,6 @@ export default function ProfileScreen() {
           targetCalories={targetCalories}
           weightKg={draft.weightKg || 70}
           onProteinChange={handleProteinChange}
-        />
-
-        {/* 4. Exercise MET Catalog */}
-        <ExerciseCatalogCard
-          activities={activities}
-          weightKg={draft.weightKg || 70}
         />
 
         {/* Danger Zone: Reset App Data */}

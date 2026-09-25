@@ -2,6 +2,7 @@ import type React from 'react';
 import { Globe } from 'lucide-react';
 import logoIcon from '@/components/images/Logo.svg';
 import burgerIcon from '@/components/images/Burger.svg';
+import { UserAvatar } from '@/components/ui/UserAvatar';
 
 interface MobileMenuProps {
   mobileMenuOpen: boolean;
@@ -31,7 +32,7 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({
           </span>
         </button>
         <div className="flex h-[46px] w-[90px] items-center justify-evenly rounded-[20px] border border-[#4F3911] bg-[#251F13]">
-          <div className="h-[34px] w-[34px] rounded-full bg-white" />
+          <UserAvatar onClick={() => setMobileMenuOpen(false)} />
           <button
             type="button"
             className="flex h-[24px] w-[24px] cursor-pointer items-center justify-center"

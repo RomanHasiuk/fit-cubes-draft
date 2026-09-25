@@ -22,7 +22,7 @@ export default function Onboarding({ onComplete }: OnboardingProps) {
   const currentStep = STEPS[step];
 
   const handleNext = (isLogin?: boolean) => {
-    if (isLogin) {
+    if (isLogin === true) {
       completeOnboarding();
       onComplete();
       return;
@@ -45,7 +45,7 @@ export default function Onboarding({ onComplete }: OnboardingProps) {
   return (
     <div className="dark min-h-[100dvh] w-full">
       {/* 1. Hero Splash Screen */}
-      {currentStep === 'welcome' && <WelcomeStep onNext={handleNext} />}
+      {currentStep === 'welcome' && <WelcomeStep onNext={() => handleNext()} />}
 
       {/* 2. Unified 1192x650 Wizard (Auth -> Basics -> Targets) */}
       {isWizardStep(currentStep) && (
@@ -58,7 +58,7 @@ export default function Onboarding({ onComplete }: OnboardingProps) {
 
       {/* 3. Celebration Screen */}
       {currentStep === 'ready' && (
-        <ReadyStep onComplete={handleNext} onBack={handleBack} />
+        <ReadyStep onComplete={() => handleNext()} onBack={handleBack} />
       )}
     </div>
   );

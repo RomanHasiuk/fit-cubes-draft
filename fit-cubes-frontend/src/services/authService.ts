@@ -4,6 +4,7 @@ export interface AuthUser {
   id: string;
   email: string;
   name?: string;
+  avatarUrl?: string;
   token?: string;
 }
 
@@ -33,6 +34,7 @@ export const authService = {
       if (res.data.user) {
         localStorage.setItem('fitcubes_auth_user', JSON.stringify(res.data.user));
       }
+      window.dispatchEvent(new Event('fitcubes_auth_change'));
     }
     return res;
   },
@@ -44,6 +46,7 @@ export const authService = {
       if (res.data.user) {
         localStorage.setItem('fitcubes_auth_user', JSON.stringify(res.data.user));
       }
+      window.dispatchEvent(new Event('fitcubes_auth_change'));
     }
     return res;
   },
@@ -56,6 +59,7 @@ export const authService = {
     localStorage.removeItem('fitcubes_auth_token');
     localStorage.removeItem('fitcubes_auth_user');
     localStorage.removeItem('token');
+    window.dispatchEvent(new Event('fitcubes_auth_change'));
   },
 
   isAuthenticated(): boolean {

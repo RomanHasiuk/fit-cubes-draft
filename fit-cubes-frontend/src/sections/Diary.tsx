@@ -259,7 +259,7 @@ export default function Diary() {
       <ModalDrawer
         isOpen={showFoodSearch}
         onClose={() => setShowFoodSearch(false)}
-        maxWidth="w-full mx-4 md:max-w-[1016px]"
+        maxWidth="w-full md:max-w-[1016px]"
       >
         <FoodSearch
           mealType={selectedMeal}
@@ -273,7 +273,7 @@ export default function Diary() {
           setShowExercise(false);
           setEditExercise(null);
         }}
-        maxWidth="w-full mx-12 md:max-w-2xl"
+        maxWidth="w-full md:max-w-2xl"
       >
         <ExerciseLogger
           onClose={() => {

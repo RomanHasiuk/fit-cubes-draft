@@ -19,6 +19,7 @@ export interface UserProfile {
   };
   goal?: WeightGoal;
   diet?: DietType;
+  avatarUrl?: string;
 }
 
 export interface FoodItem {

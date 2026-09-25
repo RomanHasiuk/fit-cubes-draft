@@ -2,6 +2,7 @@ import { Link, useLocation } from 'react-router';
 import { Globe } from 'lucide-react';
 import fitCubeLogo from '@/components/images/FitCubeLogo.svg';
 import burgerIcon from '@/components/images/Burger.svg';
+import { UserAvatar } from '@/components/ui/UserAvatar';
 
 interface MenuProps {
   menuOpen: boolean;
@@ -61,7 +62,7 @@ export const Menu: React.FC<MenuProps> = ({ setMenuOpen, menuOpen }) => {
           </button>
 
           <div className="flex h-[46px] w-[90px] items-center justify-evenly rounded-[20px] border border-[#4F3911] bg-[#251F13]">
-            <div className="h-[34px] w-[34px] rounded-full bg-white" />
+            <UserAvatar onClick={() => setMenuOpen(false)} />
             <button
               type="button"
               className="flex h-[24px] w-[24px] cursor-pointer items-center justify-center"

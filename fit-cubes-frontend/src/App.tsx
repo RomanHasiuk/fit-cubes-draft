@@ -16,6 +16,8 @@ import Onboarding from '@/sections/Onboarding.tsx';
 import { useDataLoader } from '@/hooks/useDataLoader.ts';
 import { PageTransition } from '@/components/layout/PageTransition.tsx';
 import { PageLoader } from '@/components/ui/PageLoader.tsx';
+import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
+import { authService } from '@/services/authService';
 import { MobileMenu } from './sections/MobileMenu';
 import { MobileMenuSelection } from './sections/MobileMenuSelection.tsx';
 import { Menu } from './sections/Menu';
@@ -40,7 +42,9 @@ function App() {
   const isOnboarded = useStore((state) => state.isOnboarded);
   const theme = useStore((state) => state.theme);
   const openModalCount = useStore((state) => state.openModalCount);
-  const [showOnboarding, setShowOnboarding] = useState(!isOnboarded);
+  const [showOnboarding, setShowOnboarding] = useState(
+    () => !isOnboarded || !authService.isAuthenticated()
+  );
   const [mounted, setMounted] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -125,7 +129,7 @@ function App() {
   }, []);
 
   useEffect(() => {
-    setShowOnboarding(!isOnboarded);
+    setShowOnboarding(!isOnboarded || !authService.isAuthenticated());
   }, [isOnboarded]);
 
   useEffect(() => {
@@ -184,25 +188,31 @@ function App() {
                 <Route
                   path="/"
                   element={
-                    <PageTransition>
-                      <Dashboard />
-                    </PageTransition>
+                    <ProtectedRoute>
+                      <PageTransition>
+                        <Dashboard />
+                      </PageTransition>
+                    </ProtectedRoute>
                   }
                 />
                 <Route
                   path="/diary"
                   element={
-                    <PageTransition>
-                      <Diary />
-                    </PageTransition>
+                    <ProtectedRoute>
+                      <PageTransition>
+                        <Diary />
+                      </PageTransition>
+                    </ProtectedRoute>
                   }
                 />
                 <Route
                   path="/kitchen"
                   element={
-                    <PageTransition>
-                      <RecipeBuilder />
-                    </PageTransition>
+                    <ProtectedRoute>
+                      <PageTransition>
+                        <RecipeBuilder />
+                      </PageTransition>
+                    </ProtectedRoute>
                   }
                 />
                 <Route
@@ -212,9 +222,11 @@ function App() {
                 <Route
                   path="/profile"
                   element={
-                    <PageTransition>
-                      <ProfileScreen />
-                    </PageTransition>
+                    <ProtectedRoute>
+                      <PageTransition>
+                        <ProfileScreen />
+                      </PageTransition>
+                    </ProtectedRoute>
                   }
                 />
                 <Route path="*" element={<Navigate to="/" replace />} />

@@ -1,48 +1,37 @@
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { OptionSelector } from '@/components/profile/OptionSelector';
-import {
-  LogOut,
-  Sun,
-  Moon,
-  Monitor,
-  Dumbbell,
-  TrendingDown
-} from 'lucide-react';
-
+import { Sun, Moon, Monitor, RotateCcw } from 'lucide-react';
 import { useStore } from '@/store/useStore';
-import { useModalOpen } from '@/hooks/useModalOpen';
 import {
   calculateBMR,
   calculateTDEE,
   calculateTargetCalories,
   generateMacroTargets,
   adjustMacrosForProtein,
-  clampValue,
 } from '@/utils/calculations';
 import {
-  WEIGHT_GOAL_OPTIONS,
-  DIET_TYPE_OPTIONS,
-  GENDER_OPTIONS,
-  type DietType,
+  WEIGHT_GOAL,
+  DIET_TYPE,
   type WeightGoal,
+  type DietType,
   type Gender,
 } from '@/constants';
-import InfoTooltip from '@/components/InfoTooltip';
-import { blockInvalidIntegerInput, sanitizeNameInput } from '@/utils/inputHandlers';
-import React, { useState, useEffect } from 'react';
-import { MetricInput } from '@/components/profile/MetricInput';
-import { ProteinIndicator } from '@/components/profile/ProteinIndicator';
+import { sanitizeNameInput } from '@/utils/inputHandlers';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { ConfirmModal } from '@/components/ui/ConfirmModal';
 import { ProfileSkeleton } from '@/components/profile/ProfileSkeleton';
+import { EnergyTargetsCard } from '@/components/profile/EnergyTargetsCard';
+import { BodyMetricsCard } from '@/components/profile/BodyMetricsCard';
+import { MacroAdjustmentCard } from '@/components/profile/MacroAdjustmentCard';
+import { ExerciseCatalogCard } from '@/components/profile/ExerciseCatalogCard';
 import { authService } from '@/services/authService';
 import { userService } from '@/services/userService';
 import { weightService } from '@/services/weightService';
-import { mapProfileDtoToUserProfile } from '@/utils/apiMappers';
-import type {
-  GenderApi,
-  GoalApi,
-  DietStrategyApi,
-  UpdateProfilePayload,
-} from '@/types/api';
+import {
+  mapProfileDtoToUserProfile,
+  mapProfileToUpdatePayload,
+} from '@/utils/apiMappers';
 
 export default function ProfileScreen() {
   const profile = useStore((state) => state.profile);
@@ -50,13 +39,17 @@ export default function ProfileScreen() {
   const setTheme = useStore((state) => state.setTheme);
   const activities = useStore((state) => state.activities);
   const updateProfile = useStore((state) => state.updateProfile);
-  
-  const [showResetConfirm, setShowResetConfirm] = useState(false);
+
   const [isLoading, setIsLoading] = useState(true);
+  const [showResetConfirm, setShowResetConfirm] = useState(false);
+  const [draft, setDraft] = useState(profile);
 
-  useModalOpen(showResetConfirm);
+  // Synchronize draft with global store
+  useEffect(() => {
+    setDraft(profile);
+  }, [profile]);
 
-  // Load profile from live Spring Boot backend on mount
+  // Load profile from Spring Boot backend on mount if authenticated
   useEffect(() => {
     let isCancelled = false;
 
@@ -90,100 +83,90 @@ export default function ProfileScreen() {
     };
   }, []);
 
-  const [draft, setDraft] = useState(profile);
+  // Metabolic calculations from unified calculations.ts
+  const bmr = useMemo(() => Math.round(calculateBMR(draft)), [draft]);
+  const tdee = useMemo(() => Math.round(calculateTDEE(draft)), [draft]);
+  const targetCalories = useMemo(
+    () => calculateTargetCalories(tdee, draft.goal),
+    [tdee, draft.goal]
+  );
 
-  useEffect(() => {
-    setDraft(profile);
-  }, [profile]);
-
-  const updateDraft = (changes: Partial<typeof draft>) => {
-    setDraft((prev) => ({ ...prev, ...changes }));
-  };
-
-  const bmr = Math.round(calculateBMR(draft));
-  const tdeeBase = Math.round(calculateTDEE(draft));
-  const targetCalories = calculateTargetCalories(tdeeBase, draft.goal);
-
-  const applyPreset = React.useCallback(
-    (currentDiet: DietType, currentGoal: WeightGoal) => {
-      const macros = generateMacroTargets(targetCalories, currentDiet, draft.weightKg || 0, currentGoal);
-      updateDraft({
+  // Synchronize macros when draft biometrics, activity, or calories change
+  const applyPreset = useCallback(
+    (currentDiet: DietType, currentGoal: WeightGoal, cals: number, weight: number) => {
+      const macros = generateMacroTargets(cals, currentDiet, weight, currentGoal);
+      setDraft((prev) => ({
+        ...prev,
         macroTargets: macros,
         goal: currentGoal,
         diet: currentDiet,
-      });
+      }));
     },
-    [targetCalories, draft.weightKg]
+    []
   );
 
-  const handleManualProteinChange = (newProtein: number) => {
-    const macros = adjustMacrosForProtein(targetCalories, newProtein, draft.diet as DietType);
-    updateDraft({ macroTargets: macros });
+  const handleGoalChange = (newGoal: WeightGoal) => {
+    const newTargetCals = calculateTargetCalories(tdee, newGoal);
+    applyPreset(
+      draft.diet || DIET_TYPE.BALANCED,
+      newGoal,
+      newTargetCals,
+      draft.weightKg || 0
+    );
+  };
+
+  const handleDietChange = (newDiet: DietType) => {
+    applyPreset(
+      newDiet,
+      draft.goal || WEIGHT_GOAL.MAINTAIN,
+      targetCalories,
+      draft.weightKg || 0
+    );
+  };
+
+  const handleGenderChange = (gender: Gender) => {
+    setDraft((prev) => ({ ...prev, gender }));
+  };
+
+  const handleAgeChange = (age: number) => {
+    setDraft((prev) => ({ ...prev, age }));
+  };
+
+  const handleWeightChange = (weightKg: number) => {
+    setDraft((prev) => ({ ...prev, weightKg }));
+  };
+
+  const handleHeightChange = (heightCm: number) => {
+    setDraft((prev) => ({ ...prev, heightCm }));
+  };
+
+  const handleActivityChange = (factor: number) => {
+    setDraft((prev) => ({ ...prev, activityFactor: factor }));
+  };
+
+  const handleProteinChange = (newProtein: number) => {
+    const macros = adjustMacrosForProtein(
+      targetCalories,
+      newProtein,
+      draft.diet || DIET_TYPE.BALANCED
+    );
+    setDraft((prev) => ({ ...prev, macroTargets: macros }));
   };
 
   const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    updateDraft({ name: sanitizeNameInput(e.target.value) });
+    setDraft((prev) => ({ ...prev, name: sanitizeNameInput(e.target.value) }));
   };
 
-  const handleActivityFactorChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    updateDraft({ activityFactor: parseFloat(e.target.value) });
-  };
-
-  const handleProteinInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const maxProtein = Math.floor(targetCalories / 4);
-    const newProtein = clampValue(e.target.value, 0, maxProtein, 0);
-    handleManualProteinChange(newProtein);
-  };
-
-  const prevDeps = React.useRef({ goal: draft.goal, diet: draft.diet, tdeeBase });
-
-  useEffect(() => {
-    const depsChanged =
-      prevDeps.current.goal !== draft.goal ||
-      prevDeps.current.diet !== draft.diet ||
-      prevDeps.current.tdeeBase !== tdeeBase;
-
-    if (depsChanged) {
-      applyPreset(draft.diet as DietType, draft.goal as WeightGoal);
-      prevDeps.current = { goal: draft.goal as WeightGoal, diet: draft.diet as DietType, tdeeBase };
-    }
-  }, [draft.goal, draft.diet, tdeeBase, applyPreset]);
-
-  const hasChanges = JSON.stringify(profile) !== JSON.stringify(draft);
+  const hasChanges = useMemo(
+    () => JSON.stringify(profile) !== JSON.stringify(draft),
+    [profile, draft]
+  );
 
   const handleSave = () => {
     updateProfile(draft);
 
     if (authService.isAuthenticated()) {
-      let genderApi: GenderApi | undefined;
-      if (draft.gender === 'male') genderApi = 'MALE';
-      else if (draft.gender === 'female') genderApi = 'FEMALE';
-
-      let goalApi: GoalApi | undefined;
-      if (draft.goal === 'lose') goalApi = 'WEIGHT_LOSS';
-      else if (draft.goal === 'maintain') goalApi = 'MAINTENANCE';
-      else if (draft.goal === 'gain') goalApi = 'MUSCLE_GAIN';
-
-      let dietStrategyApi: DietStrategyApi | undefined;
-      if (draft.diet === 'balanced') dietStrategyApi = 'BALANCED';
-      else if (draft.diet === 'low-carb') dietStrategyApi = 'LOW_CARB';
-      else if (draft.diet === 'keto') dietStrategyApi = 'KETO';
-
-      const payload: UpdateProfilePayload = {
-        firstName: draft.name.split(' ')[0] || draft.name,
-        lastName: draft.name.split(' ').slice(1).join(' ') || '',
-        gender: genderApi,
-        age: draft.age,
-        height: draft.heightCm,
-        currentWeight: draft.weightKg,
-        activityLevel: draft.activityFactor,
-        goal: goalApi,
-        dietStrategy: dietStrategyApi,
-        proteinTargetGrams: draft.macroTargets?.protein,
-        carbsTargetGrams: draft.macroTargets?.carbs,
-        fatsTargetGrams: draft.macroTargets?.fats,
-      };
-
+      const payload = mapProfileToUpdatePayload(draft);
       userService.updateProfile(payload).catch((err) => {
         console.error('Failed to sync profile update to backend:', err);
       });
@@ -205,367 +188,169 @@ export default function ProfileScreen() {
     setDraft(profile);
   };
 
+  const handleResetAppData = () => {
+    localStorage.removeItem('fitcubes-storage');
+    localStorage.removeItem('fitcubes_auth_token');
+    localStorage.removeItem('fitcubes_auth_user');
+    window.location.reload();
+  };
+
   if (isLoading) {
     return <ProfileSkeleton />;
   }
 
   return (
-    <div className="mx-auto flex h-full w-full max-w-[1016px] flex-col pb-12">
-      {/* Header */}
-      <div className="shrink-0 px-5 pt-[102px] md:pt-[126px] pb-2 flex items-start justify-between">
-        <div className="flex-1 mr-4">
-          <input
+    <div className="mx-auto flex h-full w-full max-w-[1016px] flex-col relative px-4 md:px-8 pt-[102px] md:pt-[126px] pb-16">
+      <div className="rounded-[5px] border border-[#32363E] bg-[#0F1114]/80 backdrop-blur-md p-5 md:p-8 shadow-2xl space-y-6">
+        {/* Header: Title, Description & Theme Switcher */}
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-[#32363E]/60 pb-5">
+          <div className="flex flex-col">
+            <h1 className="heading-h2 text-foreground">Profile & Goals</h1>
+            <p className="font-sans text-[14px] text-[#8E8F96] mt-0.5">
+              Manage your biometric parameters, targets and nutritional strategy
+            </p>
+          </div>
+
+          {/* Compact Theme Switcher */}
+          <div className="flex items-center gap-1 self-start rounded-[5px] border border-[#32363E] bg-[#16181D]/80 p-1 backdrop-blur-md">
+            {([
+              { key: 'light', icon: Sun, label: 'Light Mode' },
+              { key: 'dark', icon: Moon, label: 'Dark Mode' },
+              { key: 'system', icon: Monitor, label: 'System Default' },
+            ] as const).map((t) => (
+              <button
+                key={t.key}
+                type="button"
+                title={t.label}
+                onClick={() => setTheme(t.key)}
+                className={`flex h-8 w-8 items-center justify-center rounded-[4px] transition-all ${
+                  theme === t.key
+                    ? 'border border-[#4F3911] bg-[#251F13] text-[#F59F0A] shadow-sm'
+                    : 'text-[#8E8F96] hover:text-foreground'
+                }`}
+              >
+                <t.icon className="h-4 w-4" />
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* User Full Name Input */}
+        <div className="flex flex-col gap-1.5">
+          <Input
+            label="Full Name"
             type="text"
             value={draft.name || ''}
             onChange={handleNameChange}
             placeholder="Your Name"
-            className="bg-transparent text-2xl font-bold outline-none placeholder:text-muted-foreground/50 w-full"
+            maxLength={50}
           />
-          <p className="text-sm text-muted-foreground mt-0.5">
-            Your body metrics and goals
-          </p>
         </div>
 
-        {/* Compact Theme Switcher */}
-        <div className="flex bg-secondary/30 p-1 rounded-xl border border-white/5 backdrop-blur-md">
-          {([
-            { key: 'light', icon: Sun, label: 'Light Mode' },
-            { key: 'dark', icon: Moon, label: 'Dark Mode' },
-            { key: 'system', icon: Monitor, label: 'System Default' },
-          ] as const).map((t) => (
-            <button
-              key={t.key}
-              title={t.label}
-              onClick={() => setTheme(t.key)}
-              className={`p-2 rounded-lg transition-all ${
-                theme === t.key
-                  ? 'bg-primary text-primary-foreground shadow-sm'
-                  : 'text-muted-foreground hover:text-foreground'
-              }`}
-            >
-              <t.icon className="w-4 h-4" />
-            </button>
-          ))}
-        </div>
-      </div>
+        {/* 1. Energy & Calorie Targets */}
+        <EnergyTargetsCard
+          bmr={bmr}
+          tdee={tdee}
+          targetCalories={targetCalories}
+          goal={draft.goal || WEIGHT_GOAL.MAINTAIN}
+          diet={draft.diet || DIET_TYPE.BALANCED}
+          activityFactor={draft.activityFactor || 1.5}
+          onGoalChange={handleGoalChange}
+          onDietChange={handleDietChange}
+        />
 
-      {/* Content */}
-      <div className="flex-1 px-5 pb-8">
-        {/* BMR/TDEE Card */}
-        <motion.div
-          className="glass-card rounded-2xl p-5 mt-2"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-        >
-          <div className="flex items-center gap-2 mb-4">
-            <TrendingDown
-              className="w-4 h-4 text-primary" />
-            <span className="text-sm font-medium">Energy expenditure</span>
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div className="bg-secondary/30 rounded-xl p-3 text-center relative border border-white/5">
-              <div className="absolute top-1 right-1">
-                <InfoTooltip
-                  title="BMR (Basal Metabolic Rate)"
-                  content="This is the energy your body uses at rest. BMR decreases with age due to muscle loss."
-                  align="left"
-                />
-              </div>
-              <p className="text-xs text-muted-foreground uppercase tracking-tighter">BMR</p>
-              <p className="text-xl font-bold mt-1">{bmr}</p>
-              <p className="text-[10px] text-muted-foreground uppercase">kcal/day</p>
-            </div>
-            <div className="bg-primary/10 rounded-xl p-3 text-center relative border border-primary/20">
-              <div className="absolute top-1 right-1">
-                <InfoTooltip
-                  title="Target Calories"
-                  content="Your current calorie target accounting for deficit or surplus."
-                  align="right"
-                />
-              </div>
-              <p className="text-xs text-primary uppercase tracking-tighter">Target</p>
-              <p className="text-xl font-bold mt-1 text-primary">{targetCalories}</p>
-              <p className="text-[10px] text-primary/60 uppercase font-medium">kcal/day</p>
-            </div>
-          </div>
+        {/* 2. Body Metrics */}
+        <BodyMetricsCard
+          gender={draft.gender}
+          age={draft.age || 25}
+          weightKg={draft.weightKg || 70}
+          heightCm={draft.heightCm || 175}
+          activityFactor={draft.activityFactor || 1.5}
+          onGenderChange={handleGenderChange}
+          onAgeChange={handleAgeChange}
+          onWeightChange={handleWeightChange}
+          onHeightChange={handleHeightChange}
+          onActivityChange={handleActivityChange}
+        />
 
-          <div className="mt-6 space-y-4">
-            <OptionSelector
-              label="Goal"
-              selectedValue={draft.goal || ''}
-              onSelect={(val) => updateDraft({ goal: val })}
-              options={WEIGHT_GOAL_OPTIONS}
-            />
+        {/* 3. Macronutrient Targets */}
+        <MacroAdjustmentCard
+          macroTargets={draft.macroTargets || { protein: 140, carbs: 220, fats: 65 }}
+          targetCalories={targetCalories}
+          weightKg={draft.weightKg || 70}
+          onProteinChange={handleProteinChange}
+        />
 
-            <OptionSelector
-              label="Strategy"
-              selectedValue={draft.diet || ''}
-              onSelect={(val) => updateDraft({ diet: val })}
-              options={DIET_TYPE_OPTIONS}
-            />
-          </div>
-        </motion.div>
+        {/* 4. Exercise MET Catalog */}
+        <ExerciseCatalogCard
+          activities={activities}
+          weightKg={draft.weightKg || 70}
+        />
 
-        {/* Body Metrics Section */}
-        <motion.div
-          className="mt-8"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-        >
-          <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wide px-1 mb-3">
-            Body Metrics
-          </h3>
-          <div className="glass-card rounded-2xl p-4 space-y-4">
-            <OptionSelector
-              label="Gender"
-              selectedValue={draft.gender}
-              onSelect={(val) => updateDraft({ gender: val as Gender })}
-              columns={2}
-              options={GENDER_OPTIONS}
-            />
-
-            <div className="flex gap-3">
-              <MetricInput
-                label="Age"
-                value={draft.age || ''}
-                onChange={(val) => updateDraft({ age: val })}
-                onBlur={() => updateDraft({ age: clampValue(draft.age, 16, 120, 0) })}
-                tooltipTitle="Age"
-                tooltipContent="Metabolism slows down with age, reducing calorie needs."
-                align="left"
-              />
-              <MetricInput
-                label="Weight (kg)"
-                value={draft.weightKg || ''}
-                onChange={(val) => updateDraft({ weightKg: val })}
-                onBlur={() => updateDraft({ weightKg: clampValue(draft.weightKg, 30, 300, 0) })}
-                tooltipTitle="Weight"
-                tooltipContent="More weight requires more energy to sustain."
-                step="0.1"
-                align="center"
-              />
-              <MetricInput
-                label="Height (cm)"
-                value={draft.heightCm || ''}
-                onChange={(val) => updateDraft({ heightCm: val })}
-                onBlur={() => updateDraft({ heightCm: clampValue(draft.heightCm, 100, 250, 0) })}
-                tooltipTitle="Height"
-                tooltipContent="Height affects metabolic rate."
-                align="right"
-              />
-            </div>
-
-            <div className="pt-2 border-t border-white/5">
-              <div className="flex items-center justify-between mb-2 px-1">
-                <label className="text-[10px] font-bold text-muted-foreground uppercase">Activity</label>
-                <div className="flex items-center gap-2">
-                  <span className="text-sm font-bold text-primary">{draft.activityFactor}</span>
-                  <InfoTooltip title="Activity" content="Multiplier from 1.2 (sedentary) to 1.9 (daily heavy lifting). Greatly impacts target calories." align="right" />
-                </div>
-              </div>
-              <input
-                type="range"
-                min="1.2"
-                max="1.9"
-                step="0.05"
-                value={draft.activityFactor}
-                onChange={handleActivityFactorChange}
-                className="w-full accent-primary"
-              />
-              <div className="flex justify-between text-[10px] text-muted-foreground mt-1 px-1">
-                <span>Sedentary</span>
-                <span>Very active</span>
-              </div>
-            </div>
-          </div>
-        </motion.div>
-
-        {/* Manual Macros */}
-        <motion.div
-          className="mt-8"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-        >
-          <div className="flex items-center justify-between px-1 mb-3">
-            <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
-              Manual Protein Adjustment
-            </h3>
-            <InfoTooltip
-              title="Balance"
-              content="Enter your desired protein amount, and we will automatically adjust fats and carbs to match your current target and strategy."
-              align="right"
-            />
-          </div>
-          <div className="glass-card rounded-2xl p-4 grid grid-cols-3 gap-3">
-            {[
-              { label: 'Protein', key: 'protein', color: 'text-emerald-400' },
-              { label: 'Carbs', key: 'carbs', color: 'text-blue-400' },
-              { label: 'Fats', key: 'fats', color: 'text-amber-400' },
-            ].map((m) => (
-              <div key={m.key}>
-                <label className={`text-[10px] font-bold ${m.color} uppercase mb-1 block text-center`}>{m.label}</label>
-                <input
-                  type="number"
-                  value={
-                    m.key === 'protein'
-                      ? draft.macroTargets?.protein || ''
-                      : draft.macroTargets?.[m.key as keyof typeof draft.macroTargets] ?? 0
-                  }
-                  readOnly={m.key !== 'protein'}
-                  onKeyDown={m.key === 'protein' ? blockInvalidIntegerInput : undefined}
-                  onChange={m.key === 'protein' ? handleProteinInputChange : undefined}
-                  className={`w-full h-10 ${m.key !== 'protein' ? 'bg-secondary/20 opacity-70 cursor-not-allowed' : 'bg-secondary/50'} border border-white/5 rounded-lg text-center text-sm font-bold outline-none`}
-                />
-              </div>
-            ))}
-          </div>
-
-          {/* Protein Info/Warning */}
-          <ProteinIndicator
-            protein={draft.macroTargets?.protein || 0}
-            weight={draft.weightKg || 0}
-          />
-        </motion.div>
-
-        {/* Exercise Constants Section */}
-        <motion.div
-          className="mt-8"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
-        >
-          <div className="flex items-center justify-between px-1 mb-3">
-            <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
-              Exercise Metrics
-            </h3>
-            <InfoTooltip
-              title="What is MET?"
-              content="1 MET is resting energy. More intense exercise means higher MET and more calories burned."
-              align="right"
-            />
-          </div>
-          <div className="glass-card rounded-2xl divide-y divide-white/5 overflow-hidden">
-            {activities.map((item) => {
-              let displayKcal = item.kcalPerUnit;
-              if (displayKcal === 0) {
-                displayKcal = (item.met * 3.5 * (draft.weightKg || 75)) / 200;
-              }
-              return (
-              <div
-                key={item.name}
-                className="flex items-center justify-between p-4"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
-                    <Dumbbell className="w-4 h-4 text-primary" />
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium">{item.name}</p>
-                    <p className="text-[10px] text-muted-foreground">
-                      {parseFloat(displayKcal.toFixed(1))} kcal / {item.metricLabel}
-                    </p>
-                  </div>
-                </div>
-                <div className="text-right">
-                  <p className="text-sm font-bold text-primary">
-                    MET {item.met}
-                  </p>
-                </div>
-              </div>
-            )})}
-          </div>
-        </motion.div>
-
-        {/* Logout Placeholder */}
-        <div className="mt-8 mb-4">
+        {/* Danger Zone: Reset App Data */}
+        <div className="pt-2 border-t border-[#32363E]/60">
           <button
+            type="button"
             onClick={() => setShowResetConfirm(true)}
-            className="w-full flex items-center justify-center gap-2 py-4 text-destructive font-bold glass-card rounded-2xl hover:bg-destructive/10 transition-colors">
-            <LogOut className="w-5 h-5" />
+            className="flex h-[44px] w-full cursor-pointer items-center justify-center gap-2 rounded-[5px] border border-red-500/20 bg-red-500/10 font-sans text-[14px] font-semibold text-red-400 transition-all hover:bg-red-500/20 active:scale-[0.99]"
+          >
+            <RotateCcw className="h-4 w-4" />
             Reset App Data
           </button>
         </div>
       </div>
 
-      {/* Floating Save Bar */}
+      {/* Floating Save / Cancel Bar */}
       <AnimatePresence>
         {hasChanges && (
-          <div className="fixed bottom-[90px] left-0 right-0 z-40 flex justify-center pointer-events-none px-5">
+          <div className="fixed bottom-6 left-0 right-0 z-40 flex justify-center pointer-events-none px-4">
             <motion.div
-              className="w-full max-w-[calc(430px-2.5rem)] glass-card rounded-2xl p-4 flex items-center justify-between shadow-2xl border border-primary/20 bg-background/80 backdrop-blur-xl pointer-events-auto"
-              initial={{ y: 50, opacity: 0 }}
+              className="w-full max-w-[460px] rounded-[10px] border border-[#F59F0A]/40 bg-[#16181D]/95 backdrop-blur-xl p-3.5 flex items-center justify-between shadow-2xl pointer-events-auto"
+              initial={{ y: 40, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
-              exit={{ y: 50, opacity: 0 }}
+              exit={{ y: 40, opacity: 0 }}
             >
               <div className="flex flex-col">
-                <span className="text-sm font-bold">Unsaved changes</span>
-                <span className="text-xs text-muted-foreground">Don't forget to save!</span>
+                <span className="font-sans text-[14px] font-bold text-foreground">
+                  Unsaved changes
+                </span>
+                <span className="font-sans text-[12px] text-[#8E8F96]">
+                  Click Save to apply your metrics
+                </span>
               </div>
               <div className="flex gap-2">
-                <button
+                <Button
+                  variant="outline"
+                  size="sm"
                   onClick={handleCancel}
-                  className="px-4 py-2 rounded-xl text-sm font-bold text-muted-foreground hover:bg-white/5 transition-colors"
+                  className="h-9 px-3.5 text-[14px]"
                 >
                   Cancel
-                </button>
-                <button
+                </Button>
+                <Button
+                  size="sm"
                   onClick={handleSave}
-                  className="px-4 py-2 rounded-xl bg-primary text-primary-foreground text-sm font-bold shadow-lg shadow-primary/20 hover:scale-105 transition-transform"
+                  className="h-9 px-4 text-[14px]"
                 >
                   Save
-                </button>
+                </Button>
               </div>
             </motion.div>
           </div>
         )}
       </AnimatePresence>
 
-      {/* Reset Confirmation Modal */}
-      <AnimatePresence>
-        {showResetConfirm && (
-          <motion.div
-            className="fixed inset-0 z-[100] flex items-center justify-center p-5 bg-background/80 backdrop-blur-sm"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-          >
-            <motion.div
-              className="glass-card w-full max-w-[calc(430px-2.5rem)] rounded-3xl p-6 border border-white/10 shadow-2xl flex flex-col relative"
-              initial={{ scale: 0.9, opacity: 0, y: 20 }}
-              animate={{ scale: 1, opacity: 1, y: 0 }}
-              exit={{ scale: 0.9, opacity: 0, y: 20 }}
-            >
-              <div className="w-16 h-16 rounded-2xl bg-destructive/20 flex items-center justify-center mb-6 mx-auto">
-                <LogOut className="w-8 h-8 text-destructive" />
-              </div>
-              <h3 className="text-xl font-bold text-center mb-2">Reset App Data?</h3>
-              <p className="text-sm text-center text-muted-foreground mb-8">
-                This action cannot be undone. All your logs, custom foods, and settings will be permanently deleted.
-              </p>
-
-              <div className="flex gap-3">
-                <button
-                  onClick={() => setShowResetConfirm(false)}
-                  className="flex-1 py-3.5 rounded-xl font-bold bg-secondary/50 hover:bg-secondary transition-colors"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={() => {
-                    localStorage.removeItem('fitcubes-storage');
-                    window.location.reload();
-                  }}
-                  className="flex-1 py-3.5 rounded-xl font-bold bg-destructive text-destructive-foreground hover:bg-destructive/90 transition-colors shadow-lg shadow-destructive/20"
-                >
-                  Yes, Reset
-                </button>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {/* Unified Reset Confirmation Modal */}
+      <ConfirmModal
+        isOpen={showResetConfirm}
+        title="Reset App Data?"
+        description="This action cannot be undone. All your logs, custom foods, and settings will be permanently deleted."
+        confirmText="Yes, Reset"
+        cancelText="Cancel"
+        variant="destructive"
+        onConfirm={handleResetAppData}
+        onCancel={() => setShowResetConfirm(false)}
+      />
     </div>
   );
 }

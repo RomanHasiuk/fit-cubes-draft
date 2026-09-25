@@ -1,6 +1,18 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { ChevronLeft, Check, Dumbbell, Footprints, Timer, Flame, Loader2 } from 'lucide-react';
+import {
+  ArrowLeft,
+  Check,
+  Dumbbell,
+  Footprints,
+  Timer,
+  Flame,
+  Loader2,
+  ChevronRight,
+  AlertTriangle,
+  WifiOff,
+  RefreshCw,
+} from 'lucide-react';
 import { useStore } from '@/store/useStore';
 import { calculateExerciseCalories, generateSafeId } from '@/utils/calculations';
 import type { ExerciseEntry } from '@/types';
@@ -9,6 +21,8 @@ import FoodItemCardSkeleton from '@/components/food/FoodItemCardSkeleton';
 import { blockInvalidIntegerInput, blockInvalidNumberInput } from '@/utils/inputHandlers';
 import { authService } from '@/services/authService';
 import { diaryService } from '@/services/diaryService';
+import { exerciseService } from '@/services/exerciseService';
+import { Button } from '@/components/ui/button';
 
 interface ExerciseLoggerProps {
   onClose: () => void;
@@ -29,11 +43,52 @@ export default function ExerciseLogger({ onClose, editEntry }: ExerciseLoggerPro
   const addExerciseEntry = useStore((state) => state.addExerciseEntry);
   const updateExerciseEntry = useStore((state) => state.updateExerciseEntry);
   const activities = useStore((state) => state.activities);
+  const activitiesError = useStore((state) => state.activitiesError);
+  const setActivities = useStore((state) => state.setActivities);
+  const setActivitiesError = useStore((state) => state.setActivitiesError);
   const isLoadingData = useStore((state) => state.isLoadingData);
   const [selectedActivity, setSelectedActivity] = useState<string | null>(editEntry?.activityType || null);
   const [metric, setMetric] = useState(editEntry ? String(editEntry.metric) : '');
   const [rpe, setRpe] = useState<number>(editEntry?.rpe || 5);
   const [isSaving, setIsSaving] = useState(false);
+  const [isRetrying, setIsRetrying] = useState(false);
+
+  const handleRetryActivities = async () => {
+    setIsRetrying(true);
+    try {
+      const res = await exerciseService.getActivities({ size: 100 });
+      if (res.ok && res.data) {
+        const rawData = res.data as unknown;
+        const items = Array.isArray(rawData)
+          ? rawData
+          : typeof rawData === 'object' && rawData !== null && 'content' in rawData && Array.isArray((rawData as { content: unknown }).content)
+          ? ((rawData as { content: any[] }).content)
+          : [];
+
+        if (items.length > 0) {
+          const loaded = items.map((act) => ({
+            id: act.id,
+            name: act.name,
+            metricLabel: 'minutes',
+            met: act.met,
+            kcalPerUnit: Math.round(((act.met * 3.5 * 70) / 200) * 10) / 10,
+          }));
+          setActivities(loaded);
+          setActivitiesError(null);
+        } else {
+          setActivitiesError('EMPTY_DATABASE');
+        }
+      } else {
+        const isOffline = typeof navigator !== 'undefined' && !navigator.onLine;
+        setActivitiesError(isOffline ? 'NO_INTERNET' : 'SERVER_ERROR');
+      }
+    } catch {
+      const isOffline = typeof navigator !== 'undefined' && !navigator.onLine;
+      setActivitiesError(isOffline ? 'NO_INTERNET' : 'SERVER_ERROR');
+    } finally {
+      setIsRetrying(false);
+    }
+  };
 
   const profile = useStore((state) => state.profile);
   const activity = activities.find((a) => a.name === selectedActivity);
@@ -157,175 +212,232 @@ export default function ExerciseLogger({ onClose, editEntry }: ExerciseLoggerPro
   };
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full bg-[#0F1114]">
       {/* Header */}
-      <div className="shrink-0 px-4 pt-safe pb-2 flex items-center justify-between">
+      <div className="shrink-0 px-3 sm:px-4 pt-safe pb-2.5 flex items-center justify-between border-b border-[#32363E]/60">
         <button
           type="button"
           onClick={handleBack}
-          className="p-2.5 rounded-lg active:bg-secondary transition-colors cursor-pointer"
+          className="flex h-[32px] w-[32px] sm:h-[36px] sm:w-[36px] cursor-pointer touch-manipulation items-center justify-center rounded-full border border-white/10 bg-[#16191E]/80 backdrop-blur-sm transition-all hover:border-white/20 active:scale-95"
+          title="Back"
+          aria-label="Back"
         >
-          <ChevronLeft className="w-5 h-5" />
+          <ArrowLeft className="h-4 w-4 sm:h-5 sm:w-5 text-foreground/80" />
         </button>
-        {selectedActivity && (
-          <button
+
+        <h2 className="heading-h2 text-[17px] sm:text-[18px] md:text-[20px] text-foreground text-center truncate max-w-[180px] sm:max-w-none">
+          {selectedActivity ? activity?.name : 'Exercise'}
+        </h2>
+
+        {selectedActivity ? (
+          <Button
+            size="sm"
             onClick={handleSave}
-            disabled={isSaving}
-            className="flex items-center gap-1.5 px-4 py-2 bg-primary rounded-xl text-primary-foreground text-sm font-medium active:scale-95 transition-transform disabled:opacity-50 cursor-pointer"
+            disabled={isSaving || !metric || parseFloat(metric) <= 0}
+            className="h-[30px] sm:h-[34px] px-2.5 sm:px-3 text-[12px] sm:text-[13px]"
           >
-            {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
+            {isSaving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
             Save
-          </button>
+          </Button>
+        ) : (
+          <div className="h-[32px] w-[32px] sm:h-[36px] sm:w-[36px] opacity-0 pointer-events-none" />
         )}
       </div>
 
       {/* Content */}
-      <div className="flex-1 overflow-y-auto no-scrollbar px-5 pb-8">
+      <div className="flex-1 overflow-y-auto custom-scrollbar px-3 sm:px-5 py-3 sm:py-4" data-scrolling="true">
         {!selectedActivity ? (
-          <>
-            <h2 className="text-xl font-bold mb-4">Log Exercise</h2>
-            <div className="space-y-2">
-              {isLoadingData && activities.length === 0 ? (
-                <FoodItemCardSkeleton variant='exercise' count={6} />
-              ) : (
-                activities.map((act) => {
-                  const Icon = ICONS[act.name] || Dumbbell;
-                  return (
-                    <motion.button
-                      key={act.name}
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.15 }}
-                      onClick={() => setSelectedActivity(act.name)}
-                      className="w-full flex items-center gap-4 p-4 bg-card rounded-xl border border-border text-left active:bg-secondary/50 transition-colors"
-                    >
-                      <div className="w-10 h-10 rounded-full bg-primary/15 flex items-center justify-center">
-                        <Icon className="w-5 h-5 text-primary" />
+          <div className="space-y-2">
+            {isLoadingData && activities.length === 0 ? (
+              <FoodItemCardSkeleton variant="exercise" count={6} />
+            ) : activities.length === 0 || activitiesError ? (
+              <div className="flex flex-col items-center justify-center py-10 px-4 text-center">
+                <div className="flex h-12 w-12 items-center justify-center rounded-full border border-amber-500/20 bg-amber-500/10 text-amber-500 mb-3.5">
+                  {activitiesError === 'NO_INTERNET' || (typeof navigator !== 'undefined' && !navigator.onLine) ? (
+                    <WifiOff className="h-6 w-6" />
+                  ) : (
+                    <AlertTriangle className="h-6 w-6" />
+                  )}
+                </div>
+
+                <h3 className="font-sans text-[16px] sm:text-[18px] font-semibold text-foreground mb-1.5">
+                  {activitiesError === 'NO_INTERNET' || (typeof navigator !== 'undefined' && !navigator.onLine)
+                    ? 'No Internet Connection'
+                    : 'Exercise Service Unavailable'}
+                </h3>
+
+                <p className="font-sans text-[13px] sm:text-[14px] text-[#8E8F96] max-w-sm mb-5 leading-relaxed">
+                  {activitiesError === 'NO_INTERNET' || (typeof navigator !== 'undefined' && !navigator.onLine)
+                    ? 'You appear to be offline. Please check your network connection and try again.'
+                    : 'Unable to connect to the exercise database (Server Error 500). The service is temporarily undergoing maintenance. Please try again later.'}
+                </p>
+
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleRetryActivities}
+                  disabled={isRetrying}
+                  className="border-[#32363E] text-foreground hover:bg-white/5 cursor-pointer h-9 px-4 text-[13px]"
+                >
+                  {isRetrying ? (
+                    <Loader2 className="w-3.5 h-3.5 mr-2 animate-spin" />
+                  ) : (
+                    <RefreshCw className="w-3.5 h-3.5 mr-2" />
+                  )}
+                  Retry Connection
+                </Button>
+              </div>
+            ) : (
+              activities.map((act) => {
+                const Icon = ICONS[act.name] || Dumbbell;
+                const estimatedKcal =
+                  Math.round(
+                    (act.kcalPerUnit > 0
+                      ? act.kcalPerUnit
+                      : (act.met * 3.5 * (profile.weightKg || 70)) / 200) * 10
+                  ) / 10;
+
+                return (
+                  <motion.button
+                    key={act.name}
+                    initial={{ opacity: 0, y: 6 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.15 }}
+                    onClick={() => setSelectedActivity(act.name)}
+                    className="w-full flex items-center justify-between p-3 rounded-[5px] border border-[#32363E] bg-[#16181D]/60 hover:border-[#F59F0A]/50 backdrop-blur-sm text-left transition-all active:scale-[0.99] cursor-pointer"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-9 w-9 sm:h-10 sm:w-10 shrink-0 items-center justify-center rounded-full border border-[#4F3911] bg-[#251F13] text-[#F59F0A]">
+                        <Icon className="h-4 w-4 sm:h-5 sm:w-5" />
                       </div>
-                      <div className="flex-1">
-                        <p className="font-medium">{act.name}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {Math.round((act.kcalPerUnit > 0 ? act.kcalPerUnit : (act.met * 3.5 * profile.weightKg) / 200) * 10) / 10} kcal/{act.metricLabel} · MET {act.met}
+                      <div>
+                        <p className="font-sans text-[15px] sm:text-[16px] font-medium text-foreground leading-snug">
+                          {act.name}
+                        </p>
+                        <p className="font-sans text-[12px] sm:text-[13px] text-[#8E8F96] mt-0.5">
+                          {estimatedKcal} kcal/{act.metricLabel} • MET {act.met}
                         </p>
                       </div>
-                      <ChevronLeft className="w-4 h-4 text-muted-foreground -rotate-180" />
-                    </motion.button>
-                  );
-                })
-              )}
-            </div>
-          </>
-        ) : (
-          <>
-            {/* Selected Activity Detail */}
-            <div className="flex items-center gap-3 mb-6">
-              <div className="w-12 h-12 rounded-full bg-primary/15 flex items-center justify-center">
-                {(() => {
-                  const Icon = ICONS[activity?.name || ''] || Dumbbell;
-                  return <Icon className="w-6 h-6 text-primary" />;
-                })()}
-              </div>
-              <div>
-                <h2 className="text-xl font-bold">{activity?.name}</h2>
-                <p className="text-xs text-muted-foreground">
-                  {Math.round((activity?.kcalPerUnit || (activity ? (activity.met * 3.5 * profile.weightKg) / 200 : 0)) * 10) / 10} kcal per {activity?.metricLabel} · MET{' '}
-                  {activity?.met}
-                </p>
-              </div>
-            </div>
+                    </div>
 
-            {/* Metric Input */}
-            <div className="mt-4">
-              <label className="text-sm font-medium mb-2 block">
+                    <ChevronRight className="h-4 w-4 text-[#8E8F96]" />
+                  </motion.button>
+                );
+              })
+            )}
+          </div>
+        ) : (
+          <div className="flex flex-col gap-3 sm:gap-4">
+            {/* Metric Input Card */}
+            <div className="flex flex-col gap-1.5 rounded-[5px] border border-[#32363E] bg-[#16181D]/60 p-3 sm:p-4 backdrop-blur-sm">
+              <label className="form-label text-[15px] sm:text-[16px]">
                 {activity?.metricLabel === 'reps'
-                  ? 'Number of Reps'
+                  ? 'Number of Repetitions'
                   : activity?.metricLabel === 'minutes'
-                    ? 'Duration (minutes)'
+                    ? 'Duration in Minutes'
                     : activity?.metricLabel === 'steps'
-                      ? 'Number of Steps'
+                      ? 'Total Step Count'
                       : 'Amount'}
               </label>
+
               <div className="relative">
                 <input
                   type="text"
                   inputMode="decimal"
-                  onKeyDown={activity?.metricLabel?.toLowerCase().includes('min') ? blockInvalidNumberInput : blockInvalidIntegerInput}
+                  onKeyDown={
+                    activity?.metricLabel?.toLowerCase().includes('min')
+                      ? blockInvalidNumberInput
+                      : blockInvalidIntegerInput
+                  }
                   value={metric}
                   onChange={handleMetricChange}
                   placeholder="0"
                   autoFocus
-                  className="w-full h-16 bg-card border border-border rounded-xl text-3xl font-bold text-center text-foreground outline-none focus:ring-2 focus:ring-primary/50"
+                  className="w-full h-11 sm:h-12 rounded-[5px] border border-[#32363E] bg-[#16181D]/90 px-14 text-center font-serif text-[22px] sm:text-[24px] font-bold text-[#F59F0A] outline-none transition-colors focus:border-[#F59F0A]"
                 />
-                <span className="absolute right-6 top-1/2 -translate-y-1/2 text-muted-foreground text-lg">
+                <span className="absolute right-3.5 top-1/2 -translate-y-1/2 font-sans text-[12px] sm:text-[13px] font-medium text-[#8E8F96] pointer-events-none">
                   {activity?.metricLabel}
                 </span>
               </div>
             </div>
 
             {/* RPE Selector */}
-            <div className="mt-6">
-              <div className="flex items-center gap-2 mb-2">
-                <label className="text-sm font-medium">
-                  Rate of Perceived Exertion (RPE)
+            <div className="flex flex-col gap-2 rounded-[5px] border border-[#32363E] bg-[#16181D]/60 p-3 sm:p-4 backdrop-blur-sm">
+              <div className="flex items-center justify-between">
+                <label className="form-label text-[15px] sm:text-[16px]">
+                  Perceived Exertion (RPE 1-10)
                 </label>
-                <InfoTooltip 
-                  title="RPE (1-10)" 
-                  content="How hard you feel your body working. 1 is very easy (like watching TV), 10 is max effort. Higher RPE slightly increases calorie burn (+/- 20%)." 
-                  align="left" 
+                <InfoTooltip
+                  title="RPE (Rate of Perceived Exertion)"
+                  content="Scale from 1 (sedentary resting) to 10 (maximum physical capacity). Slightly scales calorie burn based on intensity (+/- 20%)."
+                  align="right"
+                  position="bottom"
                 />
               </div>
-              <div className="flex gap-2">
+
+              <div className="grid grid-cols-5 sm:grid-cols-10 gap-1.5 pt-0.5">
                 {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((v) => (
                   <button
                     key={v}
+                    type="button"
                     onClick={() => setRpe(v)}
-                    className={`flex-1 py-3 rounded-lg text-sm font-bold transition-colors ${
+                    className={`flex h-8 sm:h-9 cursor-pointer items-center justify-center rounded-[5px] font-sans text-[12px] sm:text-[13px] font-medium transition-all active:scale-95 ${
                       rpe === v
-                        ? 'bg-primary text-primary-foreground'
-                        : v <= 3
-                          ? 'bg-emerald-500/15 text-emerald-400'
-                          : v <= 6
-                            ? 'bg-amber-500/15 text-amber-400'
-                            : 'bg-red-500/15 text-red-400'
+                        ? 'border-2 border-[#F59F0A] bg-[#251F13] font-bold text-[#F59F0A] shadow-[0_0_8px_rgba(245,159,10,0.3)]'
+                        : 'border border-[#32363E] bg-[#16181D]/80 text-[#8E8F96] hover:border-white/20 hover:text-foreground'
                     }`}
                   >
                     {v}
                   </button>
                 ))}
               </div>
-              <p className="text-xs text-muted-foreground mt-2 text-center">
-                {rpe
-                  ? rpe <= 3
-                    ? 'Light — Easy recovery'
-                    : rpe <= 6
-                      ? 'Moderate — Working effort'
-                      : 'Hard — High intensity'
-                  : 'Tap a number to rate difficulty'}
+
+              <p className="mt-0.5 text-center font-sans text-[11px] sm:text-[12px] text-[#8E8F96]">
+                {rpe <= 3
+                  ? 'Light — Easy aerobic recovery'
+                  : rpe <= 6
+                    ? 'Moderate — Active steady working effort'
+                    : 'Intense — High heart rate and effort'}
               </p>
             </div>
 
-            {/* Calories Preview */}
+            {/* Calories Preview Banner */}
             {calories > 0 && (
               <motion.div
-                className="mt-6 bg-primary/10 rounded-xl p-4 text-center"
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
+                className="flex flex-col items-center justify-center rounded-[10px] border border-[#4F3911] bg-[#251F13]/80 p-3 sm:p-4 shadow-md backdrop-blur-md"
+                initial={{ opacity: 0, scale: 0.96 }}
+                animate={{ opacity: 1, scale: 1 }}
               >
-                <p className="text-sm text-muted-foreground">Calories Burned</p>
-                <p className="text-3xl font-bold text-primary mt-1">
-                  +{Math.round(calories * 10) / 10}
-                </p>
+                <span className="font-sans text-[11px] sm:text-[12px] font-medium text-[#8E8F96]">
+                  Estimated Energy Expenditure
+                </span>
+                <span className="mt-0.5 font-serif text-[24px] sm:text-[30px] font-medium leading-none text-[#F59F0A]">
+                  +{Math.round(calories * 10) / 10} kcal
+                </span>
               </motion.div>
             )}
 
-            {/* Back to list */}
-            <button
-              onClick={handleBack}
-              className="w-full mt-6 py-3 text-sm text-muted-foreground text-center"
-            >
-              Choose different exercise
-            </button>
-          </>
+            {/* Bottom Actions */}
+            <div className="flex flex-col gap-1.5 pt-1">
+              <Button
+                type="button"
+                onClick={handleSave}
+                disabled={isSaving || !metric || parseFloat(metric) <= 0}
+                className="w-full h-10 sm:h-11 text-[14px] sm:text-[15px]"
+              >
+                {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
+                Log Activity
+              </Button>
+
+              <button
+                type="button"
+                onClick={handleBack}
+                className="w-full py-1.5 text-center font-sans text-[12px] text-[#8E8F96] hover:text-foreground transition-colors cursor-pointer"
+              >
+                Choose a different exercise
+              </button>
+            </div>
+          </div>
         )}
       </div>
     </div>

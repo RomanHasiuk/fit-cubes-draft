@@ -70,7 +70,7 @@ export function WelcomeStep({ onNext }: WelcomeStepProps) {
         <Button
           variant="default"
           className="w-full max-w-[552px] antialiased"
-          onClick={onNext}
+          onClick={() => onNext()}
         >
           Get Started!
         </Button>

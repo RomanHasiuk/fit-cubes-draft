@@ -20,18 +20,18 @@ export const ModalDrawer: React.FC<ModalDrawerProps> = ({
     <AnimatePresence>
       {isOpen && (
         <motion.div
-          className="fixed inset-0 z-[100] bg-black/25 dark:bg-black/35 backdrop-blur-[2px] flex justify-center items-end md:items-center p-0 md:p-4"
+          className="fixed inset-0 z-[100] bg-black/40 dark:bg-black/60 backdrop-blur-[2px] flex justify-center items-center p-4"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           onClick={onClose}
         >
           <motion.div
-            className={`w-full ${maxWidth} h-[90dvh] max-h-[90dvh] md:h-[800px] rounded-t-3xl md:rounded-[5px] border border-[#32363E] bg-[#0F1114]/90 backdrop-blur-md shadow-2xl overflow-hidden ${className}`}
-            initial={{ y: '100%' }}
-            animate={{ y: 0 }}
-            exit={{ y: '100%' }}
-            transition={{ type: 'spring', damping: 30, stiffness: 300 }}
+            className={`w-full ${maxWidth} h-[90dvh] max-h-[90dvh] md:h-[800px] rounded-[16px] md:rounded-[5px] border border-[#32363E] bg-[#0F1114]/95 backdrop-blur-md shadow-2xl overflow-hidden flex flex-col ${className}`}
+            initial={{ opacity: 0, scale: 0.95, y: 8 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.95, y: 8 }}
+            transition={{ duration: 0.2, ease: 'easeOut' }}
             onClick={(e) => e.stopPropagation()}
           >
             {children}

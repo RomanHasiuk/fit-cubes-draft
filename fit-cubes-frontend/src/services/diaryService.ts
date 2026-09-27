@@ -4,7 +4,9 @@ import type {
   DiaryFoodEntryDto,
   DiaryExerciseEntryDto,
   FoodEntryRequestDto,
+  FoodEntryResponseDto,
   ExerciseEntryRequestDto,
+  ExerciseEntryResponseDto,
 } from '@/types/api';
 
 export const diaryService = {
@@ -19,6 +21,13 @@ export const diaryService = {
     return apiClient.post<DiaryFoodEntryDto>(`/diary/${date}/food`, entry);
   },
 
+  async patchFoodEntry(
+    entryId: number | string,
+    entry: FoodEntryRequestDto
+  ): Promise<ApiResponse<FoodEntryResponseDto>> {
+    return apiClient.patch<FoodEntryResponseDto>(`/food-entries/${entryId}`, entry);
+  },
+
   async removeFoodEntry(
     date: string,
     entryId: number | string
@@ -31,6 +40,13 @@ export const diaryService = {
     entry: ExerciseEntryRequestDto
   ): Promise<ApiResponse<DiaryExerciseEntryDto>> {
     return apiClient.post<DiaryExerciseEntryDto>(`/diary/${date}/exercise`, entry);
+  },
+
+  async patchExerciseEntry(
+    entryId: number | string,
+    entry: ExerciseEntryRequestDto
+  ): Promise<ApiResponse<ExerciseEntryResponseDto>> {
+    return apiClient.patch<ExerciseEntryResponseDto>(`/exercise-entries/${entryId}`, entry);
   },
 
   async removeExerciseEntry(

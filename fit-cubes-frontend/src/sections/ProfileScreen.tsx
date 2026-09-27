@@ -40,6 +40,7 @@ export default function ProfileScreen() {
 
   const [isLoading, setIsLoading] = useState(true);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
+  const [syncError, setSyncError] = useState<string | null>(null);
   const [draft, setDraft] = useState(profile);
 
   // Synchronize draft with global store
@@ -65,10 +66,9 @@ export default function ProfileScreen() {
           const mapped = mapProfileDtoToUserProfile(res.data, profile);
           updateProfile(mapped);
           setDraft(mapped);
+        } else if (!res.ok) {
+          console.warn('Failed to load profile from backend:', res.error);
         }
-      })
-      .catch((err) => {
-        console.error('Failed to load profile from backend:', err);
       })
       .finally(() => {
         if (!isCancelled) {
@@ -160,24 +160,26 @@ export default function ProfileScreen() {
     [profile, draft]
   );
 
-  const handleSave = () => {
+  const handleSave = async () => {
     updateProfile(draft);
 
     if (authService.isAuthenticated()) {
       const payload = mapProfileToUpdatePayload(draft);
-      userService.updateProfile(payload).catch((err) => {
-        console.error('Failed to sync profile update to backend:', err);
-      });
+      const res = await userService.updateProfile(payload);
+      if (!res.ok) {
+        console.error('Failed to sync profile update to backend:', res.error);
+        setSyncError(res.error || 'Failed to sync profile with server');
+        setTimeout(() => setSyncError(null), 3000);
+      }
 
       if (draft.weightKg && draft.weightKg !== profile.weightKg) {
-        weightService
-          .logWeight({
-            weight: draft.weightKg,
-            loggedAt: new Date(Date.now() - 60000).toISOString(),
-          })
-          .catch((err) => {
-            console.error('Failed to log weight to backend:', err);
-          });
+        const weightRes = await weightService.logWeight({
+          weight: draft.weightKg,
+          loggedAt: new Date(Date.now() - 5000).toISOString(),
+        });
+        if (!weightRes.ok) {
+          console.error('Failed to log weight to backend:', weightRes.error);
+        }
       }
     }
   };
@@ -187,9 +189,7 @@ export default function ProfileScreen() {
   };
 
   const handleResetAppData = () => {
-    localStorage.removeItem('fitcubes-storage');
-    localStorage.removeItem('fitcubes_auth_token');
-    localStorage.removeItem('fitcubes_auth_user');
+    authService.clearLocalSession();
     window.location.reload();
   };
 
@@ -199,8 +199,20 @@ export default function ProfileScreen() {
 
   return (
     <div className="mx-auto flex h-full w-full max-w-[1016px] flex-col relative px-4 md:px-8 pt-[102px] md:pt-[126px] pb-16">
+      <AnimatePresence>
+        {syncError && (
+          <motion.div
+            initial={{ opacity: 0, y: -12 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -12 }}
+            className="fixed top-4 left-1/2 -translate-x-1/2 z-[110] bg-destructive/90 text-destructive-foreground px-4 py-2 rounded-xl text-xs font-semibold shadow-lg backdrop-blur"
+          >
+            {syncError}
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       <div className="rounded-[5px] border border-[#32363E] bg-[#0F1114]/80 backdrop-blur-md p-5 md:p-8 shadow-2xl space-y-6">
-        {/* Header: Title, Description & Theme Switcher */}
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-[#32363E]/60 pb-5">
           <div className="flex flex-col">
             <h1 className="heading-h2 text-foreground">Profile & Goals</h1>

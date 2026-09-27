@@ -22,7 +22,7 @@ import type { ActivityDto } from '@/types/api';
 import InfoTooltip from '@/components/InfoTooltip';
 import FoodItemCardSkeleton from '@/components/food/FoodItemCardSkeleton';
 import { blockInvalidIntegerInput, blockInvalidNumberInput } from '@/utils/inputHandlers';
-import { extractApiItems, mapActivityDtoToActivityConstant } from '@/utils/apiMappers';
+import { extractApiItems, mapActivityDtoToActivityConstant, buildSafeLoggedAt, isServerId } from '@/utils/apiMappers';
 import { authService } from '@/services/authService';
 import { diaryService } from '@/services/diaryService';
 import { exerciseService } from '@/services/exerciseService';
@@ -165,46 +165,46 @@ export default function ExerciseLogger({ onClose, editEntry }: ExerciseLoggerPro
     }
 
     if (authService.isAuthenticated()) {
-      const exerciseId = activity.id || 1;
-      const isMinutes = activity.metricLabel.toLowerCase().includes('min');
-      let durationMinutes = Math.max(1, Math.round(metricValue));
+      const hasValidServerId = typeof activity.id === 'number' && activity.id > 0;
+      if (!hasValidServerId) {
+        console.warn(
+          `[ExerciseLogger] Activity "${activity.name}" is missing a valid server ID. Skipped backend sync.`
+        );
+      } else {
+        const exerciseId = activity.id as number;
+        const isMinutes = activity.metricLabel.toLowerCase().includes('min');
+        let durationMinutes = Math.max(1, Math.round(metricValue));
 
-      if (!isMinutes) {
-        if (activity.metricLabel.toLowerCase().includes('rep')) {
-          durationMinutes = Math.max(1, Math.round(metricValue / 10));
-        } else if (activity.metricLabel.toLowerCase().includes('step')) {
-          durationMinutes = Math.max(1, Math.round(metricValue / 100));
-        }
-      }
-
-      const now = new Date();
-      const isToday = selectedDate === now.toISOString().split('T')[0];
-      const loggedAt = isToday
-        ? new Date(Date.now() - 60000).toISOString()
-        : `${selectedDate}T12:00:00.000Z`;
-
-      const isExistingBackendEntry =
-        editEntry && !editEntry.id.startsWith('ex_') && /^\d+$/.test(editEntry.id);
-
-      try {
-        if (isExistingBackendEntry) {
-          await diaryService.removeExerciseEntry(selectedDate, editEntry.id);
+        if (!isMinutes) {
+          if (activity.metricLabel.toLowerCase().includes('rep')) {
+            durationMinutes = Math.max(1, Math.round(metricValue / 10));
+          } else if (activity.metricLabel.toLowerCase().includes('step')) {
+            durationMinutes = Math.max(1, Math.round(metricValue / 100));
+          }
         }
 
-        const res = await diaryService.addExerciseEntry(selectedDate, {
+        const loggedAt = buildSafeLoggedAt(selectedDate);
+
+        const isExistingBackendEntry = Boolean(editEntry && isServerId(editEntry.id));
+
+        const payload = {
           exerciseId,
           durationMinutes,
           loggedAt,
-        });
+        };
+
+        const res = isExistingBackendEntry && editEntry
+          ? await diaryService.patchExerciseEntry(editEntry.id, payload)
+          : await diaryService.addExerciseEntry(selectedDate, payload);
 
         if (res.ok && res.data) {
           updateExerciseEntry(selectedDate, entry.id, {
             ...entry,
             id: String(res.data.id),
           });
+        } else {
+          console.warn(`[ExerciseLogger] Failed to ${isExistingBackendEntry ? 'update' : 'add'} exercise entry on backend:`, res.error);
         }
-      } catch (err) {
-        console.error('Failed to sync exercise entry to backend:', err);
       }
     }
 

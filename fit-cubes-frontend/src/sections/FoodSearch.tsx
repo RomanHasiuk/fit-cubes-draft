@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { ChevronLeft, Plus, Search, AlertTriangle, WifiOff, RefreshCw, Loader2 } from 'lucide-react';
 import { useStore } from '@/store/useStore';
 import { useFoodFilter } from '@/hooks/useFoodFilter';
@@ -43,11 +43,20 @@ export default function FoodSearch({
   const [isCreatingFood, setIsCreatingFood] = useState(false);
   const [editingFood, setEditingFood] = useState<FoodItem | null>(null);
   const [isRetrying, setIsRetrying] = useState(false);
+  const [serverProducts, setServerProducts] = useState<FoodItem[]>([]);
+  const [isSearchingServer, setIsSearchingServer] = useState(false);
   const isLoadingData = useStore((state) => state.isLoadingData);
 
+  const combinedProducts = useMemo(() => {
+    if (serverProducts.length === 0) return products;
+    const existingIds = new Set(products.map((p) => p.id));
+    const newItems = serverProducts.filter((p) => !existingIds.has(p.id));
+    return newItems.length > 0 ? [...products, ...newItems] : products;
+  }, [products, serverProducts]);
+
   const availableProducts = useMemo(() => {
-    if (!recipesOnly) return products;
-    return products.filter(
+    if (!recipesOnly) return combinedProducts;
+    return combinedProducts.filter(
       (p) =>
         p.id.startsWith('recipe_') ||
         p.category === 'My Meals' ||
@@ -55,7 +64,7 @@ export default function FoodSearch({
         Boolean(p.ingredients && p.ingredients.length > 0) ||
         p.cookedWeight !== undefined
     );
-  }, [products, recipesOnly]);
+  }, [combinedProducts, recipesOnly]);
 
   const {
     query,
@@ -76,28 +85,58 @@ export default function FoodSearch({
     favoriteProductIds,
   });
 
+  // Debounced server search when typing 2+ characters
+  useEffect(() => {
+    const trimmed = query.trim();
+    if (!trimmed || trimmed.length < 2 || recipesOnly || !authService.isAuthenticated()) {
+      setServerProducts([]);
+      setIsSearchingServer(false);
+      return;
+    }
+
+    let isCancelled = false;
+    setIsSearchingServer(true);
+
+    const timer = setTimeout(async () => {
+      try {
+        const res = await productService.searchProducts(trimmed, { size: 50 });
+        if (isCancelled) return;
+        if (res.ok && res.data) {
+          const items = extractApiItems<ProductDto>(res.data);
+          const mapped = items.map(mapProductDtoToFoodItem);
+          setServerProducts(mapped);
+        }
+      } catch (err) {
+        console.warn('[FoodSearch] Server search failed:', err);
+      } finally {
+        if (!isCancelled) {
+          setIsSearchingServer(false);
+        }
+      }
+    }, 350);
+
+    return () => {
+      isCancelled = true;
+      clearTimeout(timer);
+    };
+  }, [query, recipesOnly]);
+
   const handleRetryProducts = async () => {
     setIsRetrying(true);
-    try {
-      const res = await productService.getProducts({ size: 250 });
-      if (res.ok && res.data) {
-        const items = extractApiItems<ProductDto>(res.data);
-        if (items.length > 0) {
-          setProducts(items.map(mapProductDtoToFoodItem));
-          setProductsError(null);
-        } else {
-          setProductsError('EMPTY_DATABASE');
-        }
+    const res = await productService.getProducts({ size: 250 });
+    if (res.ok && res.data) {
+      const items = extractApiItems<ProductDto>(res.data);
+      if (items.length > 0) {
+        setProducts(items.map(mapProductDtoToFoodItem));
+        setProductsError(null);
       } else {
-        const isOffline = typeof navigator !== 'undefined' && !navigator.onLine;
-        setProductsError(isOffline ? 'NO_INTERNET' : 'SERVER_ERROR');
+        setProductsError('EMPTY_DATABASE');
       }
-    } catch {
+    } else {
       const isOffline = typeof navigator !== 'undefined' && !navigator.onLine;
       setProductsError(isOffline ? 'NO_INTERNET' : 'SERVER_ERROR');
-    } finally {
-      setIsRetrying(false);
     }
+    setIsRetrying(false);
   };
 
   const handleSelect = (food: FoodItem) => {
@@ -175,6 +214,7 @@ export default function FoodSearch({
         onToggleSortDirection={() =>
           setSortDirection((prev) => (prev === 'asc' ? 'desc' : 'asc'))
         }
+        isLoading={isSearchingServer}
       />
 
       {/* Food List with Custom Blue Scrollbar and 10px insets */}

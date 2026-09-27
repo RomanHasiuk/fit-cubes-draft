@@ -27,8 +27,8 @@ export const MobileMenuSelection: React.FC<MobileMenuSelectionProps> = ({
     }
   };
 
-  const handleLogout = () => {
-    authService.logout();
+  const handleLogout = async () => {
+    await authService.logout();
     useStore.setState({ isOnboarded: false });
     setMobileMenuOpen(false);
     window.location.href = '/';

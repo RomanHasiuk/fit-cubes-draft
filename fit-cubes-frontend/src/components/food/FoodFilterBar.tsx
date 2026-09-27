@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Search, X, ChevronDown, Check, ArrowDown } from 'lucide-react';
+import { Search, X, ChevronDown, Check, ArrowDown, Loader2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { SORT_OPTIONS, type SortKey, type SortDirection } from '@/hooks/useFoodFilter';
 
@@ -14,6 +14,7 @@ interface FoodFilterBarProps {
   sortDirection: SortDirection;
   onSelectSort: (sortKey: SortKey) => void;
   onToggleSortDirection: () => void;
+  isLoading?: boolean;
 }
 
 export const FoodFilterBar: React.FC<FoodFilterBarProps> = ({
@@ -27,6 +28,7 @@ export const FoodFilterBar: React.FC<FoodFilterBarProps> = ({
   sortDirection,
   onSelectSort,
   onToggleSortDirection,
+  isLoading = false,
 }) => {
   const [showCategoryMenu, setShowCategoryMenu] = useState(false);
   const [showSortMenu, setShowSortMenu] = useState(false);
@@ -46,7 +48,9 @@ export const FoodFilterBar: React.FC<FoodFilterBarProps> = ({
             placeholder="Enter food name..."
             className="w-full h-11 pl-10 pr-10 bg-[#16181D]/60 border border-[#32363E] rounded-[5px] text-sm text-[#F5F6FA] placeholder:text-[#8E8F96] outline-none focus:border-[#F59F0A] transition-colors"
           />
-          {query && (
+          {isLoading ? (
+            <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#F59F0A] animate-spin" />
+          ) : query ? (
             <button
               type="button"
               onClick={onClearQuery}
@@ -54,7 +58,7 @@ export const FoodFilterBar: React.FC<FoodFilterBarProps> = ({
             >
               <X className="w-4 h-4 text-muted-foreground" />
             </button>
-          )}
+          ) : null}
         </div>
       </div>
 

@@ -26,8 +26,8 @@ export const MenuSelection: React.FC<MenuSelectionProps> = ({
     }
   };
 
-  const handleLogout = () => {
-    authService.logout();
+  const handleLogout = async () => {
+    await authService.logout();
     useStore.setState({ isOnboarded: false });
     setMenuOpen(false);
     window.location.href = '/';

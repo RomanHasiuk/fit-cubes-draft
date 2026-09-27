@@ -18,6 +18,7 @@ import { diaryService } from '@/services/diaryService';
 import {
   mapDiaryFoodEntryDtoToFoodEntry,
   mapDiaryExerciseEntryDtoToExerciseEntry,
+  isServerId,
 } from '@/utils/apiMappers';
 import type { FoodItem, FoodEntry, ExerciseEntry } from '@/types';
 
@@ -157,38 +158,34 @@ export default function Diary() {
     setShowExercise(true);
   };
 
-  const handleConfirmDeleteExercise = () => {
+  const handleConfirmDeleteExercise = async () => {
     if (!exerciseToDelete) return;
     const entry = exerciseToDelete;
     setExerciseToDelete(null);
     removeExerciseEntry(selectedDate, entry.id);
 
-    if (authService.isAuthenticated()) {
-      // Only sync with backend if entry has a numeric DB ID
-      if (!entry.id.startsWith('ex_') && /^\d+$/.test(entry.id)) {
-        diaryService.removeExerciseEntry(selectedDate, entry.id).catch((err) => {
-          console.error('Failed to delete exercise entry from backend:', err);
-          setSyncError('Could not sync exercise removal with server.');
-          setTimeout(() => setSyncError(null), 3000);
-        });
+    if (authService.isAuthenticated() && isServerId(entry.id)) {
+      const res = await diaryService.removeExerciseEntry(selectedDate, entry.id);
+      if (!res.ok) {
+        console.error('Failed to delete exercise entry from backend:', res.error);
+        setSyncError(res.error || 'Could not sync exercise removal with server.');
+        setTimeout(() => setSyncError(null), 3000);
       }
     }
   };
 
-  const handleConfirmDeleteFood = () => {
+  const handleConfirmDeleteFood = async () => {
     if (!entryToDelete) return;
     const entry = entryToDelete;
     setEntryToDelete(null);
     removeFoodEntry(selectedDate, entry.id);
 
-    if (authService.isAuthenticated()) {
-      // Only sync with backend if entry has a numeric DB ID
-      if (!entry.id.startsWith('fe_') && /^\d+$/.test(entry.id)) {
-        diaryService.removeFoodEntry(selectedDate, entry.id).catch((err) => {
-          console.error('Failed to delete food entry from backend:', err);
-          setSyncError('Could not sync food removal with server.');
-          setTimeout(() => setSyncError(null), 3000);
-        });
+    if (authService.isAuthenticated() && isServerId(entry.id)) {
+      const res = await diaryService.removeFoodEntry(selectedDate, entry.id);
+      if (!res.ok) {
+        console.error('Failed to delete food entry from backend:', res.error);
+        setSyncError(res.error || 'Could not sync food removal with server.');
+        setTimeout(() => setSyncError(null), 3000);
       }
     }
   };
@@ -199,7 +196,6 @@ export default function Diary() {
 
   return (
     <div className="mx-auto flex h-full w-full max-w-[1016px] flex-col relative px-4 md:px-8 pt-[102px] md:pt-[126px] pb-12">
-      {/* Network Sync Feedback */}
       <AnimatePresence>
         {syncError && (
           <motion.div

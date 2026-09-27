@@ -8,7 +8,7 @@ import FoodAnalysis from '@/components/FoodAnalysis';
 import { blockInvalidIntegerInput, sanitizePositiveInt } from '@/utils/inputHandlers';
 import { diaryService } from '@/services/diaryService';
 import { authService } from '@/services/authService';
-import { buildFoodEntryRequest } from '@/utils/apiMappers';
+import { buildFoodEntryRequest, isServerId } from '@/utils/apiMappers';
 
 interface FoodAddProps {
   food: FoodItem;
@@ -78,26 +78,20 @@ export default function FoodAdd({ food, mealType, existingEntry, onClose, onDone
     }
 
     if (authService.isAuthenticated()) {
-      const isExistingBackendEntry =
-        existingEntry &&
-        !existingEntry.id.startsWith('fe_') &&
-        /^\d+$/.test(existingEntry.id);
+      const isExistingBackendEntry = Boolean(existingEntry && isServerId(existingEntry.id));
+      const payload = buildFoodEntryRequest(food, w, mealType, selectedDate);
 
-      try {
-        if (isExistingBackendEntry) {
-          await diaryService.removeFoodEntry(selectedDate, existingEntry.id);
-        }
+      const res = isExistingBackendEntry && existingEntry
+        ? await diaryService.patchFoodEntry(existingEntry.id, payload)
+        : await diaryService.addFoodEntry(selectedDate, payload);
 
-        const payload = buildFoodEntryRequest(food, w, mealType, selectedDate);
-        const res = await diaryService.addFoodEntry(selectedDate, payload);
-        if (res.ok && res.data) {
-          updateFoodEntry(selectedDate, entry.id, {
-            ...entry,
-            id: String(res.data.id),
-          });
-        }
-      } catch (err) {
-        console.error('Failed to sync food entry to backend:', err);
+      if (res.ok && res.data) {
+        updateFoodEntry(selectedDate, entry.id, {
+          ...entry,
+          id: String(res.data.id),
+        });
+      } else {
+        console.warn(`[FoodAdd] Failed to ${isExistingBackendEntry ? 'update' : 'add'} food entry on backend:`, res.error);
       }
     }
 

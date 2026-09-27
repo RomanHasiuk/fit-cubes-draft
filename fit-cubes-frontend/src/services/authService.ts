@@ -51,19 +51,25 @@ export const authService = {
     return res;
   },
 
-  async getCurrentUser(): Promise<ApiResponse<AuthUser>> {
-    return apiClient.get<AuthUser>('/auth/me');
-  },
-
-  logout(): void {
+  clearLocalSession(): void {
     localStorage.removeItem('fitcubes_auth_token');
     localStorage.removeItem('fitcubes_auth_user');
-    localStorage.removeItem('token');
+    localStorage.removeItem('fitcubes-storage');
     window.dispatchEvent(new Event('fitcubes_auth_change'));
   },
 
+  async logout(): Promise<void> {
+    try {
+      await apiClient.post('/auth/logout');
+    } catch (err) {
+      console.warn('[AuthService] Logout backend request failed:', err);
+    } finally {
+      this.clearLocalSession();
+    }
+  },
+
   isAuthenticated(): boolean {
-    return Boolean(localStorage.getItem('fitcubes_auth_token') || localStorage.getItem('token'));
+    return Boolean(localStorage.getItem('fitcubes_auth_token'));
   },
 
   initiateSocialAuth(provider: SocialProvider): void {

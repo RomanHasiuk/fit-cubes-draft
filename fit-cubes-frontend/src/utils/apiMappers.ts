@@ -32,7 +32,11 @@ export function mapProfileToUpdatePayload(profile: UserProfile): UpdateProfilePa
   const firstName = nameParts[0] || undefined;
   const lastName = nameParts.length > 1 ? nameParts.slice(1).join(' ') : undefined;
 
-  const genderApi: GenderApi = profile.gender === 'female' ? 'FEMALE' : 'MALE';
+  const genderApi: GenderApi | undefined = profile.gender
+    ? profile.gender === 'female'
+      ? 'FEMALE'
+      : 'MALE'
+    : undefined;
 
   const goalMap: Record<WeightGoal, GoalApi> = {
     [WEIGHT_GOAL.LOSE]: 'WEIGHT_LOSS',
@@ -47,24 +51,48 @@ export function mapProfileToUpdatePayload(profile: UserProfile): UpdateProfilePa
     [DIET_TYPE.HIGH_PROTEIN]: 'BALANCED',
   };
 
-  const rawFactor = profile.activityFactor || 1.5;
-  const safeActivity = Number(Math.min(1.9, Math.max(1.2, rawFactor)).toFixed(2));
+  const safeActivity = profile.activityFactor
+    ? Number(Math.min(1.9, Math.max(1.2, profile.activityFactor)).toFixed(2))
+    : undefined;
 
-  const safeHeight = profile.heightCm ? Math.round(profile.heightCm) : undefined;
-  const safeProtein = profile.macroTargets?.protein !== undefined ? Math.round(profile.macroTargets.protein) : 0;
-  const safeCarbs = profile.macroTargets?.carbs !== undefined ? Math.round(profile.macroTargets.carbs) : 0;
-  const safeFats = profile.macroTargets?.fats !== undefined ? Math.round(profile.macroTargets.fats) : 0;
+  const safeHeight =
+    profile.heightCm && profile.heightCm >= 90 && profile.heightCm <= 250
+      ? Math.round(profile.heightCm)
+      : undefined;
+
+  const safeAge =
+    profile.age && profile.age >= 16
+      ? Math.round(profile.age)
+      : undefined;
+
+  const safeWeight =
+    profile.weightKg && profile.weightKg >= 30 && profile.weightKg <= 300
+      ? Number(profile.weightKg.toFixed(1))
+      : undefined;
+
+  const safeProtein =
+    profile.macroTargets?.protein && profile.macroTargets.protein > 0
+      ? Math.round(profile.macroTargets.protein)
+      : undefined;
+  const safeCarbs =
+    profile.macroTargets?.carbs && profile.macroTargets.carbs > 0
+      ? Math.round(profile.macroTargets.carbs)
+      : undefined;
+  const safeFats =
+    profile.macroTargets?.fats && profile.macroTargets.fats > 0
+      ? Math.round(profile.macroTargets.fats)
+      : undefined;
 
   return {
     firstName,
     lastName,
     gender: genderApi,
-    age: profile.age ? Math.round(profile.age) : undefined,
+    age: safeAge,
     height: safeHeight,
-    currentWeight: profile.weightKg || undefined,
+    currentWeight: safeWeight,
     activityLevel: safeActivity,
-    goal: profile.goal ? goalMap[profile.goal] : 'MAINTENANCE',
-    dietStrategy: profile.diet ? dietMap[profile.diet] : 'BALANCED',
+    goal: profile.goal ? goalMap[profile.goal] : undefined,
+    dietStrategy: profile.diet ? dietMap[profile.diet] : undefined,
     proteinTargetGrams: safeProtein,
     carbsTargetGrams: safeCarbs,
     fatsTargetGrams: safeFats,
@@ -219,9 +247,10 @@ export function mapFoodItemToCreateRecipeDto(
 ): CreateRecipeDto {
   const ingredients = (recipe.ingredients || []).map((ing) => {
     const rawId = String(ing.foodItemId).replace(/\D/g, '');
-    const numId = Number(rawId) || 1;
+    const numId = Number(rawId);
+    const validId = Number.isInteger(numId) && numId > 0 ? numId : 0;
     return {
-      foodItemId: numId,
+      foodItemId: validId,
       name: ing.name,
       weight: Number(ing.weight) || 100,
       caloriesPer100g: Number(ing.calories) || 0,
@@ -306,6 +335,24 @@ export function mapDiaryExerciseEntryDtoToExerciseEntry(dto: DiaryExerciseEntryD
   };
 }
 
+export function isServerId(id?: string | number | null): boolean {
+  if (typeof id === 'number') return id > 0;
+  return Boolean(id && /^\d+$/.test(id));
+}
+
+export function buildSafeLoggedAt(selectedDate: string): string {
+  const d = new Date();
+  const localToday = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+
+  if (selectedDate === localToday) {
+    return new Date(Date.now() - 5000).toISOString();
+  }
+
+  const candidate = new Date(`${selectedDate}T12:00:00`);
+  const safeTime = Math.min(candidate.getTime(), Date.now() - 5000);
+  return new Date(safeTime).toISOString();
+}
+
 export function buildFoodEntryRequest(
   food: FoodItem,
   weightGrams: number,
@@ -355,11 +402,7 @@ export function buildFoodEntryRequest(
     }
   }
 
-  const now = new Date();
-  const isToday = selectedDate === now.toISOString().split('T')[0];
-  const loggedAt = isToday
-    ? new Date(Date.now() - 60000).toISOString()
-    : `${selectedDate}T12:00:00.000Z`;
+  const loggedAt = buildSafeLoggedAt(selectedDate);
 
   return {
     sourceType,
@@ -376,16 +419,26 @@ export function buildFoodEntryRequest(
   };
 }
 
-// Extracts items from PageResponse or raw array
+// Extracts items from PageResponse, nested data or raw array
 export function extractApiItems<T>(rawData: unknown): T[] {
+  if (!rawData) return [];
   if (Array.isArray(rawData)) return rawData as T[];
-  if (
-    typeof rawData === 'object' &&
-    rawData !== null &&
-    'content' in rawData &&
-    Array.isArray((rawData as { content: unknown }).content)
-  ) {
-    return (rawData as { content: T[] }).content;
+  if (typeof rawData === 'object' && rawData !== null) {
+    if ('content' in rawData && Array.isArray((rawData as { content: unknown }).content)) {
+      return (rawData as { content: T[] }).content;
+    }
+    if ('data' in rawData) {
+      const nested = (rawData as { data: unknown }).data;
+      if (Array.isArray(nested)) return nested as T[];
+      if (
+        typeof nested === 'object' &&
+        nested !== null &&
+        'content' in nested &&
+        Array.isArray((nested as { content: unknown }).content)
+      ) {
+        return (nested as { content: T[] }).content;
+      }
+    }
   }
   return [];
 }

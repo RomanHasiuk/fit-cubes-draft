@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Sun, Moon, Monitor, RotateCcw } from 'lucide-react';
+import { Sun, Moon, Monitor } from 'lucide-react';
 import { useStore } from '@/store/useStore';
 import {
   calculateBMR,
@@ -19,7 +19,6 @@ import {
 import { sanitizeNameInput } from '@/utils/inputHandlers';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { ConfirmModal } from '@/components/ui/ConfirmModal';
 import { ProfileSkeleton } from '@/components/profile/ProfileSkeleton';
 import { EnergyTargetsCard } from '@/components/profile/EnergyTargetsCard';
 import { BodyMetricsCard } from '@/components/profile/BodyMetricsCard';
@@ -39,7 +38,6 @@ export default function ProfileScreen() {
   const updateProfile = useStore((state) => state.updateProfile);
 
   const [isLoading, setIsLoading] = useState(true);
-  const [showResetConfirm, setShowResetConfirm] = useState(false);
   const [syncError, setSyncError] = useState<string | null>(null);
   const [draft, setDraft] = useState(profile);
 
@@ -188,11 +186,6 @@ export default function ProfileScreen() {
     setDraft(profile);
   };
 
-  const handleResetAppData = () => {
-    authService.clearLocalSession();
-    window.location.reload();
-  };
-
   if (isLoading) {
     return <ProfileSkeleton />;
   }
@@ -290,18 +283,6 @@ export default function ProfileScreen() {
           weightKg={draft.weightKg || 70}
           onProteinChange={handleProteinChange}
         />
-
-        {/* Danger Zone: Reset App Data */}
-        <div className="pt-2 border-t border-[#32363E]/60">
-          <button
-            type="button"
-            onClick={() => setShowResetConfirm(true)}
-            className="flex h-[44px] w-full cursor-pointer items-center justify-center gap-2 rounded-[5px] border border-red-500/20 bg-red-500/10 font-sans text-[14px] font-semibold text-red-400 transition-all hover:bg-red-500/20 active:scale-[0.99]"
-          >
-            <RotateCcw className="h-4 w-4" />
-            Reset App Data
-          </button>
-        </div>
       </div>
 
       {/* Floating Save / Cancel Bar */}
@@ -343,18 +324,6 @@ export default function ProfileScreen() {
           </div>
         )}
       </AnimatePresence>
-
-      {/* Unified Reset Confirmation Modal */}
-      <ConfirmModal
-        isOpen={showResetConfirm}
-        title="Reset App Data?"
-        description="This action cannot be undone. All your logs, custom foods, and settings will be permanently deleted."
-        confirmText="Yes, Reset"
-        cancelText="Cancel"
-        variant="destructive"
-        onConfirm={handleResetAppData}
-        onCancel={() => setShowResetConfirm(false)}
-      />
     </div>
   );
 }

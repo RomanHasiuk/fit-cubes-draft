@@ -89,7 +89,7 @@ export const FoodFilterBar: React.FC<FoodFilterBarProps> = ({
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -10 }}
-                className="absolute top-full left-0 mt-2 w-48 max-h-64 overflow-y-auto custom-scrollbar rounded-[5px] border border-[#32363E] bg-[#16181D]/95 backdrop-blur-md shadow-2xl py-1.5"
+                className="absolute top-0 left-0 mt-2 w-48 max-h-64 overflow-y-auto custom-scrollbar glass-card rounded-2xl border border-white/10 shadow-2xl py-2"
               >
                 {uniqueCategories.map((cat) => (
                   <button
@@ -139,7 +139,7 @@ export const FoodFilterBar: React.FC<FoodFilterBarProps> = ({
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -10 }}
-                className="absolute top-full right-0 mt-2 w-48 rounded-[5px] border border-[#32363E] bg-[#16181D]/95 backdrop-blur-md shadow-2xl py-1.5"
+                className="absolute top-0 right-0 mt-2 w-48 glass-card rounded-2xl border border-white/10 shadow-2xl py-2"
               >
                 {SORT_OPTIONS.map((opt) => (
                   <button

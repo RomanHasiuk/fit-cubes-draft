@@ -14,7 +14,7 @@ export interface ProfileSlice {
 const initialTDEE = Math.round((10 * 85.5 + 6.25 * 180 - 5 * 28 + 5) * 1.55);
 const initialTargetCalories = calculateTargetCalories(initialTDEE, WEIGHT_GOAL.MAINTAIN);
 
-const defaultProfile: UserProfile = {
+export const defaultProfile: UserProfile = {
   name: '',
   gender: 'male',
   age: 28,

@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react';
 import { ChevronLeft, Check, Edit3, Loader2 } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router';
 import { useStore } from '@/store/useStore';
 import { calculatePortionOrCookedNutrition, generateSafeId } from '@/utils/calculations';
@@ -22,11 +23,13 @@ export default function FoodAdd({ food, mealType, existingEntry, onClose, onDone
   const selectedDate = useStore((state) => state.selectedDate);
   const addFoodEntry = useStore((state) => state.addFoodEntry);
   const updateFoodEntry = useStore((state) => state.updateFoodEntry);
+  const removeFoodEntry = useStore((state) => state.removeFoodEntry);
   const setEditingRecipe = useStore((state) => state.setEditingRecipe);
   const navigate = useNavigate();
   const [weight, setWeight] = useState(existingEntry ? existingEntry.weightGrams.toString() : '100');
   const [isCooked, setIsCooked] = useState(existingEntry ? !!existingEntry.isCooked : false);
   const [isSaving, setIsSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   const handleWeightChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = sanitizePositiveInt(e.target.value, 99999);
@@ -92,6 +95,14 @@ export default function FoodAdd({ food, mealType, existingEntry, onClose, onDone
         });
       } else {
         console.warn(`[FoodAdd] Failed to ${isExistingBackendEntry ? 'update' : 'add'} food entry on backend:`, res.error);
+        if (existingEntry) {
+          updateFoodEntry(selectedDate, existingEntry.id, existingEntry);
+        } else {
+          removeFoodEntry(selectedDate, entry.id);
+        }
+        setSaveError(res.error || 'Failed to sync with server. Please try again.');
+        setIsSaving(false);
+        return;
       }
     }
 
@@ -120,6 +131,19 @@ export default function FoodAdd({ food, mealType, existingEntry, onClose, onDone
           {existingEntry ? 'Update' : 'Add'}
         </button>
       </div>
+
+      <AnimatePresence>
+        {saveError && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            className="mx-4 mt-2 p-2.5 rounded-lg bg-destructive/15 border border-destructive/30 text-destructive text-xs font-medium text-center"
+          >
+            {saveError}
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Content */}
       <div className="flex-1 overflow-y-auto no-scrollbar px-5 pb-8 pt-4">

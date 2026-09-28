@@ -1,4 +1,4 @@
-import { useState, type ChangeEvent, type FormEvent } from 'react';
+import { useState, useRef, useEffect, type ChangeEvent, type FormEvent } from 'react';
 import { authService, type SocialProvider } from '@/services/authService';
 import { useStore } from '@/store/useStore';
 
@@ -19,6 +19,12 @@ interface UseAuthFormOptions {
 const CYRILLIC_REGEX = /[\u0400-\u04FF]/;
 const EMAIL_LATIN_REGEX = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
 
+const SOCIAL_PROVIDER_NAMES: Record<SocialProvider, string> = {
+  google: 'Google',
+  apple: 'Apple',
+  facebook: 'Facebook',
+};
+
 export function useAuthForm({ initialMode = 'login', onSuccess }: UseAuthFormOptions) {
   const [mode, setMode] = useState<AuthMode>(initialMode);
   const [email, setEmail] = useState('');
@@ -29,13 +35,25 @@ export function useAuthForm({ initialMode = 'login', onSuccess }: UseAuthFormOpt
   const [isLoading, setIsLoading] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const [generalError, setGeneralError] = useState<string | null>(null);
+  const [socialNotice, setSocialNotice] = useState<string | null>(null);
   const [isForgotPasswordOpen, setIsForgotPasswordOpen] = useState(false);
+
+  const socialNoticeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (socialNoticeTimeoutRef.current) {
+        clearTimeout(socialNoticeTimeoutRef.current);
+      }
+    };
+  }, []);
 
   const isLogin = mode === 'login';
 
   const handleModeToggle = (newMode: AuthMode) => {
     setFieldErrors({});
     setGeneralError(null);
+    setSocialNotice(null);
     setMode(newMode);
   };
 
@@ -223,13 +241,24 @@ export function useAuthForm({ initialMode = 'login', onSuccess }: UseAuthFormOpt
 
   const handleSocialAuth = (provider: SocialProvider) => {
     setIsLoading(true);
-    // Stage 2 OAuth2 integration:
+    setSocialNotice(null);
+    if (socialNoticeTimeoutRef.current) {
+      clearTimeout(socialNoticeTimeoutRef.current);
+    }
+
     authService.initiateSocialAuth(provider);
 
     setTimeout(() => {
       setIsLoading(false);
-      onSuccess();
-    }, 600);
+      const providerLabel = SOCIAL_PROVIDER_NAMES[provider] || 'Social';
+      setSocialNotice(
+        `${providerLabel} authorization is currently unavailable in this preview. Please use email.`
+      );
+
+      socialNoticeTimeoutRef.current = setTimeout(() => {
+        setSocialNotice(null);
+      }, 5000);
+    }, 400);
   };
 
   return {
@@ -243,6 +272,7 @@ export function useAuthForm({ initialMode = 'login', onSuccess }: UseAuthFormOpt
     isLoading,
     fieldErrors,
     generalError,
+    socialNotice,
     isForgotPasswordOpen,
     handleModeToggle,
     handleEmailChange,

@@ -1,8 +1,10 @@
+import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Check, Loader2 } from 'lucide-react';
+import { Check, Loader2, AlertCircle } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { SocialAuthButtons } from './SocialAuthButtons';
 import { ForgotPasswordModal } from './ForgotPasswordModal';
+import { LegalModal, type LegalModalType } from './LegalModal';
 import { Button } from '@/components/ui/button';
 import { useAuthForm, type AuthMode } from './useAuthForm';
 import {
@@ -32,6 +34,7 @@ export function AuthForm({
     agreeTerms,
     isLoading,
     generalError,
+    socialNotice,
     fieldErrors,
     isForgotPasswordOpen,
     handleEmailChange,
@@ -48,6 +51,8 @@ export function AuthForm({
     handleSocialAuth,
     handleSubmit,
   } = useAuthForm({ initialMode, onSuccess });
+
+  const [legalModalType, setLegalModalType] = useState<LegalModalType | null>(null);
 
   return (
     <motion.div
@@ -248,13 +253,29 @@ export function AuthForm({
                   </div>
                   <span className="leading-snug text-white/70">
                     By signing up you are giving the thumbs up to our{' '}
-                    <a href="#terms" className="text-[#2F80ED] hover:underline">
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        setLegalModalType('terms');
+                      }}
+                      className="text-[#2F80ED] hover:underline cursor-pointer font-medium"
+                    >
                       Terms of Service
-                    </a>{' '}
+                    </button>{' '}
                     and{' '}
-                    <a href="#privacy" className="text-[#2F80ED] hover:underline">
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        setLegalModalType('privacy');
+                      }}
+                      className="text-[#2F80ED] hover:underline cursor-pointer font-medium"
+                    >
                       Privacy Policy
-                    </a>
+                    </button>
                     .
                   </span>
                 </label>
@@ -348,11 +369,35 @@ export function AuthForm({
         itemVariants={authItemVariants}
       />
 
+      {/* Social Authorization Notice */}
+      <AnimatePresence>
+        {socialNotice && (
+          <motion.div
+            layout
+            initial={{ opacity: 0, y: 8, scale: 0.98 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -6, scale: 0.98 }}
+            transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
+            className="mt-3 px-3.5 py-2.5 rounded-[5px] bg-amber-500/10 border border-amber-500/25 text-amber-300 text-xs font-medium flex items-center gap-2.5 shadow-sm"
+          >
+            <AlertCircle className="w-4 h-4 shrink-0 text-amber-400" />
+            <span className="leading-snug">{socialNotice}</span>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Custom Forgot Password Modal (Supports Light & Dark Theme) */}
       <ForgotPasswordModal
         isOpen={isForgotPasswordOpen}
         initialEmail={email}
         onClose={handleCloseForgotPassword}
+      />
+
+      {/* Terms of Service & Privacy Policy Preview Modal */}
+      <LegalModal
+        isOpen={Boolean(legalModalType)}
+        type={legalModalType}
+        onClose={() => setLegalModalType(null)}
       />
     </motion.div>
   );

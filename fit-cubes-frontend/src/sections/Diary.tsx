@@ -28,7 +28,9 @@ export default function Diary() {
   const dailyLogs = useStore((state) => state.dailyLogs);
   const products = useStore((state) => state.products);
   const removeFoodEntry = useStore((state) => state.removeFoodEntry);
+  const addFoodEntry = useStore((state) => state.addFoodEntry);
   const removeExerciseEntry = useStore((state) => state.removeExerciseEntry);
+  const addExerciseEntry = useStore((state) => state.addExerciseEntry);
   const syncDayLog = useStore((state) => state.syncDayLog);
   const pendingFoodLog = useStore((state) => state.pendingFoodLog);
   const setPendingFoodLog = useStore((state) => state.setPendingFoodLog);
@@ -168,6 +170,7 @@ export default function Diary() {
       const res = await diaryService.removeExerciseEntry(selectedDate, entry.id);
       if (!res.ok) {
         console.error('Failed to delete exercise entry from backend:', res.error);
+        addExerciseEntry(selectedDate, entry);
         setSyncError(res.error || 'Could not sync exercise removal with server.');
         setTimeout(() => setSyncError(null), 3000);
       }
@@ -184,6 +187,7 @@ export default function Diary() {
       const res = await diaryService.removeFoodEntry(selectedDate, entry.id);
       if (!res.ok) {
         console.error('Failed to delete food entry from backend:', res.error);
+        addFoodEntry(selectedDate, entry);
         setSyncError(res.error || 'Could not sync food removal with server.');
         setTimeout(() => setSyncError(null), 3000);
       }

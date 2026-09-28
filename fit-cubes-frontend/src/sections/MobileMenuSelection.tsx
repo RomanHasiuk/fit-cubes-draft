@@ -1,9 +1,9 @@
 import type React from 'react';
 import { motion } from 'framer-motion';
 import { Link, useLocation } from 'react-router';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { authService } from '@/services/authService';
-import { useStore } from '@/store/useStore';
+import { ComingSoonModal, type ComingSoonFeature } from '@/components/ui/ComingSoonModal';
 import logoutIcon from '@/components/images/Logout.svg';
 
 interface MobileMenuSelectionProps {
@@ -15,22 +15,32 @@ export const MobileMenuSelection: React.FC<MobileMenuSelectionProps> = ({
 }) => {
   const { pathname } = useLocation();
   const menuRef = useRef<HTMLDivElement>(null);
+  const [activeFeature, setActiveFeature] = useState<ComingSoonFeature | null>(null);
 
   useEffect(() => {
     menuRef.current?.focus();
   }, []);
 
   const handleBlur = (event: React.FocusEvent<HTMLDivElement>) => {
+    if (activeFeature) return;
     const nextFocusedElement = event.relatedTarget as Node | null;
     if (!event.currentTarget.contains(nextFocusedElement)) {
       setMobileMenuOpen(false);
     }
   };
 
-  const handleLogout = async () => {
-    await authService.logout();
-    useStore.setState({ isOnboarded: false });
+  const handleOpenFeature = (feature: ComingSoonFeature) => {
+    setActiveFeature(feature);
+  };
+
+  const handleCloseFeature = () => {
+    setActiveFeature(null);
     setMobileMenuOpen(false);
+  };
+
+  const handleLogout = async () => {
+    setMobileMenuOpen(false);
+    await authService.logout();
     window.location.href = '/';
   };
 
@@ -42,7 +52,9 @@ export const MobileMenuSelection: React.FC<MobileMenuSelectionProps> = ({
         exit={{ opacity: 0 }}
         transition={{ duration: 0.2, ease: 'easeOut' }}
         className="fixed inset-0 z-50 bg-black"
-        onClick={() => setMobileMenuOpen(false)}
+        onClick={() => {
+          if (!activeFeature) setMobileMenuOpen(false);
+        }}
       />
       <div className="pointer-events-none fixed inset-0 z-50 flex items-start justify-center">
         <motion.div
@@ -99,28 +111,38 @@ export const MobileMenuSelection: React.FC<MobileMenuSelectionProps> = ({
 
           <ul className="flex flex-col gap-1.5 border-b border-[#32363E] pb-2">
             <li>
-              <Link
-                to="/profile"
-                onClick={() => setMobileMenuOpen(false)}
-                className="flex h-[40px] w-full items-center justify-center rounded-lg border border-[#32363E] text-sm font-medium text-white transition-all hover:border-primary/50 hover:bg-white/5"
+              <button
+                type="button"
+                onClick={() => handleOpenFeature('body')}
+                className="flex h-[40px] w-full items-center justify-between px-3.5 rounded-lg border border-[#32363E] text-sm font-medium text-white transition-all hover:border-primary/50 hover:bg-white/5 cursor-pointer"
               >
-                Body metrics
-              </Link>
+                <span>Body Metrics</span>
+                <span className="text-[10px] uppercase font-sans font-semibold tracking-wider text-primary bg-primary/10 border border-primary/20 px-1.5 py-0.5 rounded-[3px]">
+                  Soon
+                </span>
+              </button>
+            </li>
+            <li>
+              <button
+                type="button"
+                onClick={() => handleOpenFeature('exercise')}
+                className="flex h-[40px] w-full items-center justify-between px-3.5 rounded-lg border border-[#32363E] text-sm font-medium text-white transition-all hover:border-primary/50 hover:bg-white/5 cursor-pointer"
+              >
+                <span>Exercise Metrics</span>
+                <span className="text-[10px] uppercase font-sans font-semibold tracking-wider text-primary bg-primary/10 border border-primary/20 px-1.5 py-0.5 rounded-[3px]">
+                  Soon
+                </span>
+              </button>
             </li>
             <li>
               <Link
                 to="/profile"
                 onClick={() => setMobileMenuOpen(false)}
-                className="flex h-[40px] w-full items-center justify-center rounded-lg border border-[#32363E] text-sm font-medium text-white transition-all hover:border-primary/50 hover:bg-white/5"
-              >
-                Exercise Metrics
-              </Link>
-            </li>
-            <li>
-              <Link
-                to="/profile"
-                onClick={() => setMobileMenuOpen(false)}
-                className="flex h-[40px] w-full items-center justify-center rounded-lg border border-[#32363E] text-sm font-medium text-white transition-all hover:border-primary/50 hover:bg-white/5"
+                className={`flex h-[40px] w-full items-center justify-center rounded-lg border text-sm font-medium transition-all ${
+                  pathname === '/profile'
+                    ? 'border-primary bg-primary/10 font-semibold text-primary'
+                    : 'border-[#32363E] text-white hover:border-primary/50 hover:bg-white/5'
+                }`}
               >
                 Settings
               </Link>
@@ -145,6 +167,12 @@ export const MobileMenuSelection: React.FC<MobileMenuSelectionProps> = ({
           </div>
         </motion.div>
       </div>
+
+      <ComingSoonModal
+        isOpen={Boolean(activeFeature)}
+        feature={activeFeature}
+        onClose={handleCloseFeature}
+      />
     </>
   );
 };

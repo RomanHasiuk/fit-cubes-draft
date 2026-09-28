@@ -127,7 +127,12 @@ export default function FoodSearch({
     if (res.ok && res.data) {
       const items = extractApiItems<ProductDto>(res.data);
       if (items.length > 0) {
-        setProducts(items.map(mapProductDtoToFoodItem));
+        const currentProducts = useStore.getState().products;
+        const customProducts = currentProducts.filter(
+          (p) => p.id.startsWith('custom_') || p.id.startsWith('recipe_')
+        );
+        const mappedServerProducts = items.map(mapProductDtoToFoodItem);
+        setProducts([...customProducts, ...mappedServerProducts]);
         setProductsError(null);
       } else {
         setProductsError('EMPTY_DATABASE');

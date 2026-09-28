@@ -1,8 +1,8 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { createProfileSlice, type ProfileSlice } from './slices/createProfileSlice';
+import { createProfileSlice, type ProfileSlice, defaultProfile } from './slices/createProfileSlice';
 import { createDataSlice, type DataSlice } from './slices/createDataSlice';
-import { createLogSlice, type LogSlice } from './slices/createLogSlice';
+import { createLogSlice, type LogSlice, getTodayString } from './slices/createLogSlice';
 import { createUISlice, type UISlice } from './slices/createUISlice';
 
 export type StoreState = ProfileSlice & DataSlice & LogSlice & UISlice;
@@ -29,3 +29,33 @@ export const useStore = create<StoreState>()(
     }
   )
 );
+
+/**
+ * Completely purges all user data and resets store to pristine initial state.
+ * Clears both in-memory state and localStorage persist container.
+ */
+export const resetStore = (): void => {
+  useStore.setState({
+    profile: defaultProfile,
+    isOnboarded: false,
+    products: [],
+    productsError: null,
+    activities: [],
+    activitiesError: null,
+    isLoadingData: false,
+    editingRecipe: null,
+    customCategories: [],
+    favoriteProductIds: [],
+    dailyLogs: [],
+    selectedDate: getTodayString(),
+    pendingFoodLog: null,
+    openModalCount: 0,
+  });
+
+  try {
+    useStore.persist.clearStorage();
+  } catch (err) {
+    console.warn('[useStore] Failed to clear persistent storage:', err);
+  }
+};
+

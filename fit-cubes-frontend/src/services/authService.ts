@@ -1,4 +1,5 @@
 import { apiClient, type ApiResponse } from './apiClient';
+import { resetStore } from '@/store/useStore';
 
 export interface AuthUser {
   id: string;
@@ -52,9 +53,9 @@ export const authService = {
   },
 
   clearLocalSession(): void {
+    resetStore();
     localStorage.removeItem('fitcubes_auth_token');
     localStorage.removeItem('fitcubes_auth_user');
-    localStorage.removeItem('fitcubes-storage');
     window.dispatchEvent(new Event('fitcubes_auth_change'));
   },
 

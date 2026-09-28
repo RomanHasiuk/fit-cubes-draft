@@ -1,9 +1,9 @@
 import type React from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { authService } from '@/services/authService';
-import { useStore } from '@/store/useStore';
+import { ComingSoonModal, type ComingSoonFeature } from '@/components/ui/ComingSoonModal';
 import logoutIcon from '@/components/images/Logout.svg';
 
 interface MenuSelectionProps {
@@ -14,22 +14,32 @@ export const MenuSelection: React.FC<MenuSelectionProps> = ({
   setMenuOpen,
 }) => {
   const menuRef = useRef<HTMLDivElement>(null);
+  const [activeFeature, setActiveFeature] = useState<ComingSoonFeature | null>(null);
 
   useEffect(() => {
     menuRef.current?.focus();
   }, []);
 
   const handleBlur = (event: React.FocusEvent<HTMLDivElement>) => {
+    if (activeFeature) return;
     const nextFocusedElement = event.relatedTarget as Node | null;
     if (!event.currentTarget.contains(nextFocusedElement)) {
       setMenuOpen(false);
     }
   };
 
-  const handleLogout = async () => {
-    await authService.logout();
-    useStore.setState({ isOnboarded: false });
+  const handleOpenFeature = (feature: ComingSoonFeature) => {
+    setActiveFeature(feature);
+  };
+
+  const handleCloseFeature = () => {
+    setActiveFeature(null);
     setMenuOpen(false);
+  };
+
+  const handleLogout = async () => {
+    setMenuOpen(false);
+    await authService.logout();
     window.location.href = '/';
   };
 
@@ -41,7 +51,9 @@ export const MenuSelection: React.FC<MenuSelectionProps> = ({
         exit={{ opacity: 0 }}
         transition={{ duration: 0.2, ease: 'easeOut' }}
         className="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs"
-        onClick={() => setMenuOpen(false)}
+        onClick={() => {
+          if (!activeFeature) setMenuOpen(false);
+        }}
       />
       <div className="pointer-events-none fixed inset-0 z-50 flex items-start justify-end">
         <div className="mx-auto flex w-[95%] max-w-6xl justify-end">
@@ -57,22 +69,28 @@ export const MenuSelection: React.FC<MenuSelectionProps> = ({
           >
             <ul className="flex flex-col gap-1.5 border-b border-[#32363E]/60 pb-2">
               <li>
-                <Link
-                  to="/profile"
-                  onClick={() => setMenuOpen(false)}
-                  className="flex h-[42px] w-full items-center justify-center rounded-[5px] border border-[#32363E] bg-[#16181D]/40 font-serif text-[15px] font-medium text-white transition-all hover:border-primary/50 hover:bg-white/5"
+                <button
+                  type="button"
+                  onClick={() => handleOpenFeature('body')}
+                  className="flex h-[42px] w-full items-center justify-between px-3 rounded-[5px] border border-[#32363E] bg-[#16181D]/40 font-serif text-[15px] font-medium text-white transition-all hover:border-primary/50 hover:bg-white/5 cursor-pointer"
                 >
-                  Body metrics
-                </Link>
+                  <span>Body Metrics</span>
+                  <span className="text-[10px] uppercase font-sans font-semibold tracking-wider text-primary bg-primary/10 border border-primary/20 px-1.5 py-0.5 rounded-[3px]">
+                    Soon
+                  </span>
+                </button>
               </li>
               <li>
-                <Link
-                  to="/profile"
-                  onClick={() => setMenuOpen(false)}
-                  className="flex h-[42px] w-full items-center justify-center rounded-[5px] border border-[#32363E] bg-[#16181D]/40 font-serif text-[15px] font-medium text-white transition-all hover:border-primary/50 hover:bg-white/5"
+                <button
+                  type="button"
+                  onClick={() => handleOpenFeature('exercise')}
+                  className="flex h-[42px] w-full items-center justify-between px-3 rounded-[5px] border border-[#32363E] bg-[#16181D]/40 font-serif text-[15px] font-medium text-white transition-all hover:border-primary/50 hover:bg-white/5 cursor-pointer"
                 >
-                  Exercise Metrics
-                </Link>
+                  <span>Exercise Metrics</span>
+                  <span className="text-[10px] uppercase font-sans font-semibold tracking-wider text-primary bg-primary/10 border border-primary/20 px-1.5 py-0.5 rounded-[3px]">
+                    Soon
+                  </span>
+                </button>
               </li>
               <li>
                 <Link
@@ -104,6 +122,12 @@ export const MenuSelection: React.FC<MenuSelectionProps> = ({
           </motion.div>
         </div>
       </div>
+
+      <ComingSoonModal
+        isOpen={Boolean(activeFeature)}
+        feature={activeFeature}
+        onClose={handleCloseFeature}
+      />
     </>
   );
 };

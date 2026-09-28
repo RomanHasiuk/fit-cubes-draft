@@ -129,8 +129,24 @@ function App() {
   }, []);
 
   useEffect(() => {
-    setShowOnboarding(!isOnboarded || !authService.isAuthenticated());
-  }, [isOnboarded]);
+    const handleAuthChange = () => {
+      const needsOnboarding = !isOnboarded || !authService.isAuthenticated();
+      setShowOnboarding(needsOnboarding);
+      if (needsOnboarding) {
+        navigate('/');
+      }
+    };
+
+    handleAuthChange();
+
+    window.addEventListener('fitcubes_auth_change', handleAuthChange);
+    window.addEventListener('storage', handleAuthChange);
+
+    return () => {
+      window.removeEventListener('fitcubes_auth_change', handleAuthChange);
+      window.removeEventListener('storage', handleAuthChange);
+    };
+  }, [isOnboarded, navigate]);
 
   useEffect(() => {
     // Apply theme on mount

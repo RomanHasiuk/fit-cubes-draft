@@ -150,7 +150,7 @@ export default function FoodAnalysis({
     let proteinCost: number | null = null;
     let proteinRatingText = "";
 
-    if (prot >= 1) {
+    if (prot > 0) {
       proteinCost = Math.round((cals / prot) * 10);
       if (proteinCost < 80) {
         proteinRatingText =
@@ -281,28 +281,34 @@ export default function FoodAnalysis({
       </motion.div>
 
       {/* Protein-to-Calorie Cost Analysis */}
-      {analysis.proteinCost !== null && (
-        <div className="mt-4 flex items-start gap-3 bg-primary/10 rounded-xl p-4 border border-primary/20">
-          <Lightbulb className="w-5 h-5 text-primary mt-0.5 shrink-0" />
-          <div className="space-y-1">
-            <p className="text-sm font-bold text-foreground">
-              Caloric cost of protein
-            </p>
+      <div className="mt-4 flex items-start gap-3 bg-primary/10 rounded-xl p-4 border border-primary/20">
+        <Lightbulb className="w-5 h-5 text-primary mt-0.5 shrink-0" />
+        <div className="space-y-1">
+          <p className="text-sm font-bold text-foreground">
+            Caloric cost of protein
+          </p>
+          {analysis.proteinCost !== null ? (
+            <>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                To get{" "}
+                <span className="font-semibold text-foreground">10g of protein</span>{" "}
+                from this product, you consume{" "}
+                <span className="font-bold text-primary">
+                  {formatLargeNumber(analysis.proteinCost)} kcal
+                </span>
+                .
+              </p>
+              <p className="text-[11px] text-primary/80 font-medium">
+                {analysis.proteinRatingText}
+              </p>
+            </>
+          ) : (
             <p className="text-xs text-muted-foreground leading-relaxed">
-              To get{" "}
-              <span className="font-semibold text-foreground">10g of protein</span>{" "}
-              from this product, you consume{" "}
-              <span className="font-bold text-primary">
-                {formatLargeNumber(analysis.proteinCost)} kcal
-              </span>
-              .
+              Contains no protein. Not a protein source.
             </p>
-            <p className="text-[11px] text-primary/80 font-medium">
-              {analysis.proteinRatingText}
-            </p>
-          </div>
+          )}
         </div>
-      )}
+      </div>
       {/* Cooked Water Loss note */}
       {isCooked && hasConversion && (
         <div className="mt-4 flex items-start gap-2 bg-secondary/60 rounded-lg p-3 border border-border/30">

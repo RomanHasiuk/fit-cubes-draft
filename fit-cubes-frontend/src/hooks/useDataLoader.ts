@@ -1,5 +1,6 @@
 import { useEffect, useCallback } from 'react';
 import { useStore } from '@/store/useStore';
+import { authService } from '@/services/authService';
 import { productService } from '@/services/productService';
 import { recipeService } from '@/services/recipeService';
 import { exerciseService } from '@/services/exerciseService';
@@ -23,6 +24,11 @@ export function useDataLoader() {
   } = useStore();
 
   const loadData = useCallback(async () => {
+    if (!authService.isAuthenticated()) {
+      setIsLoadingData(false);
+      return;
+    }
+
     setIsLoadingData(true);
     try {
       let loadedProducts: FoodItem[] = [];
@@ -101,15 +107,17 @@ export function useDataLoader() {
   }, [setProducts, setProductsError, setActivities, setActivitiesError, setIsLoadingData]);
 
   useEffect(() => {
-    if (!isOnboarded) {
+    if (!isOnboarded || !authService.isAuthenticated()) {
       return;
     }
 
     loadData();
 
-    // Re-fetch database whenever auth state changes (login, register, logout)
+    // Re-fetch database whenever auth state changes (login, register)
     const handleAuthChange = () => {
-      loadData();
+      if (authService.isAuthenticated()) {
+        loadData();
+      }
     };
 
     window.addEventListener('fitcubes_auth_change', handleAuthChange);

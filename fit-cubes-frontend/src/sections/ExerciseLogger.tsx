@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   ArrowLeft,
   Check,
@@ -46,6 +46,7 @@ export default function ExerciseLogger({ onClose, editEntry }: ExerciseLoggerPro
   const selectedDate = useStore((state) => state.selectedDate);
   const addExerciseEntry = useStore((state) => state.addExerciseEntry);
   const updateExerciseEntry = useStore((state) => state.updateExerciseEntry);
+  const removeExerciseEntry = useStore((state) => state.removeExerciseEntry);
   const activities = useStore((state) => state.activities);
   const activitiesError = useStore((state) => state.activitiesError);
   const setActivities = useStore((state) => state.setActivities);
@@ -55,6 +56,7 @@ export default function ExerciseLogger({ onClose, editEntry }: ExerciseLoggerPro
   const [metric, setMetric] = useState(editEntry ? String(editEntry.metric) : '');
   const [rpe, setRpe] = useState<number>(editEntry?.rpe || 5);
   const [isSaving, setIsSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
   const [isRetrying, setIsRetrying] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -204,6 +206,14 @@ export default function ExerciseLogger({ onClose, editEntry }: ExerciseLoggerPro
           });
         } else {
           console.warn(`[ExerciseLogger] Failed to ${isExistingBackendEntry ? 'update' : 'add'} exercise entry on backend:`, res.error);
+          if (editEntry) {
+            updateExerciseEntry(selectedDate, editEntry.id, editEntry);
+          } else {
+            removeExerciseEntry(selectedDate, entry.id);
+          }
+          setSaveError(res.error || 'Failed to sync with server. Please try again.');
+          setIsSaving(false);
+          return;
         }
       }
     }
@@ -254,6 +264,19 @@ export default function ExerciseLogger({ onClose, editEntry }: ExerciseLoggerPro
           <div className="h-[32px] w-[32px] sm:h-[36px] sm:w-[36px] opacity-0 pointer-events-none" />
         )}
       </div>
+
+      <AnimatePresence>
+        {saveError && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            className="mx-3 sm:mx-4 mt-2 p-2.5 rounded-lg bg-destructive/15 border border-destructive/30 text-destructive text-xs font-medium text-center"
+          >
+            {saveError}
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Content */}
       <div className="flex-1 overflow-y-auto custom-scrollbar px-3 sm:px-5 py-3 sm:py-4" data-scrolling="true">

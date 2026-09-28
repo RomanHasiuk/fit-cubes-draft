@@ -1,8 +1,8 @@
 import { Link, useLocation } from 'react-router';
-import { Globe } from 'lucide-react';
 import fitCubeLogo from '@/components/images/FitCubeLogo.svg';
 import burgerIcon from '@/components/images/Burger.svg';
 import { UserAvatar } from '@/components/ui/UserAvatar';
+import { LanguageToggle } from '@/components/ui/LanguageToggle';
 
 interface MenuProps {
   menuOpen: boolean;
@@ -50,16 +50,7 @@ export const Menu: React.FC<MenuProps> = ({ setMenuOpen, menuOpen }) => {
         </ul>
 
         <div className="flex h-[46px] items-center gap-5">
-          <button
-            type="button"
-            className="flex items-center gap-2 cursor-pointer p-1 transition-opacity hover:opacity-80"
-            aria-label="Change language"
-          >
-            <Globe className="h-5 w-5 text-[#B6B6BC]" strokeWidth={1.5} />
-            <span className="text-[16px] font-medium leading-none text-[#B6B6BC]">
-              EN
-            </span>
-          </button>
+          <LanguageToggle />
 
           <div className="flex h-[46px] w-[90px] items-center justify-evenly rounded-[20px] border border-[#4F3911] bg-[#251F13]">
             <UserAvatar onClick={() => setMenuOpen(false)} />

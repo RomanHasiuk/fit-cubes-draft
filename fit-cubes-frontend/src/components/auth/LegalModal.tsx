@@ -1,4 +1,5 @@
 import React from 'react';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, ShieldCheck, FileText, CheckCircle2 } from 'lucide-react';
 import { useModalOpen } from '@/hooks/useModalOpen';
@@ -19,7 +20,9 @@ export const LegalModal: React.FC<LegalModalProps> = ({ isOpen, type, onClose })
 
   const isTerms = type === 'terms';
 
-  return (
+  if (typeof document === 'undefined') return null;
+
+  return createPortal(
     <AnimatePresence>
       {isOpen && (
         <motion.div
@@ -149,7 +152,8 @@ export const LegalModal: React.FC<LegalModalProps> = ({ isOpen, type, onClose })
           </motion.div>
         </motion.div>
       )}
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body
   );
 };
 

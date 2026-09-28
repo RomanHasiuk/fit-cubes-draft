@@ -1,16 +1,49 @@
 import React from 'react';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Ruler, Dumbbell, Sparkles } from 'lucide-react';
+import { X, Ruler, Dumbbell, Globe, Sparkles } from 'lucide-react';
 import { useModalOpen } from '@/hooks/useModalOpen';
 import { Button } from '@/components/ui/button';
 
-export type ComingSoonFeature = 'body' | 'exercise';
+export type ComingSoonFeature = 'body' | 'exercise' | 'language';
 
 export interface ComingSoonModalProps {
   isOpen: boolean;
   feature: ComingSoonFeature | null;
   onClose: () => void;
 }
+
+const FEATURE_CONFIG: Record<
+  ComingSoonFeature,
+  {
+    title: string;
+    icon: typeof Ruler;
+    cardTitle: string;
+    description: string;
+  }
+> = {
+  body: {
+    title: 'Body Metrics',
+    icon: Ruler,
+    cardTitle: 'Circumference & Dynamics Tracking',
+    description:
+      'Log circumference measurements for waist, chest, biceps, and thighs to monitor true body recomposition progress even when scale weight fluctuates.',
+  },
+  exercise: {
+    title: 'Exercise Metrics',
+    icon: Dumbbell,
+    cardTitle: 'Strength & Performance Analytics',
+    description:
+      'Track personal bests (1RM), calculate total training volume load, and monitor weekly workout intensity and endurance graphs.',
+  },
+  language: {
+    title: 'Multilingual Support',
+    icon: Globe,
+    cardTitle: 'Language Localization (UK / PL / EN)',
+    description:
+      'Full internationalization with Ukrainian and Polish language support is coming in Phase 2, including the complete UI, food catalog, and exercise directory.',
+  },
+};
 
 export const ComingSoonModal: React.FC<ComingSoonModalProps> = ({
   isOpen,
@@ -21,9 +54,12 @@ export const ComingSoonModal: React.FC<ComingSoonModalProps> = ({
 
   if (!feature) return null;
 
-  const isBody = feature === 'body';
+  const config = FEATURE_CONFIG[feature];
+  const Icon = config.icon;
 
-  return (
+  if (typeof document === 'undefined') return null;
+
+  return createPortal(
     <AnimatePresence>
       {isOpen && (
         <motion.div
@@ -44,11 +80,11 @@ export const ComingSoonModal: React.FC<ComingSoonModalProps> = ({
             <div className="flex items-center justify-between pb-4 border-b border-border/60 shrink-0">
               <div className="flex items-center gap-2.5">
                 <div className="w-10 h-10 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center text-primary shrink-0">
-                  {isBody ? <Ruler className="w-5 h-5" /> : <Dumbbell className="w-5 h-5" />}
+                  <Icon className="w-5 h-5" />
                 </div>
                 <div>
                   <h3 className="font-serif text-[18px] sm:text-[20px] font-semibold text-foreground leading-tight">
-                    {isBody ? 'Body Metrics' : 'Exercise Metrics'}
+                    {config.title}
                   </h3>
                   <span className="text-[11px] font-sans uppercase tracking-wider text-primary font-medium flex items-center gap-1 mt-0.5">
                     <Sparkles className="w-3 h-3" />
@@ -71,12 +107,10 @@ export const ComingSoonModal: React.FC<ComingSoonModalProps> = ({
             <div className="py-4 space-y-3.5 text-xs sm:text-sm text-muted-foreground leading-relaxed font-sans">
               <div className="p-3.5 rounded-[5px] bg-secondary/80 border border-border/50 text-foreground/90 space-y-1.5">
                 <h4 className="text-foreground font-semibold text-xs sm:text-sm">
-                  {isBody ? 'Circumference & Dynamics Tracking' : 'Strength & Performance Analytics'}
+                  {config.cardTitle}
                 </h4>
                 <p className="text-xs text-muted-foreground">
-                  {isBody
-                    ? 'Log circumference measurements for waist, chest, biceps, and thighs to monitor true body recomposition progress even when scale weight fluctuates.'
-                    : 'Track personal bests (1RM), calculate total training volume load, and monitor weekly workout intensity and endurance graphs.'}
+                  {config.description}
                 </p>
               </div>
 
@@ -97,7 +131,8 @@ export const ComingSoonModal: React.FC<ComingSoonModalProps> = ({
           </motion.div>
         </motion.div>
       )}
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body
   );
 };
 

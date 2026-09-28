@@ -1,8 +1,8 @@
 import type React from 'react';
-import { Globe } from 'lucide-react';
 import logoIcon from '@/components/images/Logo.svg';
 import burgerIcon from '@/components/images/Burger.svg';
 import { UserAvatar } from '@/components/ui/UserAvatar';
+import { LanguageToggle } from '@/components/ui/LanguageToggle';
 
 interface MobileMenuProps {
   mobileMenuOpen: boolean;
@@ -21,16 +21,7 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({
         alt="FitCubes Logo"
       />
       <div className="flex h-[46px] items-center gap-4">
-        <button
-          type="button"
-          className="flex items-center gap-2 cursor-pointer p-1 transition-opacity hover:opacity-80"
-          aria-label="Change language"
-        >
-          <Globe className="h-5 w-5 text-[#B6B6BC]" strokeWidth={1.5} />
-          <span className="text-[16px] font-medium leading-none text-[#B6B6BC]">
-            EN
-          </span>
-        </button>
+        <LanguageToggle />
         <div className="flex h-[46px] w-[90px] items-center justify-evenly rounded-[20px] border border-[#4F3911] bg-[#251F13]">
           <UserAvatar onClick={() => setMobileMenuOpen(false)} />
           <button

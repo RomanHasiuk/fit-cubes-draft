@@ -259,9 +259,12 @@ export function adjustMacrosForProtein(
   proteinGrams: number,
   dietType: DietType
 ): { protein: number; carbs: number; fats: number } {
-  const proteinCals = proteinGrams * 4;
-  let remainingCals = targetCalories - proteinCals;
-  if (remainingCals < 0) remainingCals = 0;
+  // Defensive bounds: protein must be non-negative and cannot exceed 500g or 80% of total calories
+  const maxSafeProtein = Math.min(500, Math.floor((Math.max(0, targetCalories) * 0.8) / 4));
+  const safeProtein = Math.max(0, Math.min(proteinGrams, maxSafeProtein));
+
+  const proteinCals = safeProtein * 4;
+  let remainingCals = Math.max(0, targetCalories - proteinCals);
 
   // Base ratios for remaining (Carbs vs Fats) based on diet type
   // balanced: carbs 40%, fats 30% -> ratio 4:3
@@ -279,7 +282,7 @@ export function adjustMacrosForProtein(
   const fatsCals = remainingCals * (fRatio / totalRatio);
 
   return {
-    protein: proteinGrams,
+    protein: safeProtein,
     carbs: Math.round(carbsCals / 4),
     fats: Math.round(fatsCals / 9),
   };

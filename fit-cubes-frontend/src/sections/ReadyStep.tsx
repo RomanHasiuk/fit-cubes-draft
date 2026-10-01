@@ -25,9 +25,9 @@ export function ReadyStep({ onComplete }: ReadyStepProps) {
     fats: 102,
   };
   const macroItems = [
-    { label: 'Protein', value: `${macroTargets.protein}g` },
-    { label: 'Carbs', value: `${macroTargets.carbs}g` },
-    { label: 'Fats', value: `${macroTargets.fats}g` },
+    { label: 'Protein', value: `${Math.round(macroTargets.protein)}g` },
+    { label: 'Carbs', value: `${Math.round(macroTargets.carbs)}g` },
+    { label: 'Fats', value: `${Math.round(macroTargets.fats)}g` },
   ];
 
   const handleStartJourney = async () => {

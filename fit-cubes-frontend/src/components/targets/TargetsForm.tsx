@@ -1,16 +1,14 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, AlertCircle } from 'lucide-react';
 import { useStore } from '@/store/useStore';
 import { Button } from '@/components/ui/button';
 import InfoTooltip from '@/components/InfoTooltip';
-import { blockInvalidIntegerInput } from '@/utils/inputHandlers';
 import {
   calculateBMR,
   calculateTDEE,
   calculateTargetCalories,
   generateMacroTargets,
-  adjustMacrosForProtein,
 } from '@/utils/calculations';
 import {
   WEIGHT_GOAL,
@@ -40,8 +38,6 @@ interface TargetsFormProps {
 export function TargetsForm({ onNext, onBack }: TargetsFormProps) {
   const profile = useStore((state) => state.profile);
   const updateProfile = useStore((state) => state.updateProfile);
-
-  const proteinInputRef = useRef<HTMLInputElement>(null);
 
   const [goal, setGoal] = useState<WeightGoal>(
     profile.goal || WEIGHT_GOAL.MAINTAIN
@@ -107,13 +103,6 @@ export function TargetsForm({ onNext, onBack }: TargetsFormProps) {
       goal
     );
     updateProfile({ diet: newDiet, macroTargets: newMacros });
-  };
-
-  const handleProteinInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const val = parseInt(e.target.value, 10);
-    const validProtein = isNaN(val) ? 0 : Math.max(0, val);
-    const updated = adjustMacrosForProtein(targetCalories, validProtein, diet);
-    updateProfile({ macroTargets: updated });
   };
 
   const optimalProteinPerKg =
@@ -233,44 +222,32 @@ export function TargetsForm({ onNext, onBack }: TargetsFormProps) {
           </div>
         </div>
 
-        {/* 4. Manual Protein Adjustment */}
+        {/* 4. Target Macronutrients */}
         <div className="flex flex-col gap-3">
           <div className="flex flex-col">
             <div className="flex w-full items-center justify-between">
               <span className="font-serif text-[16px] font-medium leading-[1.15] text-foreground lg:text-[22px]">
-                Manual protein adjustment
+                Target macronutrients
               </span>
               <InfoTooltip
-                title="Protein Adjustment"
-                content="Fine-tune your daily protein in grams. Remaining calories will automatically balance across carbohydrates and fats."
+                title="Macronutrients"
+                content="Optimal macronutrient distribution calculated automatically based on your body metrics, goal, and strategy. You can fine-tune this later in your profile."
                 align="right"
               />
             </div>
             <span className="font-sans text-[14px] leading-tight text-[#8E8F96]">
-              Can be changed later
+              Calculated automatically • Can be changed later in profile
             </span>
           </div>
           <div className="grid grid-cols-3 items-start gap-3">
             {/* Protein */}
             <div className="flex flex-col gap-2">
               <span className="form-label pl-0.5 text-left">Protein</span>
-              <div
-                onClick={() => proteinInputRef.current?.focus()}
-                className="flex h-[44px] w-full cursor-text items-center justify-center rounded-[5px] border border-[#32363E] bg-[#16181D]/60 px-2.5 font-sans text-[14px] backdrop-blur-sm transition-all focus-within:border-[#F59F0A] focus-within:ring-1 focus-within:ring-[#F59F0A]/50 sm:text-[15px]"
-              >
-                <input
-                  ref={proteinInputRef}
-                  type="text"
-                  inputMode="numeric"
-                  value={macroTargets.protein}
-                  onKeyDown={blockInvalidIntegerInput}
-                  onChange={handleProteinInputChange}
-                  className="m-0 bg-transparent p-0 text-right font-medium text-foreground outline-none"
-                  style={{
-                    width: `${Math.max(1, String(macroTargets.protein).length)}ch`,
-                  }}
-                />
-                <span className="pointer-events-none select-none text-[#8E8F96]">
+              <div className="flex h-[44px] w-full select-none items-center justify-center rounded-[5px] border border-[#32363E] bg-[#16181D]/60 px-2.5 font-sans text-[14px] backdrop-blur-sm sm:text-[15px]">
+                <span className="font-medium text-foreground">
+                  {macroTargets.protein}
+                </span>
+                <span className="text-[#8E8F96]">
                   (~{macroPercentages.protein}%)
                 </span>
               </div>

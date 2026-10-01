@@ -4,6 +4,7 @@ import { X, MailCheck, Loader2 } from 'lucide-react';
 import { useModalOpen } from '@/hooks/useModalOpen';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { authService } from '@/services/authService';
 
 interface ForgotPasswordModalProps {
   isOpen: boolean;
@@ -70,11 +71,18 @@ export const ForgotPasswordModal: React.FC<ForgotPasswordModalProps> = ({
 
     setIsLoading(true);
     try {
-      // Prototype simulate API call (Spring Boot /api/auth/forgot-password)
-      await new Promise((resolve) => setTimeout(resolve, 800));
-      setIsSuccess(true);
+      const res = await authService.requestPasswordReset(trimmed);
+      if (res.ok) {
+        setIsSuccess(true);
+      } else {
+        const errorMsg =
+          res.error ||
+          (res.errors && res.errors[0]) ||
+          'Failed to send reset link. Please try again.';
+        setError(errorMsg);
+      }
     } catch {
-      setError('Failed to send reset link. Please try again.');
+      setError('Network error. Please check your internet connection.');
     } finally {
       setIsLoading(false);
     }
@@ -167,8 +175,8 @@ export const ForgotPasswordModal: React.FC<ForgotPasswordModalProps> = ({
                   Check your inbox
                 </h3>
                 <p className="text-xs sm:text-sm text-muted-foreground mb-6 max-w-xs leading-relaxed">
-                  We have sent password reset instructions to{' '}
-                  <span className="font-semibold text-foreground">{email}</span>.
+                  If an account exists for{' '}
+                  <span className="font-semibold text-foreground">{email}</span>, we have sent password reset instructions to your inbox.
                 </p>
                 <Button
                   type="button"

@@ -22,6 +22,7 @@ import { MobileMenu } from './sections/MobileMenu';
 import { MobileMenuSelection } from './sections/MobileMenuSelection.tsx';
 import { Menu } from './sections/Menu';
 import { MenuSelection } from './sections/MenuSelection.tsx';
+import { ResetPasswordScreen } from '@/sections/ResetPasswordScreen';
 
 const SWIPE_ROUTES = [
   '/',
@@ -38,6 +39,20 @@ interface TouchCoordinates {
   endY: number;
 }
 
+function extractResetToken(): string | null {
+  if (typeof window === 'undefined') return null;
+  const searchToken = new URLSearchParams(window.location.search).get('token');
+  if (searchToken) return searchToken;
+
+  if (window.location.hash.includes('token=')) {
+    const queryPart = window.location.hash.includes('?')
+      ? window.location.hash.split('?')[1]
+      : window.location.hash.replace(/^#\/?/, '');
+    return new URLSearchParams(queryPart).get('token');
+  }
+  return null;
+}
+
 function App() {
   const isOnboarded = useStore((state) => state.isOnboarded);
   const theme = useStore((state) => state.theme);
@@ -45,6 +60,23 @@ function App() {
   const [showOnboarding, setShowOnboarding] = useState(
     () => !isOnboarded || !authService.isAuthenticated()
   );
+  const [resetToken, setResetToken] = useState<string | null>(extractResetToken);
+
+  useEffect(() => {
+    const handleUrlToken = () => {
+      const token = extractResetToken();
+      if (token) {
+        setResetToken(token);
+      }
+    };
+
+    window.addEventListener('popstate', handleUrlToken);
+    window.addEventListener('hashchange', handleUrlToken);
+    return () => {
+      window.removeEventListener('popstate', handleUrlToken);
+      window.removeEventListener('hashchange', handleUrlToken);
+    };
+  }, []);
   const [mounted, setMounted] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -163,19 +195,41 @@ function App() {
     }
   }, [theme]);
 
+  const handleResetPasswordSuccess = () => {
+    setResetToken(null);
+    try {
+      const url = new URL(window.location.href);
+      url.searchParams.delete('token');
+      if (url.pathname === '/reset-password') {
+        url.pathname = '/';
+      }
+      window.history.replaceState({}, '', url.toString());
+    } catch {
+      // Safe fallback
+    }
+    navigate('/', { replace: true });
+  };
+
+  const handleOnboardingComplete = () => {
+    setShowOnboarding(false);
+    navigate('/');
+  };
+
   if (!mounted) {
     return <PageLoader text="Loading FitCubes..." />;
   }
 
-  if (showOnboarding) {
+  if (resetToken) {
     return (
-      <Onboarding
-        onComplete={() => {
-          setShowOnboarding(false);
-          navigate('/');
-        }}
+      <ResetPasswordScreen
+        token={resetToken}
+        onSuccess={handleResetPasswordSuccess}
       />
     );
+  }
+
+  if (showOnboarding) {
+    return <Onboarding onComplete={handleOnboardingComplete} />;
   }
 
   return (

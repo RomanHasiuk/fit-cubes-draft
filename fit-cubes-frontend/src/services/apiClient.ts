@@ -23,7 +23,9 @@ class ApiClient {
     const url = endpoint.startsWith('http') ? endpoint : `${API_BASE_URL}${cleanEndpoint}`;
     const isPublicAuthEndpoint =
       cleanEndpoint.startsWith('/auth/login') ||
-      cleanEndpoint.startsWith('/auth/register');
+      cleanEndpoint.startsWith('/auth/register') ||
+      cleanEndpoint.startsWith('/auth/forgot-password') ||
+      cleanEndpoint.startsWith('/auth/reset-password');
     const token = isPublicAuthEndpoint ? null : this.getAuthToken();
 
     const headers: HeadersInit = {

@@ -20,6 +20,15 @@ export interface RegisterPayload {
   repeatedPassword: string;
 }
 
+export interface ForgotPasswordPayload {
+  email: string;
+}
+
+export interface ResetPasswordPayload {
+  token: string;
+  newPassword: string;
+}
+
 export interface AuthResponseData {
   token: string;
   user?: AuthUser;
@@ -71,6 +80,14 @@ export const authService = {
 
   isAuthenticated(): boolean {
     return Boolean(localStorage.getItem('fitcubes_auth_token'));
+  },
+
+  async requestPasswordReset(email: string): Promise<ApiResponse<void>> {
+    return apiClient.post<void>('/auth/forgot-password', { email });
+  },
+
+  async confirmPasswordReset(payload: ResetPasswordPayload): Promise<ApiResponse<void>> {
+    return apiClient.post<void>('/auth/reset-password', payload);
   },
 
   initiateSocialAuth(provider: SocialProvider): void {

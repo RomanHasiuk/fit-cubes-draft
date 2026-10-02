@@ -34,6 +34,7 @@ export interface FoodItem {
   cookedWeight?: number;
   ingredients?: Ingredients[];
   isFavorite?: boolean;
+  isCustom?: boolean;
 }
 
 export interface FoodEntry {
@@ -80,7 +81,6 @@ export interface DayLog {
   date: string;
   foodEntries: FoodEntry[];
   exerciseEntries: ExerciseEntry[];
-  weight?: number;
   notes?: string;
 }
 

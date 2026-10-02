@@ -23,6 +23,7 @@ import { ProfileSkeleton } from '@/components/profile/ProfileSkeleton';
 import { EnergyTargetsCard } from '@/components/profile/EnergyTargetsCard';
 import { BodyMetricsCard } from '@/components/profile/BodyMetricsCard';
 import { MacroAdjustmentCard } from '@/components/profile/MacroAdjustmentCard';
+import InfoTooltip from '@/components/InfoTooltip';
 import { authService } from '@/services/authService';
 import { userService } from '@/services/userService';
 import { weightService } from '@/services/weightService';
@@ -33,7 +34,6 @@ import {
 
 export default function ProfileScreen() {
   const profile = useStore((state) => state.profile);
-  const theme = useStore((state) => state.theme);
   const setTheme = useStore((state) => state.setTheme);
   const updateProfile = useStore((state) => state.updateProfile);
 
@@ -129,7 +129,20 @@ export default function ProfileScreen() {
   };
 
   const handleWeightChange = (weightKg: number) => {
-    setDraft((prev) => ({ ...prev, weightKg }));
+    const updatedDraft = { ...draft, weightKg };
+    const newTdee = Math.round(calculateTDEE(updatedDraft));
+    const newTargetCals = calculateTargetCalories(newTdee, updatedDraft.goal);
+    const newMacros = generateMacroTargets(
+      newTargetCals,
+      updatedDraft.diet || DIET_TYPE.BALANCED,
+      weightKg,
+      updatedDraft.goal || WEIGHT_GOAL.MAINTAIN
+    );
+    setDraft({
+      ...updatedDraft,
+      targetCalories: newTargetCals,
+      macroTargets: newMacros,
+    });
   };
 
   const handleHeightChange = (heightCm: number) => {
@@ -208,33 +221,53 @@ export default function ProfileScreen() {
       <div className="rounded-[5px] border border-[#32363E] bg-[#0F1114]/80 backdrop-blur-md p-5 md:p-8 shadow-2xl space-y-6">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-[#32363E]/60 pb-5">
           <div className="flex flex-col">
-            <h1 className="heading-h2 text-foreground">Profile & Goals</h1>
+            <h1 className="heading-h2 text-[#F5F6FA]">Profile & Goals</h1>
             <p className="font-sans text-[14px] text-[#8E8F96] mt-0.5">
               Manage your biometric parameters, targets and nutritional strategy
             </p>
           </div>
 
-          {/* Compact Theme Switcher */}
+          {/* Compact Theme Switcher with v2 Tooltips for locked modes */}
           <div className="flex items-center gap-1 self-start rounded-[5px] border border-[#32363E] bg-[#16181D]/80 p-1 backdrop-blur-md">
-            {([
-              { key: 'light', icon: Sun, label: 'Light Mode' },
-              { key: 'dark', icon: Moon, label: 'Dark Mode' },
-              { key: 'system', icon: Monitor, label: 'System Default' },
-            ] as const).map((t) => (
-              <button
-                key={t.key}
-                type="button"
-                title={t.label}
-                onClick={() => setTheme(t.key)}
-                className={`flex h-8 w-8 items-center justify-center rounded-[4px] transition-all ${
-                  theme === t.key
-                    ? 'border border-[#4F3911] bg-[#251F13] text-[#F59F0A] shadow-sm'
-                    : 'text-[#8E8F96] hover:text-foreground'
-                }`}
+            {/* Light Mode - Coming in v2 */}
+            <InfoTooltip
+              title="Coming in v2"
+              content="Light theme is in development for FitCubes v2. The app is currently optimized for Dark Mode."
+              align="left"
+              position="bottom"
+            >
+              <div
+                className="flex h-8 w-8 items-center justify-center rounded-[4px] opacity-40 cursor-not-allowed text-[#8E8F96] hover:text-[#F5F6FA] hover:opacity-75 transition-all select-none"
+                title="Light Mode (Coming in v2)"
               >
-                <t.icon className="h-4 w-4" />
-              </button>
-            ))}
+                <Sun className="h-4 w-4" />
+              </div>
+            </InfoTooltip>
+
+            {/* Dark Mode - Active */}
+            <button
+              type="button"
+              title="Dark Mode (Active)"
+              onClick={() => setTheme('dark')}
+              className="flex h-8 w-8 items-center justify-center rounded-[4px] border border-[#4F3911] bg-[#251F13] text-[#F59F0A] shadow-sm transition-all cursor-pointer"
+            >
+              <Moon className="h-4 w-4" />
+            </button>
+
+            {/* System Mode - Coming in v2 */}
+            <InfoTooltip
+              title="Coming in v2"
+              content="System theme synchronization will be available in FitCubes v2. Dark mode is currently active."
+              align="right"
+              position="bottom"
+            >
+              <div
+                className="flex h-8 w-8 items-center justify-center rounded-[4px] opacity-40 cursor-not-allowed text-[#8E8F96] hover:text-[#F5F6FA] hover:opacity-75 transition-all select-none"
+                title="System Default (Coming in v2)"
+              >
+                <Monitor className="h-4 w-4" />
+              </div>
+            </InfoTooltip>
           </div>
         </div>
 

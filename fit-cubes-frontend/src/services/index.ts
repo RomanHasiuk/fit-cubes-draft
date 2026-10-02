@@ -6,4 +6,3 @@ export * from './diaryService';
 export * from './userService';
 export * from './exerciseService';
 export * from './weightService';
-export * from './dashboardService';

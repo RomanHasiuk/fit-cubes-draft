@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo } from 'react';
 import { ChevronLeft, Plus, Search, AlertTriangle, WifiOff, RefreshCw, Loader2 } from 'lucide-react';
 import { useStore } from '@/store/useStore';
 import { useFoodFilter } from '@/hooks/useFoodFilter';
@@ -10,7 +10,7 @@ import FoodAdd from './FoodAdd';
 import FoodCreator from './FoodCreator';
 import { FoodItemCardSkeleton } from '@/components/food/FoodItemCardSkeleton';
 import { authService, recipeService, productService } from '@/services';
-import { extractApiItems, mapProductDtoToFoodItem } from '@/utils/apiMappers';
+import { extractApiItems, mapProductDtoToFoodItem, isServerId } from '@/utils/apiMappers';
 import type { FoodItem, MealType } from '@/types';
 import type { ProductDto } from '@/types/api';
 import { MEAL_TYPE } from '@/constants';
@@ -43,20 +43,11 @@ export default function FoodSearch({
   const [isCreatingFood, setIsCreatingFood] = useState(false);
   const [editingFood, setEditingFood] = useState<FoodItem | null>(null);
   const [isRetrying, setIsRetrying] = useState(false);
-  const [serverProducts, setServerProducts] = useState<FoodItem[]>([]);
-  const [isSearchingServer, setIsSearchingServer] = useState(false);
   const isLoadingData = useStore((state) => state.isLoadingData);
 
-  const combinedProducts = useMemo(() => {
-    if (serverProducts.length === 0) return products;
-    const existingIds = new Set(products.map((p) => p.id));
-    const newItems = serverProducts.filter((p) => !existingIds.has(p.id));
-    return newItems.length > 0 ? [...products, ...newItems] : products;
-  }, [products, serverProducts]);
-
   const availableProducts = useMemo(() => {
-    if (!recipesOnly) return combinedProducts;
-    return combinedProducts.filter(
+    if (!recipesOnly) return products;
+    return products.filter(
       (p) =>
         p.id.startsWith('recipe_') ||
         p.category === 'My Meals' ||
@@ -64,7 +55,7 @@ export default function FoodSearch({
         Boolean(p.ingredients && p.ingredients.length > 0) ||
         p.cookedWeight !== undefined
     );
-  }, [combinedProducts, recipesOnly]);
+  }, [products, recipesOnly]);
 
   const {
     query,
@@ -84,42 +75,6 @@ export default function FoodSearch({
     customCategories,
     favoriteProductIds,
   });
-
-  // Debounced server search when typing 2+ characters
-  useEffect(() => {
-    const trimmed = query.trim();
-    if (!trimmed || trimmed.length < 2 || recipesOnly || !authService.isAuthenticated()) {
-      setServerProducts([]);
-      setIsSearchingServer(false);
-      return;
-    }
-
-    let isCancelled = false;
-    setIsSearchingServer(true);
-
-    const timer = setTimeout(async () => {
-      try {
-        const res = await productService.searchProducts(trimmed, { size: 50 });
-        if (isCancelled) return;
-        if (res.ok && res.data) {
-          const items = extractApiItems<ProductDto>(res.data);
-          const mapped = items.map(mapProductDtoToFoodItem);
-          setServerProducts(mapped);
-        }
-      } catch (err) {
-        console.warn('[FoodSearch] Server search failed:', err);
-      } finally {
-        if (!isCancelled) {
-          setIsSearchingServer(false);
-        }
-      }
-    }, 350);
-
-    return () => {
-      isCancelled = true;
-      clearTimeout(timer);
-    };
-  }, [query, recipesOnly]);
 
   const handleRetryProducts = async () => {
     setIsRetrying(true);
@@ -153,13 +108,48 @@ export default function FoodSearch({
     }
   };
 
+  const handleCloseFoodCreator = () => {
+    setIsCreatingFood(false);
+    setEditingFood(null);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!foodToDelete) return;
+    const targetId = foodToDelete.id;
+
+    deleteProduct(targetId);
+    setFoodToDelete(null);
+
+    if (authService.isAuthenticated()) {
+      try {
+        if (targetId.startsWith('recipe_')) {
+          const numericId = targetId.replace('recipe_', '');
+          if (isServerId(numericId)) {
+            const res = await recipeService.deleteRecipe(numericId);
+            if (!res.ok) {
+              console.warn('[FoodSearch] Failed to sync recipe deletion with backend:', res.error);
+            }
+          }
+        } else if (isServerId(targetId)) {
+          const res = await productService.deleteProduct(targetId);
+          if (!res.ok) {
+            console.warn('[FoodSearch] Failed to sync product deletion with backend:', res.error);
+          }
+        }
+      } catch (err) {
+        console.error('[FoodSearch] Error syncing deletion with backend:', err);
+      }
+    }
+  };
+
+  const handleCancelDelete = () => {
+    setFoodToDelete(null);
+  };
+
   if (isCreatingFood || editingFood) {
     return (
       <FoodCreator
-        onClose={() => {
-          setIsCreatingFood(false);
-          setEditingFood(null);
-        }}
+        onClose={handleCloseFoodCreator}
         editingFood={editingFood || undefined}
       />
     );
@@ -219,7 +209,7 @@ export default function FoodSearch({
         onToggleSortDirection={() =>
           setSortDirection((prev) => (prev === 'asc' ? 'desc' : 'asc'))
         }
-        isLoading={isSearchingServer}
+        isLoading={isLoadingData}
       />
 
       {/* Food List with Custom Blue Scrollbar and 10px insets */}
@@ -280,10 +270,14 @@ export default function FoodSearch({
               </div>
             ) : (
               filteredFoods.map((food) => {
-                const isCustom =
+                const isCustom = Boolean(
+                  food.isCustom ||
+                  food.id.startsWith('custom_') ||
+                  food.id.startsWith('recipe_') ||
                   food.category === 'My Meals' ||
                   food.category === 'My Recipes' ||
-                  customCategories.includes(food.category);
+                  customCategories.includes(food.category)
+                );
 
                 return (
                   <FoodItemCard
@@ -319,28 +313,8 @@ export default function FoodSearch({
         }
         confirmText="Delete"
         variant="destructive"
-        onConfirm={() => {
-          if (foodToDelete) {
-            const targetId = foodToDelete.id;
-            deleteProduct(targetId);
-            setFoodToDelete(null);
-
-            if (authService.isAuthenticated()) {
-              if (targetId.startsWith('recipe_')) {
-                const numericId = targetId.replace('recipe_', '');
-                recipeService.deleteRecipe(numericId).catch((err) => {
-                  console.error('Failed to sync recipe deletion with backend:', err);
-                });
-              } else if (targetId.startsWith('custom_')) {
-                const numericId = targetId.replace('custom_', '');
-                productService.deleteProduct(numericId).catch((err) => {
-                  console.error('Failed to sync product deletion with backend:', err);
-                });
-              }
-            }
-          }
-        }}
-        onCancel={() => setFoodToDelete(null)}
+        onConfirm={handleConfirmDelete}
+        onCancel={handleCancelDelete}
       />
     </div>
   );

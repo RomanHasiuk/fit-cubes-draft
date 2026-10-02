@@ -201,6 +201,7 @@ export function mapProductDtoToFoodItem(dto: ProductDto): FoodItem {
     proteinPer100g: Number(dto.proteinPer100g) || 0,
     carbsPer100g: Number(dto.carbsPer100g) || 0,
     fatsPer100g: Number(dto.fatsPer100g) || 0,
+    isCustom: dto.isCustom ?? (dto.userId !== undefined && dto.userId !== null),
   };
 }
 
@@ -308,9 +309,15 @@ export function mapApiMealTypeToFrontend(apiMealType?: string | null): MealType 
 }
 
 export function mapDiaryFoodEntryDtoToFoodEntry(dto: DiaryFoodEntryDto): FoodEntry {
+  const resolvedFoodItemId = dto.productId
+    ? String(dto.productId)
+    : dto.recipeId
+      ? `recipe_${dto.recipeId}`
+      : '';
+
   return {
     id: String(dto.id),
-    foodItemId: String(dto.id),
+    foodItemId: resolvedFoodItemId,
     name: dto.name,
     mealType: mapApiMealTypeToFrontend(dto.mealType),
     timestamp: Date.now(),

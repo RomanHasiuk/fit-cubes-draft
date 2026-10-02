@@ -109,6 +109,8 @@ export interface ProductDto {
   carbsPer100g: number;
   proteinPer100g: number;
   proteinCaloriesPer100g?: number;
+  isCustom?: boolean;
+  userId?: number | null;
 }
 
 export interface CreateProductDto {
@@ -179,6 +181,8 @@ export type UpdateRecipeDto = Partial<CreateRecipeDto>;
 
 export interface DiaryFoodEntryDto {
   id: number;
+  productId?: number;
+  recipeId?: number;
   name: string;
   calories: number;
   protein: number;
@@ -272,19 +276,7 @@ export interface WeightLogResponseDto {
 export interface WeightProgressDto {
   startingWeight: number;
   currentWeight: number;
-  targetWeight: number;
+  targetWeight?: number | null;
   totalChange: number;
-  remainingToGoal: number;
-}
-
-export interface DailySummaryDto {
-  targetCalories: number;
-  consumed: number;
-  burned: number;
-  remaining: number;
-}
-
-export interface PredictedWeightChangeDto {
-  averageDailyDeficit: number;
-  predictedWeeklyChangeKg: number;
+  remainingToGoal?: number | null;
 }

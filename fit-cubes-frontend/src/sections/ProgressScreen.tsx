@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import {
   LineChart,
@@ -16,6 +16,9 @@ import { useStore } from '@/store/useStore.ts';
 import { calculateTDEE, calculateNetDeficit, calculateRollingAverage, getLast7Days, formatLargeNumber } from '@/utils/calculations.ts';
 import InfoTooltip from '@/components/InfoTooltip.tsx';
 import { ProgressSkeleton } from '@/components/progress/ProgressSkeleton';
+import { weightService } from '@/services/weightService';
+import { authService } from '@/services/authService';
+import type { WeightProgressDto } from '@/types/api';
 
 const TIMEFRAMES = [
   { key: '1 Week', label: '7 Days', days: 7 },
@@ -28,6 +31,28 @@ export default function ProgressScreen() {
   const dailyLogs = useStore((state) => state.dailyLogs);
   const isLoadingData = useStore((state) => state.isLoadingData);
   const [timeframe, setTimeframe] = useState('1 Week');
+  const [weightProgress, setWeightProgress] = useState<WeightProgressDto | null>(null);
+
+  useEffect(() => {
+    let isCancelled = false;
+    if (authService.isAuthenticated()) {
+      weightService.getWeightProgress().then((res) => {
+        if (!isCancelled && res.ok && res.data) {
+          setWeightProgress(res.data);
+        }
+      });
+    }
+    return () => {
+      isCancelled = true;
+    };
+  }, []);
+
+  const actualStartingWeight = weightProgress?.startingWeight ?? profile.weightKg;
+  const actualCurrentWeight = weightProgress?.currentWeight ?? profile.weightKg;
+  const actualWeightChange =
+    weightProgress?.totalChange !== undefined
+      ? weightProgress.totalChange
+      : Number((actualCurrentWeight - actualStartingWeight).toFixed(1));
 
   const days = TIMEFRAMES.find((t) => t.key === timeframe)?.days || 7;
 
@@ -55,7 +80,6 @@ export default function ProgressScreen() {
             date, 
             deficit: 0, 
             calories: 0, 
-            weight: log ? (log.weight || null) : null, 
             fatChange: 0, 
             cumulativeFatChange: Math.round(acc.cumulative),
             isLogged: false
@@ -64,10 +88,7 @@ export default function ProgressScreen() {
         }
         const intake = log.foodEntries.reduce((a, e) => a + e.calories, 0);
         const exercise = log.exerciseEntries.reduce((a, e) => a + e.caloriesBurned, 0);
-        const tdee = calculateTDEE({ 
-          ...profile, 
-          weightKg: log.weight ? log.weight : profile.weightKg 
-        });
+        const tdee = calculateTDEE(profile);
         const deficit = calculateNetDeficit(tdee, intake, exercise);
         
         const fatChange = deficit / 7.7;
@@ -77,7 +98,6 @@ export default function ProgressScreen() {
           date,
           deficit,
           calories: Math.round(intake),
-          weight: log.weight || null,
           fatChange: Math.round(fatChange),
           cumulativeFatChange: Math.round(acc.cumulative),
           isLogged: true
@@ -90,7 +110,6 @@ export default function ProgressScreen() {
           date: string;
           deficit: number;
           calories: number;
-          weight: number | null;
           fatChange: number;
           cumulativeFatChange: number;
           isLogged: boolean;
@@ -163,26 +182,27 @@ export default function ProgressScreen() {
         </div>
       </div>
 
-      {!hasProgressData ? (
-        <motion.div
-          className="glass-card mx-auto my-6 flex w-full max-w-[460px] flex-col items-center justify-center rounded-2xl p-8 text-center"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4 }}
-        >
-          <TrendingDown className="mb-4 h-12 w-12 text-muted-foreground/30" />
-          <h3 className="heading-h2 mb-2 text-2xl font-normal text-foreground">
-            No progress data yet
-          </h3>
-          <p className="max-w-[280px] text-sm text-muted-foreground">
-            Log your food and exercises to see your progress charts and statistics here.
-          </p>
-        </motion.div>
-      ) : (
-        <div className="w-full px-4 md:px-5 space-y-4">
-        {/* Deficit Chart */}
-        <motion.div
-          className="glass-card rounded-2xl p-4"
+      <div className="w-full px-4 md:px-5 space-y-4">
+        {!hasProgressData ? (
+          <motion.div
+            className="glass-card mx-auto my-6 flex w-full max-w-[460px] flex-col items-center justify-center rounded-2xl p-8 text-center"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4 }}
+          >
+            <TrendingDown className="mb-4 h-12 w-12 text-muted-foreground/30" />
+            <h3 className="heading-h2 mb-2 text-2xl font-normal text-foreground">
+              No progress data yet
+            </h3>
+            <p className="max-w-[280px] text-sm text-muted-foreground">
+              Log your food and exercises to see your progress charts and statistics here.
+            </p>
+          </motion.div>
+        ) : (
+          <>
+            {/* Deficit Chart */}
+            <motion.div
+              className="glass-card rounded-2xl p-4"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4 }}
@@ -442,6 +462,51 @@ export default function ProgressScreen() {
           </div>
         </motion.div>
 
+        {/* Actual Weight Progress from Server Logs */}
+        <motion.div
+          className="glass-card rounded-2xl p-4 mt-4"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: 0.18 }}
+        >
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <Scale className="w-4 h-4 text-primary" />
+              <span className="text-sm font-semibold text-foreground">Weight Tracker (Actual)</span>
+            </div>
+            <span className="text-[11px] text-muted-foreground">From recorded weigh-ins</span>
+          </div>
+
+          <div className="grid grid-cols-3 gap-2 text-center pt-1">
+            <div className="bg-secondary/40 rounded-xl p-2.5">
+              <span className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider">Start</span>
+              <p className="text-base sm:text-lg font-bold text-foreground mt-0.5">
+                {actualStartingWeight} kg
+              </p>
+            </div>
+            <div className="bg-secondary/40 rounded-xl p-2.5">
+              <span className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider">Current</span>
+              <p className="text-base sm:text-lg font-bold text-foreground mt-0.5">
+                {actualCurrentWeight} kg
+              </p>
+            </div>
+            <div className="bg-secondary/40 rounded-xl p-2.5">
+              <span className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider">Change</span>
+              <p
+                className={`text-base sm:text-lg font-bold mt-0.5 ${
+                  actualWeightChange < 0
+                    ? 'text-emerald-500'
+                    : actualWeightChange > 0
+                      ? 'text-amber-500'
+                      : 'text-foreground'
+                }`}
+              >
+                {actualWeightChange > 0 ? `+${actualWeightChange}` : actualWeightChange} kg
+              </p>
+            </div>
+          </div>
+        </motion.div>
+
         {/* Stats Grid */}
         <motion.div
           className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-4"
@@ -489,8 +554,9 @@ export default function ProgressScreen() {
             <span className="text-[10px] text-muted-foreground uppercase">kcal total</span>
           </div>
         </motion.div>
+          </>
+        )}
       </div>
-      )}
     </div>
   );
 }

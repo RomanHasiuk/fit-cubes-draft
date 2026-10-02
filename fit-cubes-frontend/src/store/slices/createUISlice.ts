@@ -13,7 +13,7 @@ export interface UISlice {
 }
 
 export const createUISlice: StateCreator<StoreState, [], [], UISlice> = (set) => ({
-  theme: 'system',
+  theme: 'dark',
   pendingFoodLog: null,
   setPendingFoodLog: (log) => set({ pendingFoodLog: log }),
   openModalCount: 0,

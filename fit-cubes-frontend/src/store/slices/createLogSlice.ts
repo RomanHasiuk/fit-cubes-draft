@@ -15,7 +15,6 @@ export interface LogSlice {
   updateExerciseEntry: (date: string, entryId: string, updatedEntry: ExerciseEntry) => void;
   removeExerciseEntry: (date: string, entryId: string) => void;
   syncDayLog: (date: string, foodEntries: FoodEntry[], exerciseEntries: ExerciseEntry[]) => void;
-  setWeight: (date: string, weight: number) => void;
 }
 
 export const getTodayString = () => {
@@ -146,19 +145,6 @@ export const createLogSlice: StateCreator<StoreState, [], [], LogSlice> = (set, 
         }
         return log;
       });
-      return { dailyLogs: logs };
-    });
-  },
-
-  setWeight: (date, weight) => {
-    set((state) => {
-      const logs = [...state.dailyLogs];
-      const idx = logs.findIndex((l) => l.date === date);
-      if (idx >= 0) {
-        logs[idx] = { ...logs[idx], weight };
-      } else {
-        logs.push({ date, foodEntries: [], exerciseEntries: [], weight });
-      }
       return { dailyLogs: logs };
     });
   },

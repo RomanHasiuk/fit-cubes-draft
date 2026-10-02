@@ -116,6 +116,7 @@ export default function FoodCreator({ onClose, editingFood }: FoodCreatorProps) 
       carbsPer100g: Number(carbs) || 0,
       category: finalCategory,
       isFavorite: editingFood?.isFavorite,
+      isCustom: true,
     };
 
     setIsSaving(true);
@@ -140,12 +141,18 @@ export default function FoodCreator({ onClose, editingFood }: FoodCreatorProps) 
         if (editingFood && !editingFood.id.startsWith("custom_") && !editingFood.id.startsWith("recipe_")) {
           const res = await productService.updateProduct(editingFood.id, payload);
           if (res.ok && res.data) {
-            updateProduct(editingFood.id, mapProductDtoToFoodItem(res.data));
+            updateProduct(editingFood.id, {
+              ...mapProductDtoToFoodItem(res.data),
+              isCustom: true,
+            });
           }
         } else {
           const res = await productService.createProduct(payload);
           if (res.ok && res.data) {
-            updateProduct(tempId, mapProductDtoToFoodItem(res.data));
+            updateProduct(tempId, {
+              ...mapProductDtoToFoodItem(res.data),
+              isCustom: true,
+            });
           }
         }
       }

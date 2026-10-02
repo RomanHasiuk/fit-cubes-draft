@@ -123,11 +123,14 @@ export default function Diary() {
   };
 
   const handleEditEntry = (entry: FoodEntry) => {
-    let originalProduct = products.find((p) => p.id === entry.foodItemId);
+    let originalProduct = entry.foodItemId
+      ? products.find((p) => p.id === entry.foodItemId)
+      : undefined;
 
     if (!originalProduct) {
+      const cleanName = entry.name.trim().toLowerCase();
       originalProduct = products.find(
-        (p) => p.name.trim().toLowerCase() === entry.name.trim().toLowerCase()
+        (p) => p.name.trim().toLowerCase() === cleanName
       );
 
       if (!originalProduct) {

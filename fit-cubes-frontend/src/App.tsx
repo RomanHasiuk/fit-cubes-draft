@@ -55,7 +55,6 @@ function extractResetToken(): string | null {
 
 function App() {
   const isOnboarded = useStore((state) => state.isOnboarded);
-  const theme = useStore((state) => state.theme);
   const openModalCount = useStore((state) => state.openModalCount);
   const [showOnboarding, setShowOnboarding] = useState(
     () => !isOnboarded || !authService.isAuthenticated()
@@ -181,19 +180,11 @@ function App() {
   }, [isOnboarded, navigate]);
 
   useEffect(() => {
-    // Apply theme on mount
+    // Enforce dark theme for FitCubes MVP
     const root = window.document.documentElement;
-    root.classList.remove('light', 'dark');
-    if (theme === 'system') {
-      const systemTheme = window.matchMedia('(prefers-color-scheme: dark)')
-        .matches
-        ? 'dark'
-        : 'light';
-      root.classList.add(systemTheme);
-    } else {
-      root.classList.add(theme);
-    }
-  }, [theme]);
+    root.classList.remove('light');
+    root.classList.add('dark');
+  }, []);
 
   const handleResetPasswordSuccess = () => {
     setResetToken(null);

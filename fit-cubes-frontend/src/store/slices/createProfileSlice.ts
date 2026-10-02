@@ -21,7 +21,7 @@ export const defaultProfile: UserProfile = {
   weightKg: 85.5,
   heightCm: 180,
   activityFactor: 1.5,
-  theme: 'system',
+  theme: 'dark',
   goal: WEIGHT_GOAL.MAINTAIN,
   diet: DIET_TYPE.BALANCED,
   macroTargets: generateMacroTargets(initialTargetCalories, DIET_TYPE.BALANCED, 85.5, WEIGHT_GOAL.MAINTAIN),

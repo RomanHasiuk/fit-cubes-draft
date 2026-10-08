@@ -18,6 +18,61 @@ export const productService = {
     return apiClient.get<PageResponse<ProductDto>>(`/products${queryString}`);
   },
 
+  /**
+   * Fetches all products across all pages from the backend REST API.
+   * Requests page 0 with size=1000. If the backend caps page size (totalPages > 1),
+   * fetches remaining pages in parallel so that 100% of products are loaded.
+   */
+  async getAllProducts(pageSize = 1000): Promise<ApiResponse<ProductDto[]>> {
+    const firstRes = await this.getProducts({ page: 0, size: pageSize });
+    if (!firstRes.ok || !firstRes.data) {
+      return {
+        ok: false,
+        status: firstRes.status,
+        error: firstRes.error,
+        errors: firstRes.errors,
+      };
+    }
+
+    const firstPage = firstRes.data;
+    const allItems: ProductDto[] = Array.isArray(firstPage)
+      ? [...firstPage]
+      : Array.isArray(firstPage.content)
+        ? [...firstPage.content]
+        : [];
+
+    const totalPages =
+      firstPage && typeof firstPage === 'object' && 'totalPages' in firstPage
+        ? Number(firstPage.totalPages) || 1
+        : 1;
+
+    if (totalPages > 1) {
+      const pagePromises: Promise<ApiResponse<PageResponse<ProductDto>>>[] = [];
+      for (let p = 1; p < totalPages; p++) {
+        pagePromises.push(this.getProducts({ page: p, size: pageSize }));
+      }
+
+      const subsequentPages = await Promise.allSettled(pagePromises);
+      for (const pageRes of subsequentPages) {
+        if (pageRes.status === 'fulfilled' && pageRes.value.ok && pageRes.value.data) {
+          const pageData = pageRes.value.data;
+          const items: ProductDto[] = Array.isArray(pageData)
+            ? pageData
+            : Array.isArray(pageData.content)
+              ? pageData.content
+              : [];
+          allItems.push(...items);
+        }
+      }
+    }
+
+    return {
+      ok: true,
+      status: firstRes.status,
+      data: allItems,
+    };
+  },
+
   async getProductById(id: number | string): Promise<ApiResponse<ProductDto>> {
     return apiClient.get<ProductDto>(`/products/${id}`);
   },

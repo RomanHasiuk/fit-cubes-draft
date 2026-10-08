@@ -63,7 +63,7 @@ export const FoodFilterBar: React.FC<FoodFilterBarProps> = ({
       </div>
 
       {/* Filters & Sorting Control Panel */}
-      <div className="shrink-0 px-2.5 pb-3 flex items-center justify-between gap-2.5 border-b border-[#32363E]/40 relative z-20">
+      <div className="shrink-0 px-2.5 pb-3 flex items-center justify-between gap-2.5 border-b border-[#32363E]/40 relative z-40">
         {/* Category Dropdown Toggle */}
         <div className="relative flex-1">
           <button
@@ -72,11 +72,11 @@ export const FoodFilterBar: React.FC<FoodFilterBarProps> = ({
               setShowCategoryMenu(!showCategoryMenu);
               setShowSortMenu(false);
             }}
-            className="w-full flex items-center justify-between bg-[#16181D]/60 border border-[#32363E] px-3 py-2.5 rounded-[5px] text-xs font-medium text-[#F5F6FA] hover:border-white/20 transition-colors"
+            className="w-full flex items-center justify-between bg-[#16181D]/60 border border-[#32363E] px-3 py-2.5 rounded-[5px] text-xs font-medium text-[#F5F6FA] hover:border-white/20 transition-colors cursor-pointer"
           >
             <span className="truncate mr-2">{selectedCategory}</span>
             <ChevronDown
-              className={`w-3.5 h-3.5 shrink-0 text-[#8E8F96] transition-transform ${
+              className={`w-3.5 h-3.5 shrink-0 text-[#8E8F96] transition-transform duration-200 ${
                 showCategoryMenu ? 'rotate-180' : ''
               }`}
             />
@@ -86,10 +86,11 @@ export const FoodFilterBar: React.FC<FoodFilterBarProps> = ({
           <AnimatePresence>
             {showCategoryMenu && (
               <motion.div
-                initial={{ opacity: 0, y: -10 }}
+                initial={{ opacity: 0, y: -6 }}
                 animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                className="absolute top-0 left-0 mt-2 w-48 max-h-64 overflow-y-auto custom-scrollbar glass-card rounded-2xl border border-white/10 shadow-2xl py-2"
+                exit={{ opacity: 0, y: -6 }}
+                transition={{ duration: 0.15 }}
+                className="absolute top-full left-0 mt-1.5 z-50 w-full min-w-[210px] max-h-60 overflow-y-auto dropdown-scrollbar bg-[#16181D]/95 backdrop-blur-md rounded-[8px] border border-[#32363E] shadow-2xl py-1.5"
               >
                 {uniqueCategories.map((cat) => (
                   <button
@@ -99,14 +100,14 @@ export const FoodFilterBar: React.FC<FoodFilterBarProps> = ({
                       onSelectCategory(cat);
                       setShowCategoryMenu(false);
                     }}
-                    className={`w-full text-left px-3.5 py-2 text-xs flex items-center justify-between hover:bg-white/5 transition-colors ${
+                    className={`w-full text-left px-3.5 py-2 text-xs flex items-center justify-between hover:bg-white/5 transition-colors cursor-pointer ${
                       selectedCategory === cat
                         ? 'text-[#F59F0A] font-semibold'
                         : 'text-[#B6B6BC]'
                     }`}
                   >
-                    {cat}
-                    {selectedCategory === cat && <Check className="w-3.5 h-3.5" />}
+                    <span className="truncate">{cat}</span>
+                    {selectedCategory === cat && <Check className="w-3.5 h-3.5 shrink-0 ml-2" />}
                   </button>
                 ))}
               </motion.div>
@@ -122,11 +123,11 @@ export const FoodFilterBar: React.FC<FoodFilterBarProps> = ({
               setShowSortMenu(!showSortMenu);
               setShowCategoryMenu(false);
             }}
-            className="w-full flex items-center justify-between bg-[#16181D]/60 border border-[#32363E] px-3 py-2.5 rounded-[5px] text-xs font-medium text-[#F5F6FA] hover:border-white/20 transition-colors"
+            className="w-full flex items-center justify-between bg-[#16181D]/60 border border-[#32363E] px-3 py-2.5 rounded-[5px] text-xs font-medium text-[#F5F6FA] hover:border-white/20 transition-colors cursor-pointer"
           >
             <span className="truncate mr-2">{activeSortLabel}</span>
             <ChevronDown
-              className={`w-3.5 h-3.5 shrink-0 text-[#8E8F96] transition-transform ${
+              className={`w-3.5 h-3.5 shrink-0 text-[#8E8F96] transition-transform duration-200 ${
                 showSortMenu ? 'rotate-180' : ''
               }`}
             />
@@ -136,10 +137,11 @@ export const FoodFilterBar: React.FC<FoodFilterBarProps> = ({
           <AnimatePresence>
             {showSortMenu && (
               <motion.div
-                initial={{ opacity: 0, y: -10 }}
+                initial={{ opacity: 0, y: -6 }}
                 animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                className="absolute top-0 right-0 mt-2 w-48 glass-card rounded-2xl border border-white/10 shadow-2xl py-2"
+                exit={{ opacity: 0, y: -6 }}
+                transition={{ duration: 0.15 }}
+                className="absolute top-full right-0 mt-1.5 z-50 w-full min-w-[210px] max-h-60 overflow-y-auto dropdown-scrollbar bg-[#16181D]/95 backdrop-blur-md rounded-[8px] border border-[#32363E] shadow-2xl py-1.5"
               >
                 {SORT_OPTIONS.map((opt) => (
                   <button
@@ -149,14 +151,14 @@ export const FoodFilterBar: React.FC<FoodFilterBarProps> = ({
                       onSelectSort(opt.key);
                       setShowSortMenu(false);
                     }}
-                    className={`w-full text-left px-3.5 py-2 text-xs flex items-center justify-between hover:bg-white/5 transition-colors ${
+                    className={`w-full text-left px-3.5 py-2 text-xs flex items-center justify-between hover:bg-white/5 transition-colors cursor-pointer ${
                       sortBy === opt.key
                         ? 'text-[#F59F0A] font-semibold'
                         : 'text-[#B6B6BC]'
                     }`}
                   >
-                    {opt.label}
-                    {sortBy === opt.key && <Check className="w-3.5 h-3.5" />}
+                    <span className="truncate">{opt.label}</span>
+                    {sortBy === opt.key && <Check className="w-3.5 h-3.5 shrink-0 ml-2" />}
                   </button>
                 ))}
               </motion.div>
@@ -164,26 +166,30 @@ export const FoodFilterBar: React.FC<FoodFilterBarProps> = ({
           </AnimatePresence>
         </div>
 
-        {/* Sort Direction Toggle */}
-        {sortBy !== 'usage' && (
-          <button
-            type="button"
-            onClick={onToggleSortDirection}
-            className="shrink-0 w-8 h-8 flex items-center justify-center bg-primary/10 text-primary rounded-xl hover:bg-primary/20 transition-colors"
-          >
-            <ArrowDown
-              className={`w-4 h-4 transition-transform duration-300 ${
-                sortDirection === 'desc' ? 'rotate-180' : ''
-              }`}
-            />
-          </button>
-        )}
+        {/* Sort Direction Toggle - persistent slot to prevent layout shifts */}
+        <button
+          type="button"
+          disabled={sortBy === 'usage'}
+          onClick={onToggleSortDirection}
+          title={sortBy === 'usage' ? 'Popularity is sorted automatically' : 'Toggle sort direction'}
+          className={`shrink-0 w-9 h-9 flex items-center justify-center rounded-[5px] border border-[#32363E] transition-all ${
+            sortBy === 'usage'
+              ? 'opacity-25 cursor-not-allowed bg-[#16181D]/20 text-[#8E8F96]'
+              : 'bg-[#16181D]/60 hover:border-white/20 text-[#F5F6FA] cursor-pointer active:scale-95'
+          }`}
+        >
+          <ArrowDown
+            className={`w-4 h-4 transition-transform duration-300 ${
+              sortDirection === 'desc' ? 'rotate-180' : ''
+            }`}
+          />
+        </button>
       </div>
 
       {/* Dropdown Backdrop Overlay */}
       {(showCategoryMenu || showSortMenu) && (
         <div
-          className="absolute inset-0 z-10"
+          className="fixed inset-0 z-30"
           onClick={() => {
             setShowCategoryMenu(false);
             setShowSortMenu(false);

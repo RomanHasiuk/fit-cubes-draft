@@ -36,9 +36,9 @@ export function useDataLoader() {
       let loadedActivities: ActivityConstant[] = [];
 
       const [productsRes, recipesRes, activitiesRes] = await Promise.allSettled([
-        productService.getProducts({ size: 250 }),
-        recipeService.getRecipes({ size: 100 }),
-        exerciseService.getActivities({ size: 100 }),
+        productService.getAllProducts(1000),
+        recipeService.getRecipes({ size: 200 }),
+        exerciseService.getActivities({ size: 200 }),
       ]);
 
       if (productsRes.status === 'fulfilled' && productsRes.value.ok && productsRes.value.data) {

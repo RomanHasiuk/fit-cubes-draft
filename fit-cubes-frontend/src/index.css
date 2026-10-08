@@ -107,6 +107,27 @@
     }
   }
 
+  /* Dropdown scrollbar: persistent sleek scrollbar for popovers and menus */
+  .dropdown-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: #32363E transparent;
+  }
+  .dropdown-scrollbar::-webkit-scrollbar {
+    width: 6px;
+    display: block !important;
+  }
+  .dropdown-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .dropdown-scrollbar::-webkit-scrollbar-thumb {
+    background-color: #32363E;
+    border-radius: 9999px;
+    transition: background-color 0.2s ease;
+  }
+  .dropdown-scrollbar::-webkit-scrollbar-thumb:hover {
+    background-color: #F59F0A;
+  }
+
   /* Desktop (>=1024px): 12px custom scrollbar with auto-hide track & thumb */
   @media (min-width: 1024px) {
     .custom-scrollbar::-webkit-scrollbar {

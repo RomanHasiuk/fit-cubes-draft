@@ -78,7 +78,7 @@ export default function FoodSearch({
 
   const handleRetryProducts = async () => {
     setIsRetrying(true);
-    const res = await productService.getProducts({ size: 250 });
+    const res = await productService.getAllProducts(1000);
     if (res.ok && res.data) {
       const items = extractApiItems<ProductDto>(res.data);
       if (items.length > 0) {
